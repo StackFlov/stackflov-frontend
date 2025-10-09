@@ -7,17 +7,14 @@ const NiBangNeBangMap = () => {
   const infowindowRef = useRef(null);
   const [mapLoaded, setMapLoaded] = useState(false);
 
-  const [visiblePosts, setVisiblePosts] = useState([]); // 지도 내 보이는 마커 데이터
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [filteredPosts, setFilteredPosts] = useState([]); // 검색 결과
+  const [filteredPosts, setFilteredPosts] = useState([]);
 
-  // 카카오 지도 API 스크립트 로드 및 지도 생성
   useEffect(() => {
     const loadKakaoApi = () =>
       new Promise((resolve) => {
-        if (window.kakao && window.kakao.maps) {
-          resolve();
-        } else {
+        if (window.kakao && window.kakao.maps) resolve();
+        else {
           const script = document.createElement("script");
           script.src =
             "https://dapi.kakao.com/v2/maps/sdk.js?appkey=<본인앱키>&libraries=services&autoload=false";
@@ -38,27 +35,15 @@ const NiBangNeBangMap = () => {
       const map = new window.kakao.maps.Map(container, options);
       mapRef.current = map;
       infowindowRef.current = new window.kakao.maps.InfoWindow({ zIndex: 1 });
-
-      // 지도 이동 시 visiblePosts 업데이트
-      map.addListener("bounds_changed", () => {
-        const bounds = map.getBounds();
-        const visibleMarkers = markersRef.current.filter(({ marker }) =>
-          bounds.contain(marker.getPosition())
-        );
-        setVisiblePosts(visibleMarkers.map(({ data }) => data));
-      });
-
       setMapLoaded(true);
     });
   }, []);
 
-  // 주소 → 좌표 변환 및 마커 생성
   useEffect(() => {
     if (!mapLoaded) return;
 
     const geocoder = new window.kakao.maps.services.Geocoder();
 
-    // 기존 마커 제거
     markersRef.current.forEach(({ marker }) => marker.setMap(null));
     markersRef.current = [];
 
@@ -74,7 +59,6 @@ const NiBangNeBangMap = () => {
 
           markersRef.current.push({ marker, data: post });
 
-          // 마커 마우스 오버시 인포윈도우
           window.kakao.maps.event.addListener(marker, "mouseover", () => {
             infowindowRef.current.setContent(
               `<div style="padding:5px;">${post.content}</div>`
@@ -89,9 +73,7 @@ const NiBangNeBangMap = () => {
     });
   }, [mapLoaded]);
 
-  // 검색어로 visiblePosts 필터링
   useEffect(() => {
-    console.log("searchKeyword:", searchKeyword);
     if (searchKeyword.trim() === "") {
       setFilteredPosts([]);
     } else {
@@ -102,12 +84,11 @@ const NiBangNeBangMap = () => {
       );
     }
   }, [searchKeyword]);
-  // 검색어 변경 핸들러
+
   const handleSearchChange = (e) => {
     setSearchKeyword(e.target.value);
   };
 
-  // 검색 결과 클릭 시 해당 마커 위치로 지도 이동
   const handleResultClick = (post) => {
     const found = markersRef.current.find((m) => m.data.id === post.id);
     if (found) {
@@ -117,53 +98,68 @@ const NiBangNeBangMap = () => {
   };
 
   return (
-    <div style={{ display: "flex" }}>
-      <div style={{ flex: 1, position: "relative" }}>
+    <div
+      id="map-container"
+      style={{
+        position: "relative",
+        width: "100%",
+        height: "600px",
+        borderRadius: 10,
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          top: 10,
+          left: 10,
+          width: 300,
+          maxHeight: 300,
+          backgroundColor: "rgba(255, 255, 255, 0.9)",
+          borderRadius: 8,
+          padding: 12,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+          zIndex: 1100,
+        }}
+      >
         <input
           type="text"
           placeholder="내용으로 마커 검색"
           value={searchKeyword}
           onChange={handleSearchChange}
-          style={{ width: "100%", padding: "8px", marginBottom: 8 }}
+          style={{
+            width: "100%",
+            padding: "8px",
+            marginBottom: 8,
+            boxSizing: "border-box",
+          }}
         />
-        {searchKeyword.trim() !== "" && (
-          <div
-            style={{
-              position: "absolute",
-              top: 40,
-              left: 0,
-              right: 0,
-              maxHeight: 200,
-              overflowY: "auto",
-              backgroundColor: "white",
-              border: "1px solid #ddd",
-              zIndex: 10,
-            }}
-          >
-            {filteredPosts.length > 0 ? (
-              filteredPosts.map((post) => (
-                <div
-                  key={post.id}
-                  style={{
-                    padding: "8px",
-                    cursor: "pointer",
-                    borderBottom: "1px solid #eee",
-                  }}
-                  onClick={() => handleResultClick(post)}
-                >
-                  {post.content} ({post.address})
-                </div>
-              ))
-            ) : (
-              <div style={{ padding: "8px" }}>검색 결과가 없습니다.</div>
-            )}
-          </div>
-        )}
-        <div
-          id="map"
-          style={{ width: "100%", height: "600px", borderRadius: 10 }}
-        />
+        <div style={{ maxHeight: 240, overflowY: "auto" }}>
+          {filteredPosts.length > 0 ? (
+            filteredPosts.map((post) => (
+              <div
+                key={post.id}
+                onClick={() => handleResultClick(post)}
+                style={{
+                  cursor: "pointer",
+                  padding: "6px 8px",
+                  borderBottom: "1px solid #ddd",
+                }}
+              >
+                <strong>{post.content}</strong>
+                <br />
+                <small>{post.address}</small>
+              </div>
+            ))
+          ) : (
+            <div style={{ padding: 8 }}>검색 결과가 없습니다.</div>
+          )}
+        </div>
       </div>
+
+      <div
+        id="map"
+        style={{ width: "100%", height: "100%", borderRadius: 10 }}
+      ></div>
     </div>
   );
 };
