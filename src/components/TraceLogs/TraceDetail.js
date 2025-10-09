@@ -100,7 +100,7 @@ const TraceDetail = () => {
         "https://api.stackflov.com/comments",
         {
           boardId: no,
-          title: "string",
+
           content: replyInput,
         },
         {
@@ -127,7 +127,7 @@ const TraceDetail = () => {
         `https://api.stackflov.com/comments/${replyNo}`,
         {
           boardId: no,
-          title: "string",
+
           content: replyUpdateInput,
         },
         {
