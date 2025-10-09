@@ -13,6 +13,7 @@ import TraceCreateForm from "./components/TraceLogs/TraceCreateForm";
 import TraceUpdateForm from "./components/TraceLogs/TraceUpdateForm";
 import AdminDashboard from "./pages/AdminDashboard";
 
+
 const App = () => {
   return (
     <div>
