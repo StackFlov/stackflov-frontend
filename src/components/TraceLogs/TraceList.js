@@ -16,14 +16,55 @@ import {
 import { useNavigate } from "react-router-dom";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
-import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import axios from "axios";
+import Cookies from "js-cookie";
 
 const TraceList = ({ nowCategory, setNowCategory }) => {
   const [viewList, setViewList] = useState();
   const [list, setList] = useState([]);
   const navigator = useNavigate();
+  const accessToken = Cookies.get("accessToken");
+
+  const handleTraceGood = (id) => {
+    axios
+      .post(
+        `https://api.stackflov.com/likes/${id}`,
+        { boaddId: id },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          withCredentials: true,
+        }
+      )
+      .catch((error) => {
+        console.error("게시글 작성 실패:", error);
+        // 실패 시 처리
+      });
+  };
+
+  const handleTraceUnGood = (id) => {
+    axios
+      .delete(
+        `https://api.stackflov.com/likes/${id}`,
+        { boaddId: id },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          withCredentials: true,
+        }
+      )
+      .catch((error) => {
+        console.error("게시글 작성 실패:", error);
+        // 실패 시 처리
+      });
+  };
 
   useEffect(() => {
     const response = axios
@@ -45,18 +86,21 @@ const TraceList = ({ nowCategory, setNowCategory }) => {
   useEffect(() => {
     const view = list.map((item) => {
       if (nowCategory == item.category || nowCategory == 99) {
+        console.log(item);
         return (
           <TraceListItem>
-            <ItemWrapper
-              onClick={() => {
-                navigator(`/trace/detail/${item.id}`);
-              }}
-            >
+            <ItemWrapper>
               <TraceListCreatedAt>
                 {item.createdAt?.slice(0, 10)}
               </TraceListCreatedAt>
               <TraceListContent>
-                <TraceListTitle>{item.title}</TraceListTitle>
+                <TraceListTitle
+                  onClick={() => {
+                    navigator(`/trace/detail/${item.id}`);
+                  }}
+                >
+                  {item.title}
+                </TraceListTitle>
                 <TraceListUser>
                   <PersonOutlineIcon
                     style={{ fontSize: "40px", padding: "0 5px 0 0" }}
@@ -69,13 +113,31 @@ const TraceList = ({ nowCategory, setNowCategory }) => {
                   />
                   {item.viewCount}
                 </TraceListViews>
-                {/* <TraceListGood>
-                  <ThumbUpOffAltIcon
-                    style={{ fontSize: "40px", padding: "0 5px 0 0" }}
-                  />
-                  {item.good}
-                </TraceListGood>
-                <TraceListBookMark>
+                {item.liked == false ? (
+                  <TraceListGood
+                    onClick={(e) => {
+                      handleTraceGood(item.id);
+                    }}
+                  >
+                    <FavoriteBorderIcon
+                      style={{ fontSize: "40px", padding: "0 5px 0 0" }}
+                    />
+                    {item.good}
+                  </TraceListGood>
+                ) : (
+                  <TraceListGood
+                    onClick={(e) => {
+                      handleTraceUnGood(item.id);
+                    }}
+                  >
+                    <FavoriteIcon
+                      style={{ fontSize: "40px", padding: "0 5px 0 0" }}
+                    />
+                    {item.good}
+                  </TraceListGood>
+                )}
+
+                {/* <TraceListBookMark>
                   <BookmarkBorderIcon
                     style={{ fontSize: "40px", padding: "0 5px 0 0" }}
                   />

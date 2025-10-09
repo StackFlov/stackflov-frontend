@@ -45,7 +45,7 @@ export const TraceListContent = styled.li`
 `;
 
 export const TraceListTitle = styled.li`
-  width: 900px;
+  width: 700px;
   height: 40px;
   float: left;
   font-size: 28px;
