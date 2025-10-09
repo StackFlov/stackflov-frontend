@@ -24,6 +24,7 @@ function NiBangNeBang() {
         markers={markers}
         map={map}
         setMap={setMap}
+        visiblePosts={visiblePosts}
         setVisiblePosts={setVisiblePosts}
       />
       <NiBangNeMangList
