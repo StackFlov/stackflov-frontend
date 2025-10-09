@@ -27,12 +27,14 @@ const TraceCreateForm = () => {
   const handleCreatePost = () => {
     axios
       .post(
-        "http://3.106.223.65/boards",
+        "https://api.stackflov.com/boards/multipart",
         {
-          category: selectCategory,
-          title: title,
-          content: content,
-          imageUrls: ["string"],
+          data: {
+            title: title,
+            content: content,
+            category: selectCategory,
+          },
+          images: [],
         },
         {
           headers: {
@@ -49,6 +51,58 @@ const TraceCreateForm = () => {
         console.error("게시글 작성 실패:", error);
         // 실패 시 처리
       });
+  };
+
+  const handlePost = async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData();
+
+    // images 기본값 빈 배열 지정
+    const imgs = [];
+
+    // ✅ 서버가 기대하는 "data" JSON 파트
+    const dto = {
+      title,
+      content,
+      category: Number(selectCategory), // 숫자 필드면 숫자로!
+    };
+    formData.append(
+      "data",
+      new Blob([JSON.stringify(dto)], { type: "application/json" })
+    );
+
+    if (imgs.length > 0) {
+      Array.from(imgs).forEach((file) => {
+        if (file) formData.append("images", file);
+      });
+    } else {
+      // 빈 배열을 문자열로 보내기 (서버가 빈 이미지 배열 기대하면)
+      formData.append("images", JSON.stringify([]));
+    }
+
+    try {
+      const response = await axios.post(
+        "https://api.stackflov.com/boards/multipart",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            // Content-Type은 지정하지 않음 (자동 설정)
+          },
+          withCredentials: true,
+        }
+      );
+
+      console.log("성공:", response.data);
+      navigator("/tracelog");
+    } catch (error) {
+      console.error(
+        "게시글 작성 실패:",
+        error.response?.status,
+        error.response?.data || error.message
+      );
+    }
   };
 
   return (
@@ -109,8 +163,9 @@ const TraceCreateForm = () => {
       </TraceCreateMiddleContent>
       <TraceCreateBottomContent>
         <TraceCreateCancleBtn
-          onClick={() => {
-            handleCreatePost();
+          onClick={(e) => {
+            // handleCreatePost();
+            handlePost(e);
           }}
         >
           😽 등록
