@@ -51,7 +51,7 @@ const TraceList = ({ nowCategory, setNowCategory }) => {
     axios
       .delete(
         `https://api.stackflov.com/likes/${id}`,
-        { boaddId: id },
+
         {
           headers: {
             "Content-Type": "application/json",
@@ -74,6 +74,7 @@ const TraceList = ({ nowCategory, setNowCategory }) => {
         {
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
           },
           withCredentials: true, // ← 백엔드에서 allowCredentials(true)면 이거 필수
         }
