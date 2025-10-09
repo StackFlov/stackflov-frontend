@@ -21,7 +21,7 @@ const Header = () => {
   const handleLogout = () => {
     axios
       .post(
-        "http://3.106.223.65/auth/logout",
+        "https://api.stackflov.com/auth/logout",
         {}, // 본문 데이터 (필요 없다면 빈 객체)
         {
           headers: {
@@ -47,7 +47,7 @@ const Header = () => {
 
     if (token) {
       axios
-        .get("http://3.106.223.65/users/me", {
+        .get("https://api.stackflov.com/users/me", {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,

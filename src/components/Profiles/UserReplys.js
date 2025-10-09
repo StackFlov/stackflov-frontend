@@ -42,7 +42,7 @@ const UserReplys = () => {
   useEffect(() => {
     axios
       .get(
-        "http://3.106.223.65/boards?page=0&size=10",
+        "https://api.stackflov.com/boards?page=0&size=10",
 
         {
           headers: {
@@ -65,7 +65,7 @@ const UserReplys = () => {
 
     if (token) {
       axios
-        .get("http://3.106.223.65/users/me", {
+        .get("https://api.stackflov.com/users/me", {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -81,7 +81,7 @@ const UserReplys = () => {
         });
 
       axios
-        .get(`http://3.106.223.65/comments/board/`, {
+        .get(`https://api.stackflov.com/comments/board/`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,

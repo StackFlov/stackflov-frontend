@@ -41,7 +41,7 @@ const UserPosts = () => {
   useEffect(() => {
     axios
       .get(
-        "http://3.106.223.65/boards",
+        "https://api.stackflov.com/boards",
 
         {
           headers: {
@@ -64,7 +64,7 @@ const UserPosts = () => {
 
     if (token) {
       axios
-        .get("http://3.106.223.65/users/me", {
+        .get("https://api.stackflov.com/users/me", {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,

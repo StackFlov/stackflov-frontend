@@ -33,7 +33,7 @@ const TraceUpdateForm = () => {
   const handleCreatePost = () => {
     axios
       .put(
-        `http://3.106.223.65/boards/${postNo.no}`,
+        `https://api.stackflov.com/boards/${postNo.no}`,
         {
           category: selectCategory,
           title: traceTitle,
@@ -68,7 +68,7 @@ const TraceUpdateForm = () => {
   useEffect(() => {
     axios
       .get(
-        `http://3.106.223.65/boards/${no}`,
+        `https://api.stackflov.com/boards/${no}`,
 
         {
           headers: {

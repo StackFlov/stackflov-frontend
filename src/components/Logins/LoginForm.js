@@ -29,7 +29,7 @@ const LoginForm = () => {
       const body = { email: id, password: password };
       const response = await axios
         .post(
-          "http://3.106.223.65/auth/login",
+          "https://api.stackflov.com/auth/login",
           body, // ← body 따로 감싸지 않음
           {
             headers: {

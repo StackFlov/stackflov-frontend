@@ -62,7 +62,7 @@ const TraceDetail = () => {
 
     if (token) {
       axios
-        .get("http://3.106.223.65/users/me", {
+        .get("https://api.stackflov.com/users/me", {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -77,7 +77,7 @@ const TraceDetail = () => {
         });
 
       axios
-        .get(`http://3.106.223.65/comments/board/${no}`, {
+        .get(`https://api.stackflov.com/comments/board/${no}`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -97,7 +97,7 @@ const TraceDetail = () => {
   const handleReplyCreate = () => {
     axios
       .post(
-        "http://3.106.223.65/comments",
+        "https://api.stackflov.com/comments",
         {
           boardId: no,
           title: "string",
@@ -124,7 +124,7 @@ const TraceDetail = () => {
   const handleReplyUpdate = (replyNo) => {
     axios
       .put(
-        `http://3.106.223.65/comments/${replyNo}`,
+        `https://api.stackflov.com/comments/${replyNo}`,
         {
           boardId: no,
           title: "string",
@@ -151,7 +151,7 @@ const TraceDetail = () => {
   // 댓글 목록 새로고침 함수
   const fetchReplies = () => {
     axios
-      .get(`http://3.106.223.65/comments/board/${no}`, {
+      .get(`https://api.stackflov.com/comments/board/${no}`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
@@ -168,7 +168,7 @@ const TraceDetail = () => {
 
   useEffect(() => {
     axios
-      .get(`http://3.106.223.65/boards/${no}`, {
+      .get(`https://api.stackflov.com/boards/${no}`, {
         headers: {
           "Content-Type": "application/json",
         },

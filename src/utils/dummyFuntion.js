@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const baseUrl = "http://3.106.223.65/";
+const baseUrl = "https://api.stackflov.com/";
 
 export const handleTest1 = (body) => {
   axios.put(`${baseUrl}/users/users/me`, body, {

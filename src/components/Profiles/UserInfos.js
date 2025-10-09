@@ -56,7 +56,7 @@ const UserInfos = () => {
 
     if (token) {
       axios
-        .get("http://3.106.223.65/users/me", {
+        .get("https://api.stackflov.com/users/me", {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,

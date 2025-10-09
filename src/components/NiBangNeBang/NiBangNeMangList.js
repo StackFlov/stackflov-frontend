@@ -103,7 +103,7 @@ const NiBangNeMangList = ({
   useEffect(() => {
     const response = axios
       .get(
-        "http://3.106.223.65/boards?page=0&size=10",
+        "https://api.stackflov.com/boards?page=0&size=10",
 
         {
           headers: {
