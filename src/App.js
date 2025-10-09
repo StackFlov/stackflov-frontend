@@ -11,7 +11,7 @@ import Profile from "./pages/Profile";
 import TraceDetail from "./components/TraceLogs/TraceDetail";
 import TraceCreateForm from "./components/TraceLogs/TraceCreateForm";
 import TraceUpdateForm from "./components/TraceLogs/TraceUpdateForm";
-import AdminPage from "./pages/AdminPage";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const App = () => {
   return (
@@ -29,7 +29,7 @@ const App = () => {
           <Route exact path="/login" element={<Login />} />
           <Route exact path="/register" element={<Register />} />
           <Route exact path="/profile" element={<Profile />} />
-          <Route exact path="/admin" element={<AdminPage />} />
+          <Route exact path="/admin" element={<AdminDashboard />} />
         </Route>
       </Routes>
     </div>
