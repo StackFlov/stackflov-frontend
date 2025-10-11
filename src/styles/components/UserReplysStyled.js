@@ -62,7 +62,7 @@ export const UserReplysListDiv = styled.div`
 `;
 
 export const UserReplysCreateAtDiv = styled.div`
-  width: 100px;
+  width: 200px;
   height: 30px;
   float: left;
 `;

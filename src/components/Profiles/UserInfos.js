@@ -78,6 +78,8 @@ const UserInfos = () => {
 
   useEffect(() => {
     setNickName(me.nickname);
+    setPhone(me.phoneNumber);
+    setAddr(me.address);
   }, [me]);
 
   return (
@@ -163,11 +165,21 @@ const UserInfos = () => {
         </UserHistoryItem>
         <UserHistoryItem>
           <UserPhoneDiv>전화번호</UserPhoneDiv>
-          <UserPhoneInput />
+          <UserPhoneInput
+            value={phone}
+            onChange={(e) => {
+              setPhone(e.target.value);
+            }}
+          />
         </UserHistoryItem>
         <UserHistoryItem>
           <UserAddrDiv>주소</UserAddrDiv>
-          <UserZipCodeInput />
+          <UserZipCodeInput
+            value={addr}
+            onChange={(e) => {
+              setAddr(e.target.value);
+            }}
+          />
           <UserZipCodeBtn>우편 번호</UserZipCodeBtn>
         </UserHistoryItem>
         <UserHistoryItem>

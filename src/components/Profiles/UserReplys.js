@@ -81,7 +81,7 @@ const UserReplys = () => {
         });
 
       axios
-        .get(`https://api.stackflov.com/comments/board/`, {
+        .get(`https://api.stackflov.com/my/comments/board`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -90,6 +90,8 @@ const UserReplys = () => {
         })
         .then((res) => {
           setIsLoggedIn(true);
+          console.log(res.data.content);
+          setMyReplys(res.data.content);
         })
         .catch((err) => {
           console.error("Error fetching user data:", err);
@@ -109,27 +111,49 @@ const UserReplys = () => {
 
   useEffect(() => {
     const view = myReplts.map((item) => {
-      const list = TraceListDummyData.filter(
-        (post) => item.postId == post.tracePostId
-      );
-
       return (
         <UserReplysListDiv
           onClick={() => {
-            navigator(`/trace/detail/${list[0].tracePostId}`);
+            // navigator(`/trace/detail/${item.tracePostId}`);
           }}
         >
           <UserReplysCreateAtDiv>
             {item.createdAt.slice(0, 10)}
           </UserReplysCreateAtDiv>
-          <UserReplysPostTitleDiv>{list[0].postTitle}</UserReplysPostTitleDiv>
-          <UserReplyContentDiv>{item.replyContent}</UserReplyContentDiv>
-          <UserReplysDelBtn>삭제</UserReplysDelBtn>
+          {/* <UserReplysPostTitleDiv>{list[0].authorEmail}</UserReplysPostTitleDiv> */}
+          <UserReplyContentDiv>{item.content}</UserReplyContentDiv>
+          <UserReplysDelBtn
+            onClick={() => {
+              handleReplyDel(item.id);
+            }}
+          >
+            삭제
+          </UserReplysDelBtn>
         </UserReplysListDiv>
       );
     });
     setViewPosts(view);
   }, [myReplts]);
+
+  const handleReplyDel = (id) => {
+    axios
+      .delete(
+        `https://api.stackflov.com/comments/${id}`,
+
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          withCredentials: true,
+        }
+      )
+      .then((res) => {})
+      .catch((err) => {
+        console.error("Error creating reply:", err);
+      });
+  };
+
   return (
     <UserReplysWrapper>
       <UserReplysTopDiv>
