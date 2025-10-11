@@ -166,6 +166,28 @@ const TraceDetail = () => {
       });
   };
 
+  const handleReplyDel = (id) => {
+    axios
+      .delete(
+        `https://api.stackflov.com/comments/${id}`,
+
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          withCredentials: true,
+        }
+      )
+      .then((res) => {
+        setReplyInput("");
+        fetchReplies();
+      })
+      .catch((err) => {
+        console.error("Error creating reply:", err);
+      });
+  };
+
   useEffect(() => {
     axios
       .get(`https://api.stackflov.com/boards/${no}`, {
@@ -235,7 +257,6 @@ const TraceDetail = () => {
       </ReplyCreateDiv>
 
       {replys.map((item, idx) => {
-        // 수정 중인지 확인 (id로 비교)
         const isEditing = editingReplyId === item.id;
 
         return (
@@ -248,15 +269,25 @@ const TraceDetail = () => {
                 </ReplyCreateAtDiv>
                 {me.email === item.authorEmail &&
                   (!isEditing ? (
-                    <button
-                      onClick={() => {
-                        setEditingReplyId(item.id);
-                        setReplyUpdateInput(item.content);
-                      }}
-                      style={{ marginLeft: "10px" }}
-                    >
-                      수정
-                    </button>
+                    <>
+                      <button
+                        onClick={() => {
+                          setEditingReplyId(item.id);
+                          setReplyUpdateInput(item.content);
+                        }}
+                        style={{ marginLeft: "10px" }}
+                      >
+                        수정
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleReplyDel(item.id);
+                        }}
+                        style={{ marginLeft: "10px" }}
+                      >
+                        삭제
+                      </button>
+                    </>
                   ) : (
                     <>
                       <button
