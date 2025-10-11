@@ -16,7 +16,7 @@ export default function AdminDashboard() {
     setErr(null);
 
     api
-      .get("/admin/dashboard")
+      .get("admin/dashboard/stats")
       .then(({ data }) => {
         if (!alive) return;
         setStats(data || {});
