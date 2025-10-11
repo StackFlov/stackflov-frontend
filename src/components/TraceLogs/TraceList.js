@@ -66,6 +66,25 @@ const TraceList = ({ nowCategory, setNowCategory }) => {
       });
   };
 
+  const handleTraceFollow = (id) => {
+    axios
+      .post(
+        `https://api.stackflov.com/follows/follow`,
+        { followedId: id },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          withCredentials: true,
+        }
+      )
+      .catch((error) => {
+        console.error("게시글 작성 실패:", error);
+        // 실패 시 처리
+      });
+  };
+
   useEffect(() => {
     const response = axios
       .get(
@@ -137,13 +156,15 @@ const TraceList = ({ nowCategory, setNowCategory }) => {
                     {item.good}
                   </TraceListGood>
                 )}
-
-                {/* <TraceListBookMark>
+                <TraceListBookMark>
                   <BookmarkBorderIcon
+                    onClick={() => {
+                      handleTraceFollow(item.id);
+                    }}
                     style={{ fontSize: "40px", padding: "0 5px 0 0" }}
                   />
                   {item.bookMark}
-                </TraceListBookMark> */}
+                </TraceListBookMark>
               </TraceListContent>
             </ItemWrapper>
           </TraceListItem>

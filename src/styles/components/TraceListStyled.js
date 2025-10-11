@@ -45,7 +45,7 @@ export const TraceListContent = styled.li`
 `;
 
 export const TraceListTitle = styled.li`
-  width: 700px;
+  width: 800px;
   height: 40px;
   float: left;
   font-size: 28px;
@@ -53,7 +53,7 @@ export const TraceListTitle = styled.li`
 `;
 
 export const TraceListUser = styled.li`
-  width: 170px;
+  width: 120px;
   height: 40px;
   display: flex;
   justify-content: center;
@@ -63,7 +63,7 @@ export const TraceListUser = styled.li`
 `;
 
 export const TraceListViews = styled.li`
-  width: 120px;
+  width: 100px;
   height: 40px;
   display: flex;
   justify-content: center;
@@ -73,7 +73,7 @@ export const TraceListViews = styled.li`
 `;
 
 export const TraceListGood = styled.li`
-  width: 120px;
+  width: 80px;
   height: 40px;
   display: flex;
   justify-content: center;
@@ -83,7 +83,7 @@ export const TraceListGood = styled.li`
 `;
 
 export const TraceListBookMark = styled.li`
-  width: 120px;
+  width: 80px;
   height: 40px;
   display: flex;
   justify-content: center;
