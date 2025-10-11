@@ -106,7 +106,6 @@ const TraceList = ({ nowCategory, setNowCategory }) => {
   useEffect(() => {
     const view = list.map((item) => {
       if (nowCategory == item.category || nowCategory == 99) {
-        console.log(item);
         return (
           <TraceListItem>
             <ItemWrapper>
@@ -159,7 +158,7 @@ const TraceList = ({ nowCategory, setNowCategory }) => {
                 <TraceListBookMark>
                   <BookmarkBorderIcon
                     onClick={() => {
-                      handleTraceFollow(item.id);
+                      handleTraceFollow(item.authorId);
                     }}
                     style={{ fontSize: "40px", padding: "0 5px 0 0" }}
                   />
