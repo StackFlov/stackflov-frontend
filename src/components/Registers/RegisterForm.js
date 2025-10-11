@@ -72,6 +72,8 @@ const RegisterForm = () => {
           password: password,
           nickname: nickName,
           profileImage: null,
+          address: addr,
+          phoneNumber: phoneNum,
           socialType: "NONE",
           socialId: "",
           level: 0,
