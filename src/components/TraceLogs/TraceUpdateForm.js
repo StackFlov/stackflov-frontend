@@ -30,31 +30,53 @@ const TraceUpdateForm = () => {
   const [selectCategory, setSelectCategory] = useState(1);
   const accessToken = Cookies.get("accessToken");
 
-  const handleCreatePost = () => {
-    axios
-      .put(
+  const handleUpdagtePost = async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData();
+    const imgs = [];
+
+    // ✅ DTO에 맞게 값 정의
+    const dto = {
+      title: traceTitle, // 입력값에서 받아와야 함
+      content: traceContent, // content로 맞추기
+      category: Number(selectCategory),
+      removeImageUrls: [], // 필요하다면 값 넣기
+    };
+
+    // data라는 이름으로 JSON Blob 추가 (서버에서 @RequestParam("data")로 받음)
+    formData.append(
+      "data",
+      new Blob([JSON.stringify(dto)], { type: "application/json" })
+    );
+
+    // 파일 배열이 비어있지 않으면 첨부
+    imgs.forEach((file) => {
+      if (file) formData.append("images", file);
+    });
+
+    try {
+      const response = await axios.put(
         `https://api.stackflov.com/boards/${postNo.no}`,
-        {
-          category: selectCategory,
-          title: traceTitle,
-          content: traceContent,
-          imageUrls: ["string"],
-        },
+        formData,
         {
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
+            // Content-Type은 명시하지 않음!
           },
           withCredentials: true,
         }
-      )
-      .then((response) => {
-        // 성공 시 추가 작업 (예: 페이지 이동 등)
-      })
-      .catch((error) => {
-        console.error("게시글 작성 실패:", error);
-        // 실패 시 처리
-      });
+      );
+
+      console.log("성공:", response.data);
+      navigator("/tracelog");
+    } catch (error) {
+      console.error(
+        "게시글 작성 실패:",
+        error.response?.status,
+        error.response?.data || error.message
+      );
+    }
   };
 
   const category = {
@@ -143,8 +165,8 @@ const TraceUpdateForm = () => {
       </TraceUpdateMiddleContent>
       <TraceUpdateBottomContent>
         <TraceUpdateCancleBtn
-          onClick={() => {
-            handleCreatePost();
+          onClick={(e) => {
+            handleUpdagtePost(e);
             navigator(`/trace/detail/${postNo.no}`);
           }}
         >
