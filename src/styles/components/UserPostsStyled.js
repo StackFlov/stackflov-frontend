@@ -60,7 +60,7 @@ export const UserPostCreateAtDiv = styled.div`
 `;
 
 export const UserPostTitleDiv = styled.div`
-  width: 1000px;
+  width: 1100px;
   font-size: 24px;
   font-weight: 700;
   float: left;
