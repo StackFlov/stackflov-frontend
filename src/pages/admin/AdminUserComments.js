@@ -103,34 +103,31 @@ export default function AdminUserComments() {
           <table className="table">
             <thead>
               <tr>
-                <th style={{ width: 80 }}>ID</th>
                 <th>내용</th>
-                <th style={{ width: 200 }}>작성자</th>
                 <th style={{ width: 120 }}>상태</th>
                 <th style={{ width: 200 }}>작성일</th>
                 <th style={{ width: 220 }}>액션</th>
               </tr>
             </thead>
             <tbody>
-              {items.map(c => (
-                <tr key={c.id}>
-                  <td>{c.id}</td>
+              {items.map(c => {
+                console.log(c)
+                return(<tr key={c.userId}>
                   <td>{c.content || c.text}</td>
-                  <td>{c.authorEmail || c.author?.email || "-"}</td>
                   <td>{c.active === false ? "INACTIVE" : "ACTIVE"}</td>
-                  <td>{c.createdAt || "-"}</td>
+                  <td>{c.createdAt.slice(0,10) || "-"}</td>
                   <td>
                     <div className="hstack" style={{ gap: 8, flexWrap: "wrap" }}>
-                      <button disabled={busyRow === c.id} onClick={() => deactivateOne(c.id)}>
-                        {busyRow === c.id ? "처리 중…" : "비활성화"}
+                      <button disabled={c.active == false ? true : false} onClick={() => deactivateOne(c.commentId)}>
+                        {busyRow === c.userId ? "처리 중…" : "비활성화"}
                       </button>
-                      <button disabled={busyRow === c.id} onClick={() => reactivateOne(c.id)}>
-                        {busyRow === c.id ? "처리 중…" : "복구"}
+                      <button disabled={c.active == true ? true : false} onClick={() => reactivateOne(c.commentId)}>
+                        {busyRow === c.userId ? "처리 중…" : "복구"}
                       </button>
                     </div>
                   </td>
-                </tr>
-              ))}
+                </tr>)
+              })}
               {items.length === 0 && (
                 <tr>
                   <td colSpan={6} style={{ textAlign: "center", color: "#666" }}>결과 없음</td>

@@ -11,7 +11,11 @@ import Profile from "./pages/Profile";
 import TraceDetail from "./components/TraceLogs/TraceDetail";
 import TraceCreateForm from "./components/TraceLogs/TraceCreateForm";
 import TraceUpdateForm from "./components/TraceLogs/TraceUpdateForm";
-import AdminDashboard from "./pages/AdminDashboard";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUserBoards from "./pages/admin/AdminUserBoards";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminBoardsSearch from "./pages/admin/AdminBoardsSearch";
+import AdminUserComments from "./pages/admin/AdminUserComments";
 
 
 const App = () => {
@@ -31,7 +35,11 @@ const App = () => {
           <Route exact path="/register" element={<Register />} />
           <Route exact path="/profile" element={<Profile />} />
           <Route exact path="/admin" element={<AdminDashboard />} />
-        </Route>
+          <Route exact path="/admin/users" element={<AdminUsers />} />
+          <Route exact path="/admin/boards" element={<AdminBoardsSearch />} />
+          <Route exact path="/admin/users/:userId/boards" element={<AdminUserBoards />} />
+          <Route exact path="/admin/users/:userId/comments" element={<AdminUserComments />} />
+          </Route>
       </Routes>
     </div>
   );

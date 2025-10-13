@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../utils/api";
-import AdminUserMemos from "../../components/AdminUserMemos";
+import AdminUserMemos from "./AdminUserMemos";
 import { Link } from "react-router-dom";
 
 const PAGE_SIZE = 10;
@@ -124,26 +124,27 @@ export default function AdminUsers() {
               </tr>
             </thead>
             <tbody>
-              {content.map((u) => (
-                <tr key={u.id}>
-                  <td>{u.id}</td>
+              {content.map((u) => {
+                console.log(u)
+                return(<tr key={u.userId}>
+                  <td>{u.userId}</td>
                   <td>{u.email}</td>
                   <td>{u.name}</td>
                   <td>{u.role || (u.roles && u.roles.join(", "))}</td>
                   <td>{u.status || (u.active ? "ACTIVE" : "INACTIVE")}</td>
-                  <td>{u.createdAt || u.created_date}</td>
+                  <td>{u.createdAt.slice(0,10) || u.created_date.slice(0,10)}</td>
                   <td>
                     <div className="hstack" style={{ gap: 8, flexWrap: "wrap" }}>
                       {/* 메모 보기/추가 */}
-                      <button onClick={() => setMemoUser({ id: u.id, email: u.email, name: u.name })}>
+                      <button onClick={() => setMemoUser({ id: u.userId, email: u.email, name: u.name })}>
                         메모
                       </button>
 
                       {/* 역할 변경 */}
                       <select
                         defaultValue=""
-                        disabled={busyId === u.id}
-                        onChange={(e) => updateRole(u.id, e.target.value, e.target)}
+                        disabled={busyId === u.userId}
+                        onChange={(e) => updateRole(u.userId, e.target.value, e.target)}
                       >
                         <option value="" disabled>역할 변경</option>
                         <option value="ROLE_USER">ROLE_USER</option>
@@ -153,8 +154,8 @@ export default function AdminUsers() {
                       {/* 상태 변경 */}
                       <select
                         defaultValue=""
-                        disabled={busyId === u.id}
-                        onChange={(e) => updateStatus(u.id, e.target.value, e.target)}
+                        disabled={busyId === u.userId}
+                        onChange={(e) => updateStatus(u.userId, e.target.value, e.target)}
                       >
                         <option value="" disabled>상태 변경</option>
                         <option value="ACTIVE">ACTIVE</option>
@@ -164,8 +165,8 @@ export default function AdminUsers() {
                       {/* 정지 */}
                       <select
                         defaultValue=""
-                        disabled={busyId === u.id}
-                        onChange={(e) => suspendUser(u.id, e.target.value, e.target)}
+                        disabled={busyId === u.userId}
+                        onChange={(e) => suspendUser(u.userId, e.target.value, e.target)}
                       >
                         <option value="" disabled>정지 기간</option>
                         <option value="THREE_DAYS">3일</option>
@@ -176,12 +177,11 @@ export default function AdminUsers() {
                         <option value="PERMANENT">영구</option>
                       </select>
                       
-                      <Link to={`/admin/users/${u.id}/boards`} className="admin-linkbtn">게시글 보기</Link>
-                      <Link to={`/admin/users/${u.id}/comments`} className="admin-linkbtn">댓글 보기</Link>
+                      <Link to={`/admin/users/${u.userId}/boards`} className="admin-linkbtn">게시글 보기</Link>
+                      <Link to={`/admin/users/${u.userId}/comments`} className="admin-linkbtn">댓글 보기</Link>
                     </div>
                   </td>
-                </tr>
-              ))}
+                </tr>)})}
               {content.length === 0 && (
                 <tr>
                   <td colSpan={7} style={{ textAlign: "center", color: "#666" }}>

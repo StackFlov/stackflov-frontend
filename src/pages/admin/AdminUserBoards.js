@@ -102,9 +102,7 @@ export default function AdminUserBoards() {
           <table className="table">
             <thead>
               <tr>
-                <th style={{ width: 80 }}>ID</th>
                 <th>제목</th>
-                <th style={{ width: 200 }}>작성자</th>
                 <th style={{ width: 120 }}>상태</th>
                 <th style={{ width: 200 }}>작성일</th>
                 <th style={{ width: 220 }}>액션</th>
@@ -113,11 +111,9 @@ export default function AdminUserBoards() {
             <tbody>
               {items.map(b => (
                 <tr key={b.id}>
-                  <td>{b.id}</td>
                   <td>{b.title}</td>
-                  <td>{b.authorEmail || b.author?.email || "-"}</td>
                   <td>{b.active === false ? "INACTIVE" : "ACTIVE"}</td>
-                  <td>{b.createdAt || "-"}</td>
+                  <td>{b.createdAt.slice(0,10) || "-"}</td>
                   <td>
                     <div className="hstack" style={{ gap: 8, flexWrap: "wrap" }}>
                       <button disabled={busyRow === b.id} onClick={() => deactivateOne(b.id)}>

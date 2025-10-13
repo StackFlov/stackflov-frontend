@@ -184,7 +184,7 @@ export default function AdminBoardsSearch() {
                   <td>{b.title}</td>
                   <td>{b.authorEmail || b.author?.email || "-"}</td>
                   <td>{b.active === false ? "INACTIVE" : "ACTIVE"}</td>
-                  <td>{b.createdAt || "-"}</td>
+                  <td>{b.createdAt.slice(0,10) || "-"}</td>
                   <td>
                     <div className="hstack" style={{ gap: 8, flexWrap: "wrap" }}>
                       <button
