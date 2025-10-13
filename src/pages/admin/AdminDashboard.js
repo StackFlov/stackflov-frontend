@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import api from "../utils/api";
+import api from "../../utils/api";
 import axios from "axios";
 
 const fmt = (n) => (typeof n === "number" ? n.toLocaleString() : "-");
@@ -101,6 +101,9 @@ export default function AdminDashboard() {
         </Link>
         <Link className="admin-linkbtn" to="/admin/banned-words">
           금지어 관리
+        </Link>
+        <Link className="admin-linkbtn" to="/admin/dashboard/detailed">
+          상세 통계
         </Link>
       </div>
     </div>
