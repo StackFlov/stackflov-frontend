@@ -1,20 +1,48 @@
+// src/pages/admin/AdminUserMemos.js
 import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import api from "../../utils/api";
 
 export default function AdminUserMemos({ user, onClose }) {
+  const { userId: routeUserId } = useParams(); // /admin/users/:userId/memos
+  const uid = user?.id ?? (routeUserId ? Number(routeUserId) : undefined);
+  const displayName = user?.email || user?.name || uid || "-";
+  const isModal = !!onClose;
+
   const [items, setItems] = useState([]);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [posting, setPosting] = useState(false);
   const [err, setErr] = useState(null);
 
+  // 수정 상태
+  const [editingId, setEditingId] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // 서버 응답을 안전하게 정규화
+  const normalize = (raw) => {
+    const id =
+      raw?.id ??
+      raw?.memoId ??
+      raw?.noteId ??
+      raw?.adminNoteId ??
+      raw?.admin_note_id;
+    const content = raw?.content ?? raw?.message ?? raw?.memo ?? "";
+    const adminEmail =
+      raw?.adminEmail ?? raw?.authorEmail ?? raw?.admin?.email ?? "-";
+    const createdAt = raw?.createdAt ?? raw?.created_at ?? "-";
+    return { ...raw, _id: id, _content: content, _adminEmail: adminEmail, _createdAt: createdAt };
+  };
+
   const load = async () => {
-    if (!user?.id) return;
+    if (!uid) return;
     setLoading(true);
     setErr(null);
     try {
-      const { data } = await api.get(`/admin/users/${user.id}/memos`);
-      setItems(Array.isArray(data) ? data : []);
+      const { data } = await api.get(`/admin/users/${uid}/memos`);
+      const list = Array.isArray(data) ? data : [];
+      setItems(list.map(normalize));
     } catch (e) {
       setErr(e?.response?.data?.message || e.message || "불러오기 실패");
     } finally {
@@ -25,9 +53,10 @@ export default function AdminUserMemos({ user, onClose }) {
   const add = async () => {
     const body = text.trim();
     if (!body) return alert("메모 내용을 입력하세요.");
+    if (!uid) return alert("userId가 없습니다.");
     setPosting(true);
     try {
-      await api.post(`/admin/users/${user.id}/memos`, { content: body });
+      await api.post(`/admin/users/${uid}/memos`, { content: body }); // DTO 키 다르면 수정
       setText("");
       await load();
     } catch (e) {
@@ -37,18 +66,59 @@ export default function AdminUserMemos({ user, onClose }) {
     }
   };
 
-  useEffect(() => { load(); }, [user?.id]);
+  const remove = async (memoId) => {
+    if (!uid) return alert("userId가 없습니다.");
+    if (!memoId) return alert("memoId가 없습니다.");
+    if (!window.confirm(`메모 #${memoId} 를 삭제할까요?`)) return;
+    try {
+      await api.delete(`/admin/users/${uid}/memos/${memoId}`);
+      await load();
+    } catch (e) {
+      alert(`삭제 실패: ${e?.response?.data?.message || e.message}`);
+    }
+  };
 
-  // 간단 모달 스타일 (프로젝트 css에 맞게 바꿔도 됨)
+  const startEdit = (m) => {
+    setEditingId(m._id);
+    setEditText(m._content || "");
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditText("");
+  };
+
+  const saveEdit = async () => {
+    if (!uid) return alert("userId가 없습니다.");
+    if (!editingId) return alert("memoId가 없습니다.");
+    const body = editText.trim();
+    if (!body) return alert("수정할 내용을 입력하세요.");
+    setSaving(true);
+    try {
+      await api.put(`/admin/users/${uid}/memos/${editingId}`, { content: body });
+      setEditingId(null);
+      setEditText("");
+      await load();
+    } catch (e) {
+      alert(`수정 실패: ${e?.response?.data?.message || e.message}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  useEffect(() => { load(); }, [uid]);
+
+  const handleClose = isModal ? onClose : () => window.history.back();
+
   return (
-    <div style={backdropStyle} onClick={onClose}>
-      <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
+    <div style={isModal ? backdropStyle : { padding: 16 }} onClick={isModal ? handleClose : undefined}>
+      <div style={isModal ? modalStyle : { maxWidth: 760, margin: "0 auto" }} onClick={(e) => e.stopPropagation?.()}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <h3 style={{ margin: 0 }}>운영 메모 – {user?.email || user?.name || user?.id}</h3>
-          <button onClick={onClose}>닫기</button>
+          <h3 style={{ margin: 0 }}>운영 메모 – {displayName}</h3>
+          <button onClick={handleClose}>닫기</button>
         </div>
 
-        {/* 입력 */}
+        {/* 입력(신규) */}
         <div className="card" style={{ padding: 12, marginBottom: 12 }}>
           <textarea
             value={text}
@@ -63,22 +133,48 @@ export default function AdminUserMemos({ user, onClose }) {
           </div>
         </div>
 
-        {/* 상태 */}
         {loading && <div>불러오는 중…</div>}
         {err && <div style={{ color: "#c00" }}>오류: {String(err)}</div>}
 
         {/* 목록 */}
         {!loading && !err && (
-          <div style={{ maxHeight: 360, overflow: "auto" }}>
+          <div style={{ maxHeight: isModal ? 360 : "auto", overflow: "auto" }}>
             {items.length === 0 && <div style={{ color: "#666" }}>메모 없음</div>}
-            {items.map((m) => (
-              <div key={m.id} className="card" style={{ padding: 12, marginBottom: 8 }}>
-                <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>
-                  #{m.id} · 작성자: {m.adminEmail || m.authorEmail || "-"} · {m.createdAt || "-"}
+            {items.map((m) => {
+              const isEditing = editingId === m._id;
+              return (
+                <div key={m._id ?? Math.random()} className="card" style={{ padding: 12, marginBottom: 8 }}>
+                  <div style={{ fontSize: 12, color: "#666", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span>
+                      #{m._id ?? "?"} · 작성자: {m._adminEmail} · {m._createdAt}
+                    </span>
+                    {!isEditing && (
+                      <div className="hstack" style={{ gap: 8 }}>
+                        <button onClick={() => startEdit(m)}>수정</button>
+                        <button onClick={() => remove(m._id)}>삭제</button>
+                      </div>
+                    )}
+                  </div>
+
+                  {!isEditing ? (
+                    <div>{m._content}</div>
+                  ) : (
+                    <div>
+                      <textarea
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        rows={4}
+                        style={{ width: "100%" }}
+                      />
+                      <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
+                        <button onClick={saveEdit} disabled={saving}>{saving ? "저장 중…" : "저장"}</button>
+                        <button onClick={cancelEdit} disabled={saving}>취소</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div>{m.content || m.message || m.memo}</div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

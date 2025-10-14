@@ -179,6 +179,7 @@ export default function AdminUsers() {
                       
                       <Link to={`/admin/users/${u.userId}/boards`} className="admin-linkbtn">게시글 보기</Link>
                       <Link to={`/admin/users/${u.userId}/comments`} className="admin-linkbtn">댓글 보기</Link>
+                      <Link to={`/admin/users/${u.userId}/memos`} className="admin-linkbtn">메모(페이지)</Link>
                     </div>
                   </td>
                 </tr>)})}
