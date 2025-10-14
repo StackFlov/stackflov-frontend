@@ -19,7 +19,7 @@ const NiBangNeBangMap = () => {
         } else {
           const script = document.createElement("script");
           script.src =
-            "https://dapi.kakao.com/v2/maps/sdk.js?appkey=<본인앱키>&libraries=services&autoload=false";
+            "https://dapi.kakao.com/v2/maps/sdk.js?appkey=a36b7d03721cc984f5787d0b37f4a395&libraries=services&autoload=false";
           script.async = true;
           script.onload = () => {
             window.kakao.maps.load(() => resolve());
@@ -47,9 +47,11 @@ const NiBangNeBangMap = () => {
 
     const geocoder = new window.kakao.maps.services.Geocoder();
 
+    // 기존 마커 제거
     markersRef.current.forEach(({ marker }) => marker.setMap(null));
     markersRef.current = [];
 
+    // samplePosts에 대해 좌표 변환 후 마커 생성
     Promise.all(
       samplePosts.map(
         (post) =>
@@ -66,8 +68,10 @@ const NiBangNeBangMap = () => {
                   position: coords,
                 });
 
+                // 마커 보관 (id 매핑용)
                 markersRef.current.push({ marker, data: post });
 
+                // 마커 호버 시 인포윈도우 열기/닫기
                 window.kakao.maps.event.addListener(marker, "mouseover", () => {
                   infowindowRef.current.setContent(
                     `<div style="padding:5px;">${post.content}</div>`
@@ -105,7 +109,7 @@ const NiBangNeBangMap = () => {
     setSearchKeyword(e.target.value);
   };
 
-  // 검색 결과 클릭 시 해당 마커 위치로 지도 이동 및 확대
+  // 검색 결과 클릭 시 해당 마커 위치로 지도 이동 및 인포윈도우 표시
   const handleResultClick = (post) => {
     console.log("클릭된 post:", post);
     if (!mapRef.current) {
@@ -117,10 +121,23 @@ const NiBangNeBangMap = () => {
       console.warn("해당 id 마커를 찾을 수 없습니다:", post.id);
       return;
     }
-    console.log("지도 이동 위치:", found.marker.getPosition());
-    // setCenter로 변경하여 이동 시도
-    mapRef.current.setCenter(found.marker.getPosition());
+
+    const position = found.marker.getPosition();
+    console.log("지도 이동 위치:", position);
+
+    // 부드럽게 이동하려면 panTo, 즉시 이동은 setCenter 사용
+    if (typeof mapRef.current.panTo === "function") {
+      mapRef.current.panTo(position);
+    } else {
+      mapRef.current.setCenter(position);
+    }
     mapRef.current.setLevel(3);
+
+    // 인포윈도우 열기
+    infowindowRef.current.setContent(
+      `<div style="padding:5px;">${post.content}</div>`
+    );
+    infowindowRef.current.open(mapRef.current, found.marker);
   };
 
   return (
