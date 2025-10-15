@@ -1,12 +1,28 @@
+// src/pages/admin/AdminUserBoards.js
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams, useNavigate } from "react-router-dom";
 import api from "../../utils/api";
+import {
+  PageWrap, Header, Title, Sub,
+  SearchCard, Row, PrimaryBtn, GhostBtn, MutedBtn,
+  TableCard, Table, Th, Td, Badge, Actions,
+  Pagination, PageInfo, ErrorText, InfoText, Empty,
+} from "../../styles/components/admin/AdminCommonStyled";
 
 const PAGE_SIZE = 10;
 
+// 공통 복구 헬퍼 (소/대문자 폴백)
+async function reactivateContent(type, id) {
+  try {
+    await api.put(`/admin/content/${type.toLowerCase()}/${id}/reactivate`);
+  } catch {
+    await api.put(`/admin/content/${type.toUpperCase()}/${id}/reactivate`);
+  }
+}
+
 export default function AdminUserBoards() {
-  const params = useParams();                 // /admin/users/:userId/boards
-  const [sp] = useSearchParams();             // /admin/users/boards?userId=...
+  const params = useParams();                  // /admin/users/:userId/boards
+  const [sp] = useSearchParams();              // /admin/users/boards?userId=...
   const userId = params.userId || sp.get("userId");
 
   const [items, setItems] = useState([]);
@@ -16,27 +32,14 @@ export default function AdminUserBoards() {
   const [err, setErr] = useState(null);
   const [busyRow, setBusyRow] = useState(null);
 
-  // ---- 공통 복구 헬퍼 (소문자 → 대문자 폴백) ----
-  async function reactivateContent(type, id) {
-    try {
-      await api.put(`/admin/content/${type.toLowerCase()}/${id}/reactivate`);
-      return;
-    } catch (_) {
-      await api.put(`/admin/content/${type.toUpperCase()}/${id}/reactivate`);
-    }
-  }
-
-  const paramsMemo = useMemo(() => ({
-    page,
-    size: PAGE_SIZE,
-  }), [page]);
+  const query = useMemo(() => ({ page, size: PAGE_SIZE }), [page]);
 
   const load = async () => {
     if (!userId) return;
     setLoading(true);
     setErr(null);
     try {
-      const { data } = await api.get(`/admin/users/${userId}/boards`, { params: paramsMemo });
+      const { data } = await api.get(`/admin/users/${userId}/boards`, { params: query });
       const content = data?.content ?? [];
       setItems(content);
       setMeta({
@@ -52,7 +55,7 @@ export default function AdminUserBoards() {
     }
   };
 
-  useEffect(() => { load(); /* page 변경 시 재조회 */ }, [/* eslint-disable-line */ paramsMemo, userId]);
+  useEffect(() => { load(); }, [/* eslint-disable-line */ query, userId]);
 
   const deactivateOne = async (boardId) => {
     if (!window.confirm(`게시글 #${boardId} 을(를) 비활성화할까요?`)) return;
@@ -67,6 +70,7 @@ export default function AdminUserBoards() {
     }
   };
 
+  const navigate = useNavigate();
   const reactivateOne = async (boardId) => {
     if (!window.confirm(`게시글 #${boardId} 을(를) 복구할까요?`)) return;
     setBusyRow(boardId);
@@ -80,68 +84,97 @@ export default function AdminUserBoards() {
     }
   };
 
+  const fmtDate = (d) => (d ? String(d).slice(0, 10) : "-");
+  const isActive = (b) => (b.active ?? b.isActive) !== false;
+
   return (
-    <div>
-      <h2 style={{ marginBottom: 12 }}>사용자별 게시글</h2>
+    <PageWrap>
+      <Header>
+        <Title>사용자별 게시글</Title>
+        <Sub>선택 사용자(<b>{userId ?? "-"}</b>)의 게시글 상태를 조회/관리합니다.</Sub>
+      </Header>
 
       {/* 상단 바 */}
-      <div className="card" style={{ padding: 12, marginBottom: 12, display: "flex", gap: 8, alignItems: "center" }}>
-        <div>대상 사용자 ID: <b>{userId || "-"}</b></div>
-        <div style={{ flex: "1 1 auto" }} />
-        <Link to="/admin/users" className="admin-linkbtn">사용자 목록으로</Link>
-        <button onClick={load}>새로고침</button>
-      </div>
+      <SearchCard>
+        <Row>
+        <GhostBtn onClick={() => navigate("/admin/users")}>사용자 목록으로</GhostBtn>
+        <PrimaryBtn onClick={load}>새로고침</PrimaryBtn>
+      </Row>
+      </SearchCard>
 
       {/* 상태 */}
-      {loading && <div>불러오는 중…</div>}
-      {err && <div style={{ color: "#c00" }}>오류: {String(err)}</div>}
+      {loading && <InfoText>불러오는 중…</InfoText>}
+      {err && <ErrorText>오류: {String(err)}</ErrorText>}
 
       {/* 테이블 */}
       {!loading && !err && (
-        <>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>제목</th>
-                <th style={{ width: 120 }}>상태</th>
-                <th style={{ width: 200 }}>작성일</th>
-                <th style={{ width: 220 }}>액션</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map(b => (
-                <tr key={b.id}>
-                  <td>{b.title}</td>
-                  <td>{b.active === false ? "INACTIVE" : "ACTIVE"}</td>
-                  <td>{b.createdAt.slice(0,10) || "-"}</td>
-                  <td>
-                    <div className="hstack" style={{ gap: 8, flexWrap: "wrap" }}>
-                      <button disabled={busyRow === b.id} onClick={() => deactivateOne(b.id)}>
-                        {busyRow === b.id ? "처리 중…" : "비활성화"}
-                      </button>
-                      <button disabled={busyRow === b.id} onClick={() => reactivateOne(b.id)}>
-                        {busyRow === b.id ? "처리 중…" : "복구"}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {items.length === 0 && (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: "center", color: "#666" }}>결과 없음</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        items.length === 0 ? (
+          <Empty>결과 없음</Empty>
+        ) : (
+          <>
+            <TableCard>
+              <Table>
+                <thead>
+                  <tr>
+                    <Th>제목</Th>
+                    <Th w={140}>상태</Th>
+                    <Th w={180}>작성일</Th>
+                    <Th w={260}>액션</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((b) => {
+                    const active = isActive(b);
+                    return (
+                      <tr key={b.id}>
+                        <Td title={b.title} ellipsis>{b.title}</Td>
+                        <Td w={140}>
+                          {active ? (
+                            <Badge type="success">ACTIVE</Badge>
+                          ) : (
+                            <Badge type="danger">INACTIVE</Badge>
+                          )}
+                        </Td>
+                        <Td w={180}>{fmtDate(b.createdAt)}</Td>
+                        <Td w={260}>
+                          <Actions>
+                            {active ? (
+                              <MutedBtn
+                                disabled={busyRow === b.id}
+                                onClick={() => deactivateOne(b.id)}
+                              >
+                                {busyRow === b.id ? "처리 중…" : "비활성화"}
+                              </MutedBtn>
+                            ) : (
+                              <PrimaryBtn
+                                disabled={busyRow === b.id}
+                                onClick={() => reactivateOne(b.id)}
+                              >
+                                {busyRow === b.id ? "처리 중…" : "복구"}
+                              </PrimaryBtn>
+                            )}
+                          </Actions>
+                        </Td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </Table>
+            </TableCard>
 
-          {/* 페이지네이션 */}
-          <div className="hstack" style={{ marginTop: 12 }}>
-            <button disabled={meta.first} onClick={() => setPage(p => Math.max(0, p - 1))}>이전</button>
-            <span> {(meta.number ?? page) + 1} / {meta.totalPages} </span>
-            <button disabled={meta.last} onClick={() => setPage(p => p + 1)}>다음</button>
-          </div>
-        </>
+            {/* 페이지네이션 */}
+            <Pagination>
+              <MutedBtn disabled={meta.first} onClick={() => setPage((p) => Math.max(0, p - 1))}>
+                이전
+              </MutedBtn>
+              <PageInfo>{(meta.number ?? page) + 1} / {meta.totalPages}</PageInfo>
+              <MutedBtn disabled={meta.last} onClick={() => setPage((p) => p + 1)}>
+                다음
+              </MutedBtn>
+            </Pagination>
+          </>
+        )
       )}
-    </div>
+    </PageWrap>
   );
 }

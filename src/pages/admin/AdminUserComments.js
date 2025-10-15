@@ -1,13 +1,40 @@
-// src/pages/AdminUserComments.js
+// src/pages/admin/AdminUserComments.js
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import api from "../../utils/api";
+import {
+  PageWrap, Header, Title, Sub,
+  SearchCard, Row, PrimaryBtn, GhostBtn, MutedBtn,
+  TableCard, Table, Th, Td, Badge, Actions,
+  Pagination, PageInfo, ErrorText, InfoText, Empty,
+} from "../../styles/components/admin/AdminCommonStyled";
 
 const PAGE_SIZE = 10;
 
+// 복구 헬퍼 (소/대문자 폴백)
+async function reactivateContent(type, id) {
+  try {
+    await api.put(`/admin/content/${type.toLowerCase()}/${id}/reactivate`);
+  } catch {
+    await api.put(`/admin/content/${type.toUpperCase()}/${id}/reactivate`);
+  }
+}
+
+// 안전한 필드 추출기
+const getId = (c) => c?.commentId ?? c?.id ?? c?.comment_id ?? c?._id;
+const isActive = (c) =>
+  typeof c?.active === "boolean" ? c.active :
+  (typeof c?.isActive === "boolean" ? c.isActive : true);
+const getContent = (c) => c?.content ?? c?.text ?? c?.body ?? "-";
+const getDate = (c) => {
+  const d = c?.createdAt ?? c?.created_at ?? c?.created_date;
+  return d ? String(d).slice(0, 10) : "-";
+};
+
 export default function AdminUserComments() {
-  const params = useParams();                
-  const [sp] = useSearchParams();            
+  const params = useParams();           // /admin/users/:userId/comments
+  const [sp] = useSearchParams();       // /admin/users/comments?userId=...
+  const navigate = useNavigate();
   const userId = params.userId || sp.get("userId");
 
   const [items, setItems] = useState([]);
@@ -17,27 +44,14 @@ export default function AdminUserComments() {
   const [err, setErr] = useState(null);
   const [busyRow, setBusyRow] = useState(null);
 
-  // ---- 복구 헬퍼 (소문자 → 대문자 폴백) ----
-  async function reactivateContent(type, id) {
-    try {
-      await api.put(`/admin/content/${type.toLowerCase()}/${id}/reactivate`);
-      return;
-    } catch (_) {
-      await api.put(`/admin/content/${type.toUpperCase()}/${id}/reactivate`);
-    }
-  }
-
-  const paramsMemo = useMemo(() => ({
-    page,
-    size: PAGE_SIZE,
-  }), [page]);
+  const query = useMemo(() => ({ page, size: PAGE_SIZE }), [page]);
 
   const load = async () => {
     if (!userId) return;
     setLoading(true);
     setErr(null);
     try {
-      const { data } = await api.get(`/admin/users/${userId}/comments`, { params: paramsMemo });
+      const { data } = await api.get(`/admin/users/${userId}/comments`, { params: query });
       const content = data?.content ?? [];
       setItems(content);
       setMeta({
@@ -53,7 +67,7 @@ export default function AdminUserComments() {
     }
   };
 
-  useEffect(() => { load(); }, [/* eslint-disable-line */ paramsMemo, userId]);
+  useEffect(() => { load(); }, [/* eslint-disable-line */ query, userId]);
 
   const deactivateOne = async (commentId) => {
     if (!window.confirm(`댓글 #${commentId} 을(를) 비활성화할까요?`)) return;
@@ -82,68 +96,94 @@ export default function AdminUserComments() {
   };
 
   return (
-    <div>
-      <h2 style={{ marginBottom: 12 }}>사용자별 댓글</h2>
+    <PageWrap>
+      <Header>
+        <Title>사용자별 댓글</Title>
+        <Sub>선택 사용자(<b>{userId ?? "-"}</b>)의 댓글 상태를 조회/관리합니다.</Sub>
+      </Header>
 
       {/* 상단 바 */}
-      <div className="card" style={{ padding: 12, marginBottom: 12, display: "flex", gap: 8, alignItems: "center" }}>
-        <div>대상 사용자 ID: <b>{userId || "-"}</b></div>
-        <div style={{ flex: "1 1 auto" }} />
-        <Link to="/admin/users" className="admin-linkbtn">사용자 목록으로</Link>
-        <button onClick={load}>새로고침</button>
-      </div>
+      <SearchCard>
+        <Row>
+          <GhostBtn onClick={() => navigate("/admin/users")}>사용자 목록으로</GhostBtn>
+          <PrimaryBtn onClick={load}>새로고침</PrimaryBtn>
+        </Row>
+      </SearchCard>
 
       {/* 상태 */}
-      {loading && <div>불러오는 중…</div>}
-      {err && <div style={{ color: "#c00" }}>오류: {String(err)}</div>}
+      {loading && <InfoText>불러오는 중…</InfoText>}
+      {err && <ErrorText>오류: {String(err)}</ErrorText>}
 
       {/* 테이블 */}
       {!loading && !err && (
-        <>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>내용</th>
-                <th style={{ width: 120 }}>상태</th>
-                <th style={{ width: 200 }}>작성일</th>
-                <th style={{ width: 220 }}>액션</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map(c => {
-                console.log(c)
-                return(<tr key={c.userId}>
-                  <td>{c.content || c.text}</td>
-                  <td>{c.active === false ? "INACTIVE" : "ACTIVE"}</td>
-                  <td>{c.createdAt.slice(0,10) || "-"}</td>
-                  <td>
-                    <div className="hstack" style={{ gap: 8, flexWrap: "wrap" }}>
-                      <button disabled={c.active == false ? true : false} onClick={() => deactivateOne(c.commentId)}>
-                        {busyRow === c.userId ? "처리 중…" : "비활성화"}
-                      </button>
-                      <button disabled={c.active == true ? true : false} onClick={() => reactivateOne(c.commentId)}>
-                        {busyRow === c.userId ? "처리 중…" : "복구"}
-                      </button>
-                    </div>
-                  </td>
-                </tr>)
-              })}
-              {items.length === 0 && (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: "center", color: "#666" }}>결과 없음</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        items.length === 0 ? (
+          <Empty>결과 없음</Empty>
+        ) : (
+          <>
+            <TableCard>
+              <Table>
+                <thead>
+                  <tr>
+                    <Th>내용</Th>
+                    <Th w={140}>상태</Th>
+                    <Th w={180}>작성일</Th>
+                    <Th w={260}>액션</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((c) => {
+                    const id = getId(c);
+                    const active = isActive(c);
+                    return (
+                      <tr key={id}>
+                        <Td ellipsis title={getContent(c)}>{getContent(c)}</Td>
+                        <Td w={140}>
+                          {active ? (
+                            <Badge type="success">ACTIVE</Badge>
+                          ) : (
+                            <Badge type="danger">INACTIVE</Badge>
+                          )}
+                        </Td>
+                        <Td w={180}>{getDate(c)}</Td>
+                        <Td w={260}>
+                          <Actions>
+                            {active ? (
+                              <MutedBtn
+                                disabled={busyRow === id}
+                                onClick={() => deactivateOne(id)}
+                              >
+                                {busyRow === id ? "처리 중…" : "비활성화"}
+                              </MutedBtn>
+                            ) : (
+                              <PrimaryBtn
+                                disabled={busyRow === id}
+                                onClick={() => reactivateOne(id)}
+                              >
+                                {busyRow === id ? "처리 중…" : "복구"}
+                              </PrimaryBtn>
+                            )}
+                          </Actions>
+                        </Td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </Table>
+            </TableCard>
 
-          {/* 페이지네이션 */}
-          <div className="hstack" style={{ marginTop: 12 }}>
-            <button disabled={meta.first} onClick={() => setPage(p => Math.max(0, p - 1))}>이전</button>
-            <span> {(meta.number ?? page) + 1} / {meta.totalPages} </span>
-            <button disabled={meta.last} onClick={() => setPage(p => p + 1)}>다음</button>
-          </div>
-        </>
+            {/* 페이지네이션 */}
+            <Pagination>
+              <MutedBtn disabled={meta.first} onClick={() => setPage((p) => Math.max(0, p - 1))}>
+                이전
+              </MutedBtn>
+              <PageInfo>{(meta.number ?? page) + 1} / {meta.totalPages}</PageInfo>
+              <MutedBtn disabled={meta.last} onClick={() => setPage((p) => p + 1)}>
+                다음
+              </MutedBtn>
+            </Pagination>
+          </>
+        )
       )}
-    </div>
+    </PageWrap>
   );
 }

@@ -129,7 +129,7 @@ export default function AdminUsers() {
                     <Th w={90}>Nickname</Th>
                     <Th w={80}>Role</Th>
                     <Th w={80}>Status</Th>
-                    <Th w={80}>가입일</Th>
+                    <Th w={90}>가입일</Th>
                     <Th>액션</Th>
                   </tr>
                 </thead>
@@ -149,7 +149,7 @@ export default function AdminUsers() {
                         <Td w={90} ellipsis title={nick}>{nick}</Td>
                         <Td w={80} ellipsis title={role}>{role}</Td>
                         <Td w={80}>{status}</Td>
-                        <Td w={80}>{created}</Td>
+                        <Td w={90}>{created}</Td>
                         <Td>
                            <Actions>
                             <PrimaryBtn
