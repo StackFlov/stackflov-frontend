@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../utils/api";
-import axios from "axios";
+import {
+  PageWrap, Header, Title, Sub,
+} from "../../styles/components/admin/AdminCommonStyled";
+import {
+  CardsGrid, StatCard, CardTitle, CardValue,
+  LinkRow, LinkBtn
+} from "../../styles/components/admin/AdminDashboardStyled";
 
 const fmt = (n) => (typeof n === "number" ? n.toLocaleString() : "-");
 
@@ -15,113 +21,64 @@ export default function AdminDashboard() {
     setLoading(true);
     setErr(null);
 
-    api
-      .get("admin/dashboard/stats")
-      .then(({ data }) => {
-        if (!alive) return;
-        setStats(data || {});
-      })
+    api.get("/admin/dashboard/stats")
+      .then(({ data }) => { if (alive) setStats(data || {}); })
       .catch((e) => {
-        if (!alive) return;
-        setErr(e?.response?.data?.message || e.message || "불러오기 실패");
+        if (alive) setErr(e?.response?.data?.message || e.message || "불러오기 실패");
       })
-      .finally(() => alive && setLoading(false));
+      .finally(() => { if (alive) setLoading(false); });
 
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, []);
 
-  if (loading) return <div>대시보드 불러오는 중…</div>;
-  if (err) return <div style={{ color: "#c00" }}>오류: {String(err)}</div>;
+  if (loading) return <PageWrap>대시보드 불러오는 중…</PageWrap>;
+  if (err)      return <PageWrap style={{ color:"#c00" }}>오류: {String(err)}</PageWrap>;
 
-  // 백엔드가 주는 키들이 프로젝트마다 조금씩 다를 수 있어서 안전하게 fallback 처리
   const {
-    totalUsers,
-    activeUsers,
-    totalBoards,
-    totalComments,
-    totalReports,
-    pendingReports,
-    todayNewUsers,
-    todayNewBoards,
+    totalUsers, activeUsers, totalBoards, totalComments,
+    totalReports, pendingReports, todayNewUsers, todayNewBoards,
   } = stats || {};
 
   return (
-    <div>
-      <h2 style={{ marginBottom: 16 }}>관리자 대시보드</h2>
+    <PageWrap>
+      <Header>
+        <Title>관리자 대시보드</Title>
+        <Sub>핵심 지표 요약과 빠른 이동 링크</Sub>
+      </Header>
 
-      {/* 상단 카드 4개 */}
-      <div className="admin-card-grid">
-        <DashboardCard
-          title="총 사용자"
-          value={fmt(totalUsers)}
-          to="/admin/users"
-        />
-        <DashboardCard title="활성 사용자" value={fmt(activeUsers)} />
-        <DashboardCard
-          title="게시물 수"
-          value={fmt(totalBoards)}
-          to="/admin/boards"
-        />
-        <DashboardCard title="댓글 수" value={fmt(totalComments)} />
-      </div>
+      {/* 상단 카드 */}
+      <CardsGrid>
+        <DashCard title="총 사용자"    value={fmt(totalUsers)}   to="/admin/users" />
+        <DashCard title="활성 사용자"   value={fmt(activeUsers)} />
+        <DashCard title="게시물 수"     value={fmt(totalBoards)}  to="/admin/boards" />
+        <DashCard title="댓글 수"       value={fmt(totalComments)} />
+      </CardsGrid>
 
-      {/* 하단 카드 3개 */}
-      <div className="admin-card-grid" style={{ marginTop: 16 }}>
-        <DashboardCard
-          title="신고 총합"
-          value={fmt(totalReports)}
-          to="/admin/reports"
-        />
-        <DashboardCard
-          title="대기 중 신고"
-          value={fmt(pendingReports)}
-          to="/admin/reports"
-          highlight
-        />
-        <DashboardCard
-          title="오늘 신규"
-          value={`유저 ${fmt(todayNewUsers)} / 글 ${fmt(todayNewBoards)}`}
-        />
-      </div>
+      {/* 하단 카드 */}
+      <CardsGrid style={{ marginTop: 16 }}>
+        <DashCard title="신고 총합"   value={fmt(totalReports)}  to="/admin/reports" />
+        <DashCard title="대기 중 신고" value={fmt(pendingReports)} to="/admin/reports" warn />
+        <DashCard title="오늘 신규"   value={`유저 ${fmt(todayNewUsers)} / 글 ${fmt(todayNewBoards)}`} />
+      </CardsGrid>
 
       {/* 링크 모음 */}
-      <div
-        style={{ marginTop: 24, display: "flex", gap: 12, flexWrap: "wrap" }}
-      >
-        <Link className="admin-linkbtn" to="/admin/users">
-          사용자 관리
-        </Link>
-        <Link className="admin-linkbtn" to="/admin/boards">
-          게시물 관리
-        </Link>
-        <Link className="admin-linkbtn" to="/admin/reports">
-          신고 관리
-        </Link>
-        <Link className="admin-linkbtn" to="/admin/banned-words">
-          금지어 관리
-        </Link>
-        <Link className="admin-linkbtn" to="/admin/dashboard/detailed">
-          상세 통계
-        </Link>
-      </div>
-    </div>
+      <LinkRow>
+        <LinkBtn to="/admin/users">사용자 관리</LinkBtn>
+        <LinkBtn to="/admin/boards">게시물 관리</LinkBtn>
+        <LinkBtn to="/admin/reports">신고 관리</LinkBtn>
+        <LinkBtn to="/admin/banned-words">금지어 관리</LinkBtn>
+        <LinkBtn to="/admin/dashboard/detailed">상세 통계</LinkBtn>
+      </LinkRow>
+    </PageWrap>
   );
 }
 
-function DashboardCard({ title, value, to, highlight }) {
+function DashCard({ title, value, to, warn }) {
   const body = (
-    <div className={`admin-card ${highlight ? "admin-card--warn" : ""}`}>
-      <div className="admin-card__title">{title}</div>
-      <div className="admin-card__value">{value}</div>
-    </div>
+    <StatCard $warn={warn}>
+      <CardTitle>{title}</CardTitle>
+      <CardValue>{value}</CardValue>
+    </StatCard>
   );
-  if (to)
-    return (
-      <Link to={to} style={{ textDecoration: "none" }}>
-        {body}
-      </Link>
-    );
-  return body;
+  return to ? <Link to={to} style={{ textDecoration:"none" }}>{body}</Link> : body;
 }

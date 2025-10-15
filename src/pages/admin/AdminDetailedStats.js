@@ -1,6 +1,19 @@
-// src/pages/AdminDetailedStats.js
 import React, { useEffect, useMemo, useState } from "react";
 import api from "../../utils/api";
+
+// 공통 스타일
+import {
+  PageWrap, Header, Title, Sub,
+  SearchCard, Row, Select, Input, Spacer,
+  PrimaryBtn, GhostBtn,
+  TableCard, Table, Th, Td,
+  ErrorText, InfoText, Empty
+} from "../../styles/components/admin/AdminCommonStyled";
+
+// 대시보드 카드/그리드 재사용 (없다면 주석 처리하고 임시 SumCard 써도 OK)
+import {
+  CardsGrid, StatCard, CardTitle, CardValue
+} from "../../styles/components/admin/AdminDashboardStyled";
 
 // 기간 프리셋
 const PRESETS = [
@@ -12,8 +25,8 @@ const PRESETS = [
 
 export default function AdminDetailedStats() {
   const [preset, setPreset] = useState("7d");
-  const [from, setFrom]   = useState("");   // YYYY-MM-DD
-  const [to, setTo]       = useState("");   // YYYY-MM-DD
+  const [from, setFrom]     = useState("");   // YYYY-MM-DD
+  const [to, setTo]         = useState("");   // YYYY-MM-DD
   const [loading, setLoading] = useState(false);
   const [err, setErr]         = useState(null);
   const [stats, setStats]     = useState(null);
@@ -21,7 +34,7 @@ export default function AdminDetailedStats() {
   const params = useMemo(() => {
     const p = {};
     if (preset !== "custom") {
-      p.range = preset; // 서버가 range 프리셋을 지원한다면 사용
+      p.range = preset;
     } else {
       if (from) p.startDate = from;
       if (to)   p.endDate   = to;
@@ -42,106 +55,87 @@ export default function AdminDetailedStats() {
     }
   };
 
-  useEffect(() => { load(); }, [params]); // preset/from/to 바뀔 때마다 재조회
+  useEffect(() => { load(); /* preset/from/to 바뀔 때마다 재조회 */ }, [/* eslint-disable-line */ params]);
 
-  const entries =
-    stats && typeof stats === "object" ? Object.entries(stats) : [];
+  const entries = stats && typeof stats === "object" ? Object.entries(stats) : [];
 
-  // 합계/최근값 도우미
-  const sum  = (arr, key) =>
-    Array.isArray(arr) ? arr.reduce((a, r) => a + (Number(r[key]) || 0), 0) : 0;
-  const last = (arr, key) =>
-    Array.isArray(arr) && arr.length ? (Number(arr[arr.length - 1][key]) || 0) : 0;
+  // 합계/최근값 유틸
+  const sum  = (arr, key) => Array.isArray(arr) ? arr.reduce((a, r) => a + (Number(r[key]) || 0), 0) : 0;
+  // const last = (arr, key) => Array.isArray(arr) && arr.length ? (Number(arr[arr.length - 1][key]) || 0) : 0;
 
   return (
-    <div>
-      <h2 style={{ marginBottom: 12 }}>상세 통계</h2>
+    <PageWrap>
+      <Header>
+        <Title>상세 통계</Title>
+        <Sub>기간별 지표를 조회하고, 원본 데이터를 표로 확인할 수 있어요.</Sub>
+      </Header>
 
       {/* 상단 컨트롤 */}
-      <div
-        className="card"
-        style={{
-          padding: 12,
-          marginBottom: 12,
-          display: "flex",
-          gap: 8,
-          flexWrap: "wrap",
-          alignItems: "center",
-        }}
-      >
-        <select value={preset} onChange={(e) => setPreset(e.target.value)}>
-          {PRESETS.map((p) => (
-            <option key={p.v} value={p.v}>
-              {p.label}
-            </option>
-          ))}
-        </select>
-        {preset === "custom" && (
-          <>
-            <input
-              type="date"
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-            />
-            <span>~</span>
-            <input
-              type="date"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-            />
-          </>
-        )}
-        <button onClick={load}>새로고침</button>
-      </div>
+      <SearchCard>
+        <Row>
+          <Select value={preset} onChange={(e) => setPreset(e.target.value)}>
+            {PRESETS.map(p => <option key={p.v} value={p.v}>{p.label}</option>)}
+          </Select>
 
-      {/* 요약 카드: 합계 기준 (원하면 last(...)로 최근값 카드로 변경 가능) */}
-      <div className="admin-card-grid" style={{ marginBottom: 12 }}>
-        <SumCard title="신규 사용자" value={fmt(sum(stats?.dailySignups,  "count"))} />
-        <SumCard title="신규 게시글" value={fmt(sum(stats?.dailyBoards,   "count"))} />
-        <SumCard title="신규 댓글"  value={fmt(sum(stats?.dailyComments, "count"))} />
-        <SumCard title="신규 리뷰"  value={fmt(sum(stats?.dailyReviews,  "count"))} />
-      </div>
+          {preset === "custom" && (
+            <>
+              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} style={{ flex: "0 0 180px" }} />
+              <span>~</span>
+              <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} style={{ flex: "0 0 180px" }} />
+            </>
+          )}
 
-      {/* 상태 */}
-      {loading && <div>불러오는 중…</div>}
-      {err && <div style={{ color: "#c00" }}>오류: {String(err)}</div>}
+          <PrimaryBtn onClick={load}>새로고침</PrimaryBtn>
+          <Spacer />
+        </Row>
+      </SearchCard>
 
-      {/* 원본 키-값 표 (백엔드 반환 전체 가시화) */}
+      {/* 요약 카드 (합계 기준) */}
+      <CardsGrid style={{ marginBottom: 12 }}>
+        <DashCard title="신규 사용자(합계)" value={fmt(sum(stats?.dailySignups,  "count"))} />
+        <DashCard title="신규 게시글(합계)" value={fmt(sum(stats?.dailyBoards,   "count"))} />
+        <DashCard title="신규 댓글(합계)"   value={fmt(sum(stats?.dailyComments, "count"))} />
+        <DashCard title="신규 리뷰(합계)"   value={fmt(sum(stats?.dailyReviews,  "count"))} />
+      </CardsGrid>
+
+      {loading && <InfoText>불러오는 중…</InfoText>}
+      {err && <ErrorText>오류: {String(err)}</ErrorText>}
+
+      {/* 원본 키-값 표 */}
       {!loading && !err && (
-        <table className="table">
-          <thead>
-            <tr>
-              <th style={{ width: 260 }}>키</th>
-              <th>값</th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.length === 0 && (
-              <tr>
-                <td colSpan={2} style={{ textAlign: "center", color: "#666" }}>
-                  데이터 없음
-                </td>
-              </tr>
-            )}
-            {entries.map(([key, value]) => (
-              <tr key={key}>
-                <td>{key}</td>
-                <td>{renderValue(value)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        entries.length === 0 ? (
+          <Empty>데이터 없음</Empty>
+        ) : (
+          <TableCard>
+            <Table>
+              <thead>
+                <tr>
+                  <Th w={260}>키</Th>
+                  <Th>값</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map(([key, value]) => (
+                  <tr key={key}>
+                    <Td w={260}>{key}</Td>
+                    <Td>{renderValue(value)}</Td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </TableCard>
+        )
       )}
-    </div>
+    </PageWrap>
   );
 }
 
-function SumCard({ title, value }) {
+function DashCard({ title, value }) {
   return (
-    <div className="admin-card">
-      <div className="admin-card__title">{title}</div>
-      <div className="admin-card__value">{value}</div>
-    </div>
+    <StatCard>
+      <CardTitle>{title}</CardTitle>
+      <CardValue>{value}</CardValue>
+    </StatCard>
   );
 }
 
@@ -151,7 +145,7 @@ const isArr = (v) => Array.isArray(v);
 
 function renderValue(value) {
   if (isArr(value)) {
-    // DailyStatDto[] 가정: [{ date: 'YYYY-MM-DD', count: 3 }, ...]
+    // DailyStatDto[]: [{ date: 'YYYY-MM-DD', count: 3 }, ...] 등
     if (value.length > 0 && typeof value[0] === "object") {
       return <MiniSeriesTable data={value} />;
     }
@@ -175,25 +169,25 @@ function MiniSeriesTable({ data }) {
       : d;
 
   return (
-    <table className="table" style={{ margin: 0 }}>
+    <Table style={{ margin: 0 }}>
       <thead>
         <tr>
-          <th style={{ width: 140 }}>날짜</th>
-          <th style={{ width: 120, textAlign: "right" }}>수치</th>
+          <Th w={140}>날짜</Th>
+          <Th w={120} style={{ textAlign: "right" }}>수치</Th>
         </tr>
       </thead>
       <tbody>
         {data.map((r, i) => (
           <tr key={i}>
-            <td>{fmtDate(r[dateKey])}</td>
-            <td style={{ textAlign: "right" }}>
+            <Td w={140}>{fmtDate(r[dateKey])}</Td>
+            <Td w={120} style={{ textAlign: "right" }}>
               {typeof r[countKey] === "number"
                 ? r[countKey].toLocaleString()
                 : String(r[countKey] ?? "-")}
-            </td>
+            </Td>
           </tr>
         ))}
       </tbody>
-    </table>
+    </Table>
   );
 }

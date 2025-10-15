@@ -1,11 +1,18 @@
 import React, { useEffect, useMemo, useState } from "react";
 import api from "../../utils/api";
+import {
+  PageWrap, Header, Title, Sub,
+  SearchCard, Row, Select, Input, Spacer,
+  PrimaryBtn, GhostBtn, DangerBtn, MutedBtn,
+  TableCard, Table, Th, Td, Badge, Actions,
+  Pagination, PageInfo, ErrorText, InfoText, Empty
+} from "../../styles/components/admin/AdminBoardsSearchStyled";
 
 const PAGE_SIZE = 10;
 const TYPES = [
-  { value: "TITLE", label: "제목" },
+  { value: "TITLE",   label: "제목" },
   { value: "CONTENT", label: "내용" },
-  { value: "AUTHOR", label: "작성자" },
+  { value: "AUTHOR",  label: "작성자" },
 ];
 
 export default function AdminBoardsSearch() {
@@ -17,9 +24,16 @@ export default function AdminBoardsSearch() {
   const [meta, setMeta] = useState({ totalPages: 0, number: 0, first: true, last: true });
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(null);
-  const [busy, setBusy] = useState(false);      // 일괄 처리 진행
-  const [busyRow, setBusyRow] = useState(null); // 행 단위 진행
+  const [busy, setBusy] = useState(false);
+  const [busyRow, setBusyRow] = useState(null);
   const [selected, setSelected] = useState(() => new Set());
+
+  // ✅ 호환 유틸
+  const getId = (b) => b.id ?? b.boardId;
+  const getAuthor = (b) =>
+    b.authorNickname || b.authorEmail || b.author?.nickname || b.author?.email || "-";
+  const getActive = (b) =>
+    (b.active ?? b.isActive) !== false;
 
   const params = useMemo(() => ({
     type,
@@ -41,7 +55,7 @@ export default function AdminBoardsSearch() {
         first: data?.first ?? page === 0,
         last: data?.last ?? (data?.totalPages ? page >= data.totalPages - 1 : true),
       });
-      setSelected(new Set()); // 검색마다 선택 초기화
+      setSelected(new Set());
     } catch (e) {
       setErr(e?.response?.data?.message || e.message || "불러오기 실패");
     } finally {
@@ -49,7 +63,7 @@ export default function AdminBoardsSearch() {
     }
   };
 
-  useEffect(() => { search(); /* type/keyword/page 바뀔 때 */ }, [/* eslint-disable-line */ params]);
+  useEffect(() => { search(); }, [/* eslint-disable-line */ params]);
 
   const toggleSelect = (id, checked) => {
     setSelected(prev => {
@@ -62,22 +76,18 @@ export default function AdminBoardsSearch() {
 
   const toggleSelectAll = (checked) => {
     if (!checked) { setSelected(new Set()); return; }
-    const allIds = items.map(it => it.id);
+    const allIds = items.map(it => getId(it));
     setSelected(new Set(allIds));
   };
 
-  // ---- 공통 복구 헬퍼 (소문자 → 대문자 폴백) ----
   async function reactivateContent(type, id) {
     try {
       await api.put(`/admin/content/${type.toLowerCase()}/${id}/reactivate`);
-      return;
     } catch {
-      // 서버가 Enum PathVariable(대문자)만 받는 경우
       await api.put(`/admin/content/${type.toUpperCase()}/${id}/reactivate`);
     }
   }
 
-  // --- 액션: 단건 비활성화 / 복구 / 일괄 비활성화 ---
   const deactivateOne = async (id) => {
     if (!window.confirm(`게시글 #${id} 을(를) 비활성화할까요?`)) return;
     setBusyRow(id);
@@ -120,107 +130,124 @@ export default function AdminBoardsSearch() {
   };
 
   return (
-    <div>
-      <h2 style={{ marginBottom: 12 }}>게시물 관리</h2>
+    <PageWrap>
+      <Header>
+        <Title>게시물 관리</Title>
+        <Sub>제목/내용/작성자 기준으로 검색하고 상태를 변경합니다.</Sub>
+      </Header>
 
       {/* 검색 바 */}
-      <div className="card" style={{ padding: 12, marginBottom: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <select value={type} onChange={(e) => { setPage(0); setType(e.target.value); }}>
-          {TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-        </select>
-        <input
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && setPage(0)}
-          placeholder="검색어를 입력하세요"
-          style={{ flex: "1 1 320px" }}
-        />
-        <button onClick={() => setPage(0)}>검색</button>
-        <button onClick={search}>새로고침</button>
-        <div style={{ flex: "1 1 auto" }} />
-        <button onClick={bulkDeactivate} disabled={busy || selected.size === 0}>
-          {busy ? "일괄 처리 중…" : `선택 비활성화 (${selected.size})`}
-        </button>
-      </div>
+      <SearchCard>
+        <Row>
+          <Select value={type} onChange={(e) => { setPage(0); setType(e.target.value); }}>
+            {TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </Select>
+          <Input
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && setPage(0)}
+            placeholder="검색어를 입력하세요"
+          />
+          <PrimaryBtn onClick={() => setPage(0)}>검색</PrimaryBtn>
+          <GhostBtn onClick={search}>새로고침</GhostBtn>
+          <Spacer />
+          <DangerBtn onClick={bulkDeactivate} disabled={busy || selected.size === 0}>
+            {busy ? "일괄 처리 중…" : `선택 비활성화 (${selected.size})`}
+          </DangerBtn>
+        </Row>
+      </SearchCard>
 
-      {/* 상태 */}
-      {loading && <div>불러오는 중…</div>}
-      {err && <div style={{ color: "#c00" }}>오류: {String(err)}</div>}
+      {loading && <InfoText>불러오는 중…</InfoText>}
+      {err && <ErrorText>오류: {String(err)}</ErrorText>}
 
-      {/* 결과 테이블 */}
       {!loading && !err && (
-        <>
-          <table className="table">
-            <thead>
-              <tr>
-                <th style={{ width: 44 }}>
-                  <input
-                    type="checkbox"
-                    checked={items.length > 0 && selected.size === items.length}
-                    onChange={(e) => toggleSelectAll(e.target.checked)}
-                    aria-label="select-all"
-                  />
-                </th>
-                <th style={{ width: 80 }}>ID</th>
-                <th>제목</th>
-                <th style={{ width: 180 }}>작성자</th>
-                <th style={{ width: 140 }}>상태</th>
-                <th style={{ width: 220 }}>작성일</th>
-                <th style={{ width: 260 }}>액션</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map(b => (
-                <tr key={b.id}>
-                  <td>
-                    <input
-                      type="checkbox"
-                      checked={selected.has(b.id)}
-                      onChange={(e) => toggleSelect(b.id, e.target.checked)}
-                      aria-label={`select-${b.id}`}
-                    />
-                  </td>
-                  <td>{b.id}</td>
-                  <td>{b.title}</td>
-                  <td>{b.authorEmail || b.author?.email || "-"}</td>
-                  <td>{b.active === false ? "INACTIVE" : "ACTIVE"}</td>
-                  <td>{b.createdAt.slice(0,10) || "-"}</td>
-                  <td>
-                    <div className="hstack" style={{ gap: 8, flexWrap: "wrap" }}>
-                      <button
-                        disabled={busyRow === b.id}
-                        onClick={() => deactivateOne(b.id)}
-                      >
-                        {busyRow === b.id ? "처리 중…" : "비활성화"}
-                      </button>
-                      <button
-                        disabled={busyRow === b.id}
-                        onClick={() => reactivateOne(b.id)}
-                      >
-                        {busyRow === b.id ? "처리 중…" : "복구"}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {items.length === 0 && (
-                <tr>
-                  <td colSpan={7} style={{ textAlign: "center", color: "#666" }}>
-                    결과 없음
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        items.length === 0 ? (
+          <Empty>결과 없음</Empty>
+        ) : (
+          <>
+            <TableCard>
+              <Table>
+                <thead>
+                  <tr>
+                    <Th w={44}>
+                      {/* ✅ 전체선택: b 참조 제거 */}
+                      <input
+                        type="checkbox"
+                        checked={items.length > 0 && selected.size === items.length}
+                        onChange={(e) => toggleSelectAll(e.target.checked)}
+                        aria-label="select-all"
+                      />
+                    </Th>
+                    <Th>제목</Th>
+                    <Th w={200}>작성자</Th>
+                    <Th w={140}>상태</Th>
+                    <Th w={180}>작성일</Th>
+                    <Th w={260}>액션</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                {items.map(b => {
+                  const id = getId(b);
+                  const isActive = getActive(b);
 
-          {/* 페이지네이션 */}
-          <div className="hstack" style={{ marginTop: 12 }}>
-            <button disabled={meta.first} onClick={() => setPage(p => Math.max(0, p - 1))}>이전</button>
-            <span> {(meta.number ?? page) + 1} / {meta.totalPages} </span>
-            <button disabled={meta.last} onClick={() => setPage(p => p + 1)}>다음</button>
-          </div>
-        </>
+                  return (
+                    <tr key={id}>
+                      <Td w={44}>
+                        <input
+                          type="checkbox"
+                          checked={selected.has(id)}
+                          onChange={(e) => toggleSelect(id, e.target.checked)}
+                          aria-label={`select-${id}`}
+                        />
+                      </Td>
+                      <Td title={b.title} ellipsis>{b.title}</Td>
+                      <Td w={200}>{getAuthor(b)}</Td>
+                      <Td w={140}>
+                        {isActive
+                          ? <Badge type="success">ACTIVE</Badge>
+                          : <Badge type="danger">INACTIVE</Badge>}
+                      </Td>
+                      <Td w={180}>{(b.createdAt || "").slice(0,10) || "-"}</Td>
+
+                      {/* ✅ 여기만 변경 */}
+                      <Td w={260}>
+                        <Actions>
+                          {isActive ? (
+                            <MutedBtn
+                              disabled={busyRow === id}
+                              onClick={() => deactivateOne(id)}
+                            >
+                              {busyRow === id ? "처리 중…" : "비활성화"}
+                            </MutedBtn>
+                          ) : (
+                            <PrimaryBtn
+                              disabled={busyRow === id}
+                              onClick={() => reactivateOne(id)}
+                            >
+                              {busyRow === id ? "처리 중…" : "복구"}
+                            </PrimaryBtn>
+                          )}
+                        </Actions>
+                      </Td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              </Table>
+            </TableCard>
+
+            <Pagination>
+              <MutedBtn disabled={meta.first} onClick={() => setPage(p => Math.max(0, p - 1))}>
+                이전
+              </MutedBtn>
+              <PageInfo>{(meta.number ?? page) + 1} / {meta.totalPages}</PageInfo>
+              <MutedBtn disabled={meta.last} onClick={() => setPage(p => p + 1)}>
+                다음
+              </MutedBtn>
+            </Pagination>
+          </>
+        )
       )}
-    </div>
+    </PageWrap>
   );
 }
