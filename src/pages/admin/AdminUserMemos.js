@@ -146,7 +146,7 @@ export default function AdminUserMemos({ user, onClose }) {
                 <div key={m._id ?? Math.random()} className="card" style={{ padding: 12, marginBottom: 8 }}>
                   <div style={{ fontSize: 12, color: "#666", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span>
-                      #{m._id ?? "?"} · 작성자: {m._adminEmail} · {m._createdAt}
+                      #{m._id ?? "?"} · 작성자: {m._adminEmail} · {m._createdAt.slice(0,10)}
                     </span>
                     {!isEditing && (
                       <div className="hstack" style={{ gap: 8 }}>

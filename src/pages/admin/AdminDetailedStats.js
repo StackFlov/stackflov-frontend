@@ -4,7 +4,7 @@ import api from "../../utils/api";
 
 // 기간 프리셋
 const PRESETS = [
-  { v: "7d", label: "최근 7일" },
+  { v: "7d",  label: "최근 7일" },
   { v: "30d", label: "최근 30일" },
   { v: "90d", label: "최근 90일" },
   { v: "custom", label: "사용자 지정" },
@@ -12,20 +12,19 @@ const PRESETS = [
 
 export default function AdminDetailedStats() {
   const [preset, setPreset] = useState("7d");
-  const [from, setFrom] = useState("");   // YYYY-MM-DD
-  const [to, setTo] = useState("");       // YYYY-MM-DD
+  const [from, setFrom]   = useState("");   // YYYY-MM-DD
+  const [to, setTo]       = useState("");   // YYYY-MM-DD
   const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState(null);
-  const [stats, setStats] = useState(null);
+  const [err, setErr]         = useState(null);
+  const [stats, setStats]     = useState(null);
 
   const params = useMemo(() => {
-    // 백엔드가 start/end 같은 쿼리를 지원하면 자동으로 전달됨. (미지원이면 무시되어도 무해)
     const p = {};
     if (preset !== "custom") {
       p.range = preset; // 서버가 range 프리셋을 지원한다면 사용
     } else {
       if (from) p.startDate = from;
-      if (to) p.endDate = to;
+      if (to)   p.endDate   = to;
     }
     return p;
   }, [preset, from, to]);
@@ -43,40 +42,64 @@ export default function AdminDetailedStats() {
     }
   };
 
-  useEffect(() => { load(); /* preset/from/to 바뀜마다 */ }, [/* eslint-disable-line */ params]);
+  useEffect(() => { load(); }, [params]); // preset/from/to 바뀔 때마다 재조회
 
-  const entries = stats && typeof stats === "object"
-    ? Object.entries(stats)
-    : [];
+  const entries =
+    stats && typeof stats === "object" ? Object.entries(stats) : [];
 
-  // 카드에 자주 쓸만한 값 키 힌트(백엔드 구조에 맞춰 자유롭게 교체)
-  const k = (name, d = "-") => stats?.[name] ?? d;
+  // 합계/최근값 도우미
+  const sum  = (arr, key) =>
+    Array.isArray(arr) ? arr.reduce((a, r) => a + (Number(r[key]) || 0), 0) : 0;
+  const last = (arr, key) =>
+    Array.isArray(arr) && arr.length ? (Number(arr[arr.length - 1][key]) || 0) : 0;
 
   return (
     <div>
       <h2 style={{ marginBottom: 12 }}>상세 통계</h2>
 
       {/* 상단 컨트롤 */}
-      <div className="card" style={{ padding: 12, marginBottom: 12, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+      <div
+        className="card"
+        style={{
+          padding: 12,
+          marginBottom: 12,
+          display: "flex",
+          gap: 8,
+          flexWrap: "wrap",
+          alignItems: "center",
+        }}
+      >
         <select value={preset} onChange={(e) => setPreset(e.target.value)}>
-          {PRESETS.map(p => <option key={p.v} value={p.v}>{p.label}</option>)}
+          {PRESETS.map((p) => (
+            <option key={p.v} value={p.v}>
+              {p.label}
+            </option>
+          ))}
         </select>
         {preset === "custom" && (
           <>
-            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+            <input
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+            />
             <span>~</span>
-            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+            <input
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+            />
           </>
         )}
         <button onClick={load}>새로고침</button>
       </div>
 
-      {/* 요약 카드 (원하는 키로 바꿔서 사용) */}
+      {/* 요약 카드: 합계 기준 (원하면 last(...)로 최근값 카드로 변경 가능) */}
       <div className="admin-card-grid" style={{ marginBottom: 12 }}>
-        <SumCard title="신규 사용자" value={fmt(k("newUsers"))} />
-        <SumCard title="신규 게시글" value={fmt(k("newBoards"))} />
-        <SumCard title="신규 댓글" value={fmt(k("newComments"))} />
-        <SumCard title="신고 수" value={fmt(k("reportCount"))} />
+        <SumCard title="신규 사용자" value={fmt(sum(stats?.dailySignups,  "count"))} />
+        <SumCard title="신규 게시글" value={fmt(sum(stats?.dailyBoards,   "count"))} />
+        <SumCard title="신규 댓글"  value={fmt(sum(stats?.dailyComments, "count"))} />
+        <SumCard title="신규 리뷰"  value={fmt(sum(stats?.dailyReviews,  "count"))} />
       </div>
 
       {/* 상태 */}
@@ -94,14 +117,16 @@ export default function AdminDetailedStats() {
           </thead>
           <tbody>
             {entries.length === 0 && (
-              <tr><td colSpan={2} style={{ textAlign: "center", color: "#666" }}>데이터 없음</td></tr>
+              <tr>
+                <td colSpan={2} style={{ textAlign: "center", color: "#666" }}>
+                  데이터 없음
+                </td>
+              </tr>
             )}
             {entries.map(([key, value]) => (
               <tr key={key}>
                 <td>{key}</td>
-                <td>
-                  {isObj(value) ? <pre style={{ margin: 0 }}>{JSON.stringify(value, null, 2)}</pre> : String(value)}
-                </td>
+                <td>{renderValue(value)}</td>
               </tr>
             ))}
           </tbody>
@@ -119,5 +144,56 @@ function SumCard({ title, value }) {
     </div>
   );
 }
-const fmt = (n) => (typeof n === "number" ? n.toLocaleString() : (n ?? "-"));
-const isObj = (v) => v && typeof v === "object" && !Array.isArray(v);
+
+const fmt   = (n) => (typeof n === "number" ? n.toLocaleString() : n ?? "-");
+const isObj = (v) => v && typeof v === "object";
+const isArr = (v) => Array.isArray(v);
+
+function renderValue(value) {
+  if (isArr(value)) {
+    // DailyStatDto[] 가정: [{ date: 'YYYY-MM-DD', count: 3 }, ...]
+    if (value.length > 0 && typeof value[0] === "object") {
+      return <MiniSeriesTable data={value} />;
+    }
+    return <pre style={{ margin: 0 }}>{JSON.stringify(value, null, 2)}</pre>;
+  }
+  if (isObj(value)) {
+    return <pre style={{ margin: 0 }}>{JSON.stringify(value, null, 2)}</pre>;
+  }
+  return String(value);
+}
+
+function MiniSeriesTable({ data }) {
+  // DailyStatDto: { date, count } 또는 { day/date, value/count } 방어적 처리
+  const pick = (row, keys) => (row ? keys.find((k) => k in row) : undefined);
+  const dateKey  = data.length ? pick(data[0], ["date", "day"]) : "date";
+  const countKey = data.length ? pick(data[0], ["count", "value"]) : "count";
+
+  const fmtDate = (d) =>
+    Array.isArray(d)
+      ? `${d[0]}-${String(d[1]).padStart(2, "0")}-${String(d[2]).padStart(2, "0")}`
+      : d;
+
+  return (
+    <table className="table" style={{ margin: 0 }}>
+      <thead>
+        <tr>
+          <th style={{ width: 140 }}>날짜</th>
+          <th style={{ width: 120, textAlign: "right" }}>수치</th>
+        </tr>
+      </thead>
+      <tbody>
+        {data.map((r, i) => (
+          <tr key={i}>
+            <td>{fmtDate(r[dateKey])}</td>
+            <td style={{ textAlign: "right" }}>
+              {typeof r[countKey] === "number"
+                ? r[countKey].toLocaleString()
+                : String(r[countKey] ?? "-")}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}

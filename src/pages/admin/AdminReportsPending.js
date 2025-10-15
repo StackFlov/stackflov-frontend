@@ -43,7 +43,7 @@ export default function AdminReportsPending() {
     }
   };
 
-  useEffect(() => { load(); /* page 변경 시 재조회 */ }, [/* eslint-disable-line */ params]);
+  useEffect(() => { load(); }, [params]);
 
   const processReport = async (id, status) => {
     if (!status) return;
@@ -60,6 +60,30 @@ export default function AdminReportsPending() {
       setBusyRow(null);
     }
   };
+
+  function buildContentPath(r) {
+    if (r.contentUrl) return r.contentUrl;
+    const type = r.contentType || r.type;
+    if (type === "BOARD") {
+      // 당신의 실제 게시글 상세 라우트에 맞게 유지
+      return `/trace/detail/${r.contentId}`;
+    }
+    if (type === "REVIEW") {
+      return `/reviews/${r.contentId}`;
+    }
+    if (type === "COMMENT") {
+      // 부모 정보 있을 때 딥링크
+      if (r.parentType === "BOARD" && r.parentBoardId) {
+        return `/boards/${r.parentBoardId}#comment-${r.contentId}`;
+      }
+      if (r.parentType === "REVIEW" && r.parentReviewId) {
+        return `/reviews/${r.parentReviewId}#comment-${r.contentId}`;
+      }
+      // 마지막 폴백(임시)
+      return `/comments/board/${r.contentId}`;
+    }
+    return "#";
+  }
 
   return (
     <div>
@@ -91,28 +115,42 @@ export default function AdminReportsPending() {
                 <th style={{ width: 140 }}>유형</th>
                 <th style={{ width: 120 }}>콘텐츠ID</th>
                 <th>신고자</th>
+                <th>작성자</th>
                 <th>사유</th>
+                <th>링크</th>
                 <th style={{ width: 260 }}>처리</th>
               </tr>
             </thead>
             <tbody>
               {items.map(r => (
-                <tr key={r.id}>
-                  <td>{r.id}</td>
+                <tr key={r.reportId}>
+                  <td>{r.reportId}</td>
                   <td>{r.status}</td>
                   <td>{r.contentType || r.type}</td>
                   <td>{r.contentId}</td>
-                  <td>{r.reporterEmail || r.reporter?.email || "-"}</td>
-                  <td>{r.reason || r.message || "-"}</td>
+                  <td>{r.reporterNickname || "-"}</td>
+                  <td>{r.reportedUserId} ({r.reportedUserNickname})</td>
+                  <td>{r.reason || "-"}</td>
+                  <td>
+                    <button
+                      onClick={() => {
+                        const url = buildContentPath(r);
+                        if (url && url !== "#") window.open(url, "_blank");
+                        else alert("링크 정보를 찾을 수 없습니다.");
+                      }}
+                    >
+                      보기
+                    </button>
+                  </td>
                   <td>
                     <div className="hstack" style={{ gap: 8, flexWrap: "wrap" }}>
                       {NEXT_STATUSES.map(s => (
                         <button
                           key={s.v}
-                          disabled={busyRow === r.id}
-                          onClick={() => processReport(r.id, s.v)}
+                          disabled={busyRow === r.reportId}
+                          onClick={() => processReport(r.reportId, s.v)}
                         >
-                          {busyRow === r.id ? "처리 중…" : s.label}
+                          {busyRow === r.reportId ? "처리 중…" : s.label}
                         </button>
                       ))}
                     </div>
@@ -121,7 +159,7 @@ export default function AdminReportsPending() {
               ))}
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", color: "#666" }}>
+                  <td colSpan={9} style={{ textAlign: "center", color: "#666" }}>
                     결과 없음
                   </td>
                 </tr>

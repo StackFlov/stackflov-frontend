@@ -90,7 +90,7 @@ export default function AdminBannedWords() {
               <tr key={bw.id}>
                 <td>{bw.id}</td>
                 <td>{bw.word}</td>
-                <td>{bw.createdAt || "-"}</td>
+                <td>{bw.createdAt.slice(0,10) || "-"}</td>
                 <td>
                   <button
                     disabled={busyWord === bw.word}

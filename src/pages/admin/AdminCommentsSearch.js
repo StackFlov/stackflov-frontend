@@ -1,7 +1,51 @@
+// src/pages/admin/AdminCommentsSearch.js
 import React, { useEffect, useMemo, useState } from "react";
 import api from "../../utils/api";
 
 const PAGE_SIZE = 10;
+
+// 응답을 안전하게 정규화해서 프론트에서 일관된 키로 사용
+const normalize = (c) => {
+  const id =
+    c?.id ??
+    c?.commentId ??
+    c?.comment_id ??
+    c?.comment_id_seq;
+
+  const content = c?.content ?? c?.text ?? c?.body ?? "";
+
+  const author =
+    c?.authorEmail ??
+    c?.userEmail ??
+    c?.writerEmail ??
+    c?.authorNickname ??           // ✔ DTO에서 nickname
+    c?.author?.email ??
+    c?.user?.email ??
+    "-";
+
+  const active =
+    typeof c?.active === "boolean"
+      ? c.active
+      : (typeof c?.isActive === "boolean" ? c.isActive : true); // ✔ DTO isActive
+
+  // 날짜 문자열 안전 처리
+  const rawDate = c?.createdAt ?? c?.created_at ?? null;
+  const created = rawDate
+    ? (typeof rawDate === "string"
+        ? rawDate.slice(0, 10)
+        : String(rawDate).slice(0, 10))
+    : "-";
+
+  return {
+    _id: id,
+    _content: content,
+    _author: author,
+    _active: active,
+    _created: created,
+    // 원본도 보관(필요 시 디버깅용)
+    __raw: c,
+  };
+};
 
 export default function AdminCommentsSearch() {
   const [keyword, setKeyword] = useState("");
@@ -26,7 +70,7 @@ export default function AdminCommentsSearch() {
     setErr(null);
     try {
       const { data } = await api.get("/admin/comments/search", { params });
-      const content = data?.content ?? [];
+      const content = (data?.content ?? []).map(normalize);
       setItems(content);
       setMeta({
         totalPages: data?.totalPages ?? 1,
@@ -55,7 +99,7 @@ export default function AdminCommentsSearch() {
 
   const toggleSelectAll = (checked) => {
     if (!checked) { setSelected(new Set()); return; }
-    const allIds = items.map(it => it.id);
+    const allIds = items.map(it => it._id);
     setSelected(new Set(allIds));
   };
 
@@ -121,7 +165,7 @@ export default function AdminCommentsSearch() {
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && setPage(0)}
-          placeholder="댓글 내용/작성자 이메일 등 키워드"
+          placeholder="댓글 내용/작성자 이메일·닉네임 등 키워드"
           style={{ flex: "1 1 360px" }}
         />
         <button onClick={() => setPage(0)}>검색</button>
@@ -150,7 +194,6 @@ export default function AdminCommentsSearch() {
                     aria-label="select-all"
                   />
                 </th>
-                <th style={{ width: 80 }}>ID</th>
                 <th>내용</th>
                 <th style={{ width: 180 }}>작성자</th>
                 <th style={{ width: 140 }}>상태</th>
@@ -160,33 +203,32 @@ export default function AdminCommentsSearch() {
             </thead>
             <tbody>
               {items.map(c => (
-                <tr key={c.id}>
+                <tr key={c._id}>
                   <td>
                     <input
                       type="checkbox"
-                      checked={selected.has(c.id)}
-                      onChange={(e) => toggleSelect(c.id, e.target.checked)}
-                      aria-label={`select-${c.id}`}
+                      checked={selected.has(c._id)}
+                      onChange={(e) => toggleSelect(c._id, e.target.checked)}
+                      aria-label={`select-${c._id}`}
                     />
                   </td>
-                  <td>{c.id}</td>
-                  <td>{c.content || c.text}</td>
-                  <td>{c.authorEmail || c.author?.email || "-"}</td>
-                  <td>{c.active === false ? "INACTIVE" : "ACTIVE"}</td>
-                  <td>{c.createdAt || "-"}</td>
+                  <td>{c._content}</td>
+                  <td>{c._author}</td>
+                  <td>{c._active ? "ACTIVE" : "INACTIVE"}</td>
+                  <td>{c._created}</td>
                   <td>
                     <div className="hstack" style={{ gap: 8, flexWrap: "wrap" }}>
                       <button
-                        disabled={busyRow === c.id}
-                        onClick={() => deactivateOne(c.id)}
+                        disabled={busyRow === c._id}
+                        onClick={() => deactivateOne(c._id)}
                       >
-                        {busyRow === c.id ? "처리 중…" : "비활성화"}
+                        {busyRow === c._id ? "처리 중…" : "비활성화"}
                       </button>
                       <button
-                        disabled={busyRow === c.id}
-                        onClick={() => reactivateOne(c.id)}
+                        disabled={busyRow === c._id}
+                        onClick={() => reactivateOne(c._id)}
                       >
-                        {busyRow === c.id ? "처리 중…" : "복구"}
+                        {busyRow === c._id ? "처리 중…" : "복구"}
                       </button>
                     </div>
                   </td>
