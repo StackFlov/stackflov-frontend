@@ -24,6 +24,8 @@ import AdminDetailedStats from "./pages/admin/AdminDetailedStats";
 import AdminBannedWords from "./pages/admin/AdminBannedWords";
 import AdminReviews from "./pages/admin/AdminReviews";
 
+import ChatStompTester from "./pages/ChatStompTester";
+
 
 const App = () => {
   return (
@@ -52,6 +54,7 @@ const App = () => {
           <Route path="/admin/dashboard/detailed" element={<AdminDetailedStats />} />
           <Route path="/admin/banned-words" element={<AdminBannedWords />} />
           <Route path="/admin/reviews" element={<AdminReviews />} />
+          <Route path="/chat-test" element={<ChatStompTester />} />
           </Route>
       </Routes>
     </div>

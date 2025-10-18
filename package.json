@@ -6,6 +6,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^7.1.1",
+    "@stomp/stompjs": "^7.2.1",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
@@ -20,6 +21,7 @@
     "react-router-dom": "^6.30.0",
     "react-scripts": "^5.0.1",
     "reducers": "^3.0.0-alpha",
+    "sockjs-client": "^1.6.1",
     "styled-components": "^6.1.17",
     "universal-cookie": "^8.0.1",
     "web-vitals": "^2.1.4"
