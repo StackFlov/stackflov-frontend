@@ -37,7 +37,6 @@ const NiBangNeMangList = ({
           resolve();
         } else {
           const script = document.createElement("script");
-          // 실제 앱키로 변경하세요!
           script.src =
             "https://dapi.kakao.com/v2/maps/sdk.js?appkey=a36b7d03721cc984f5787d0b37f4a395&libraries=services&autoload=false";
           script.async = true;
@@ -59,7 +58,6 @@ const NiBangNeMangList = ({
       };
       const newMap = new window.kakao.maps.Map(container, options);
 
-      // 지도 영역 변경 시 표시 영역 내 마커 필터링
       newMap.addListener("bounds_changed", () => {
         const bounds = newMap.getBounds();
         const visible = markers.current.filter(({ marker }) =>
@@ -96,7 +94,6 @@ const NiBangNeMangList = ({
   useEffect(() => {
     if (!map) return;
 
-    // samplePosts가 2중 배열이므로 평탄화하여 처리
     samplePosts
       .flat()
       .forEach(({ address, ...post }) => geocodeAddress(address, post));
@@ -133,9 +130,7 @@ const NiBangNeMangList = ({
                 <NiBangNeBangListUser>
                   {item.authorNickname}
                 </NiBangNeBangListUser>
-                <NiBangNeBangListViews>
-                  {/* 조회수 등 표시 가능 */}
-                </NiBangNeBangListViews>
+                <NiBangNeBangListViews></NiBangNeBangListViews>
               </NiBangNeBangListContent>
             </ItemWrapper>
           </NiBangNeBangListItem>
@@ -170,9 +165,7 @@ const NiBangNeMangList = ({
                     <NiBangNeBangListUser>
                       {item.authorNickname}
                     </NiBangNeBangListUser>
-                    <NiBangNeBangListViews>
-                      {/* 조회수 등 */}
-                    </NiBangNeBangListViews>
+                    <NiBangNeBangListViews></NiBangNeBangListViews>
                   </NiBangNeBangListContent>
                 </ItemWrapper>
               </NiBangNeBangListItem>

@@ -23,6 +23,7 @@ import AdminReportsPending from "./pages/admin/AdminReportsPending";
 import AdminDetailedStats from "./pages/admin/AdminDetailedStats";
 import AdminBannedWords from "./pages/admin/AdminBannedWords";
 import AdminReviews from "./pages/admin/AdminReviews";
+import NiBangNeBangCreateForm from "./components/NiBangNeBang/NiBangNeBangCreateForm";
 
 const App = () => {
   return (
@@ -36,6 +37,16 @@ const App = () => {
           <Route exact path="/trace/create" element={<TraceCreateForm />} />
           <Route exact path="/trace/update/:no" element={<TraceUpdateForm />} />
           <Route exact path="/nibangnebang" element={<PageTwo />} />
+          <Route
+            exact
+            path="/nibangnebang/create"
+            element={<NiBangNeBangCreateForm />}
+          />
+          <Route
+            exact
+            path="/nibangnebang/:id"
+            // element={<NiBangNeBangUp />}
+          />
           <Route exact path="/page3" element={<PageThree />} />
           <Route exact path="/login" element={<Login />} />
           <Route exact path="/register" element={<Register />} />

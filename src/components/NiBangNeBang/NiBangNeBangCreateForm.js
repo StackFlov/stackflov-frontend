@@ -97,7 +97,6 @@ const NiBangNeBangCreateForm = () => {
       <NiBangNeBangCreateBottomContent>
         <NiBangNeBangCreateCancleBtn
           onClick={(e) => {
-            // handleCreatePost();
             handlePost(e);
           }}
         >
