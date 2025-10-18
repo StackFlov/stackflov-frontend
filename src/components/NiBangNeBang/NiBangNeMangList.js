@@ -14,7 +14,6 @@ import {
 } from "../../styles/components/NiBangNeBangListStyled";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { samplePosts } from "../../utils/dummyAddress";
 
 const NiBangNeMangList = ({
   markers,
@@ -94,7 +93,7 @@ const NiBangNeMangList = ({
   useEffect(() => {
     if (!map) return;
 
-    samplePosts
+    reviews
       .flat()
       .forEach(({ address, ...post }) => geocodeAddress(address, post));
   }, [map]);

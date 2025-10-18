@@ -1,7 +1,13 @@
 import React, { useEffect, useState, useRef } from "react";
-import { samplePosts } from "../../utils/dummyAddress";
 
-const NiBangNeBangMap = ({ map, setMap }) => {
+const NiBangNeBangMap = ({
+  markers,
+  map,
+  setMap,
+  visiblePosts,
+  setVisiblePosts,
+  reviews,
+}) => {
   const mapRef = useRef(null);
   const markersRef = useRef([]);
   const infowindowRef = useRef(null);
@@ -80,7 +86,7 @@ const NiBangNeBangMap = ({ map, setMap }) => {
     markersRef.current.forEach(({ marker }) => marker.setMap(null));
     markersRef.current = [];
 
-    const flatPosts = samplePosts.flat();
+    const flatPosts = reviews.flat();
 
     Promise.all(
       flatPosts.map(
@@ -114,21 +120,21 @@ const NiBangNeBangMap = ({ map, setMap }) => {
     ).then(() => {
       console.log("모든 마커 생성 완료", markersRef.current);
     });
-  }, [mapLoaded, samplePosts]); // samplePosts가 변경될 때도 마커를 다시 그리도록 의존성 추가
+  }, [mapLoaded, reviews]); // reviews가 변경될 때도 마커를 다시 그리도록 의존성 추가
 
   // 4. 검색 기능 관련 로직 (기존 코드 유지)
   useEffect(() => {
     if (searchKeyword.trim() === "") {
       setFilteredPosts([]);
     } else {
-      const flatPosts = samplePosts.flat();
+      const flatPosts = reviews.flat();
       setFilteredPosts(
         flatPosts.filter((post) =>
           post.content.toLowerCase().includes(searchKeyword.toLowerCase())
         )
       );
     }
-  }, [searchKeyword, samplePosts]);
+  }, [searchKeyword, reviews]);
 
   const handleSearchChange = (e) => {
     setSearchKeyword(e.target.value);

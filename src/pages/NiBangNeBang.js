@@ -29,8 +29,8 @@ function NiBangNeBang() {
         }
       )
       .then((res) => {
-        console.log(res.data.content);
         setReviews(res.data.content);
+        console.log(res.data.content);
       });
   }, []);
 

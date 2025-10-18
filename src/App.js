@@ -24,6 +24,8 @@ import AdminDetailedStats from "./pages/admin/AdminDetailedStats";
 import AdminBannedWords from "./pages/admin/AdminBannedWords";
 import AdminReviews from "./pages/admin/AdminReviews";
 import NiBangNeBangCreateForm from "./components/NiBangNeBang/NiBangNeBangCreateForm";
+import NiBangNeBangUpdateForm from "./components/NiBangNeBang/NiBangNeBangUpdateForm";
+import NiBangNeBangDetail from "./components/NiBangNeBang/NiBangNeBangDetail";
 
 const App = () => {
   return (
@@ -39,13 +41,18 @@ const App = () => {
           <Route exact path="/nibangnebang" element={<PageTwo />} />
           <Route
             exact
+            path="/nibangnebang/:id"
+            element={<NiBangNeBangDetail />}
+          />
+          <Route
+            exact
             path="/nibangnebang/create"
             element={<NiBangNeBangCreateForm />}
           />
           <Route
             exact
-            path="/nibangnebang/:id"
-            // element={<NiBangNeBangUp />}
+            path="/nibangnebang/update/:id"
+            element={<NiBangNeBangUpdateForm />}
           />
           <Route exact path="/page3" element={<PageThree />} />
           <Route exact path="/login" element={<Login />} />

@@ -34,7 +34,7 @@ const NiBangNeBangCreateForm = () => {
 
     const data = {
       title,
-      address: "서울특별시 가산1동",
+      address: "서울특별시 금천구",
       content,
       rating: rating,
     };
