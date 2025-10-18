@@ -11,7 +11,18 @@ import Profile from "./pages/Profile";
 import TraceDetail from "./components/TraceLogs/TraceDetail";
 import TraceCreateForm from "./components/TraceLogs/TraceCreateForm";
 import TraceUpdateForm from "./components/TraceLogs/TraceUpdateForm";
-import AdminDashboard from "./pages/AdminDashboard";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUserBoards from "./pages/admin/AdminUserBoards";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminBoardsSearch from "./pages/admin/AdminBoardsSearch";
+import AdminUserComments from "./pages/admin/AdminUserComments";
+import AdminUserMemos from "./pages/admin/AdminUserMemos";
+
+import AdminCommentsSearch from "./pages/admin/AdminCommentsSearch";
+import AdminReportsPending from "./pages/admin/AdminReportsPending";
+import AdminDetailedStats from "./pages/admin/AdminDetailedStats";
+import AdminBannedWords from "./pages/admin/AdminBannedWords";
+import AdminReviews from "./pages/admin/AdminReviews";
 
 const App = () => {
   return (
@@ -30,6 +41,30 @@ const App = () => {
           <Route exact path="/register" element={<Register />} />
           <Route exact path="/profile" element={<Profile />} />
           <Route exact path="/admin" element={<AdminDashboard />} />
+          <Route exact path="/admin/users" element={<AdminUsers />} />
+          <Route exact path="/admin/boards" element={<AdminBoardsSearch />} />
+          <Route
+            exact
+            path="/admin/users/:userId/boards"
+            element={<AdminUserBoards />}
+          />
+          <Route
+            exact
+            path="/admin/users/:userId/comments"
+            element={<AdminUserComments />}
+          />
+          <Route
+            path="/admin/users/:userId/memos"
+            element={<AdminUserMemos />}
+          />
+          <Route path="/admin/comments" element={<AdminCommentsSearch />} />
+          <Route path="/admin/reports" element={<AdminReportsPending />} />
+          <Route
+            path="/admin/dashboard/detailed"
+            element={<AdminDetailedStats />}
+          />
+          <Route path="/admin/banned-words" element={<AdminBannedWords />} />
+          <Route path="/admin/reviews" element={<AdminReviews />} />
         </Route>
       </Routes>
     </div>
