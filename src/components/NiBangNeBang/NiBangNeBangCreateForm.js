@@ -1,12 +1,28 @@
 import React, { useState } from "react";
 import Cookies from "js-cookie";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import {
+  NiBangNeBangCategoryDiv,
+  NiBangNeBangCategoryTitle,
+  NiBangNeBangCreateTopContent,
+  NiBangNeBangCreateWrapper,
+  NiBangNeBangTitleDiv,
+  NiBangNeBangTitleInputDiv,
+  NiBangNeBangCategorySelectorItem,
+  NiBangNeBangCreateBottomContent,
+  NiBangNeBangCreateMiddleContent,
+  NiBangNeBangCreateContentInput,
+  NiBangNeBangCreateCancleBtn,
+  NiBangNeBangCreateBtn,
+} from "../../styles/components/NiBangNeBangCreateFormStyled";
+import NiBangNeBangStarRating from "./NiBangNeBangStarRating";
 
 const NiBangNeBangCreateForm = () => {
-  const [title, setTtitle] = useState();
+  const [title, setTitle] = useState();
   const [address, setAddress] = useState();
   const [content, setContent] = useState();
-  const [rating, setRating] = useState();
+  const [rating, setRating] = useState(0);
 
   const accessToken = Cookies.get("accessToken");
 
@@ -16,12 +32,11 @@ const NiBangNeBangCreateForm = () => {
     const formData = new FormData();
     const imgs = [];
 
-    // 서버가 받는 리뷰 정보 객체 (data)
     const data = {
       title,
-      address,
+      address: "서울특별시 가산1동",
       content,
-      rating,
+      rating: rating,
     };
     formData.append(
       "data",
@@ -46,7 +61,7 @@ const NiBangNeBangCreateForm = () => {
         }
       );
       console.log("성공:", response);
-      navigator("/tracelog");
+      navigator("/NiBangNeBanglog");
     } catch (error) {
       console.error(
         "게시글 작성 실패:",
@@ -57,43 +72,46 @@ const NiBangNeBangCreateForm = () => {
   };
 
   return (
-    <div>
-      <ul>
-        <li>
-          <input
-            onClick={(e) => {
-              setTtitle(e.target.value);
-            }}
-          />
-        </li>
-        <li>
-          <input
-            onClick={(e) => {
-              setAddress(e.target.value);
-            }}
-          />
-        </li>
-        <li>
-          <input
-            onClick={(e) => {
-              setContent(e.target.value);
-            }}
-          />
-        </li>
-        <li>
-          <input
-            onClick={(e) => {
-              setRating(e.target.value);
-            }}
-          />
-        </li>
-      </ul>
-      <button
-        onClick={(e) => {
-          handlePost(e);
-        }}
-      ></button>
-    </div>
+    <NiBangNeBangCreateWrapper>
+      <NiBangNeBangCreateTopContent>
+        <NiBangNeBangTitleDiv>제목</NiBangNeBangTitleDiv>
+        <NiBangNeBangTitleInputDiv
+          placeholder="글 제목을 작성해주세요."
+          value={title}
+          onChange={(e) => {
+            setTitle(e.target.value);
+          }}
+        />
+      </NiBangNeBangCreateTopContent>
+
+      <NiBangNeBangCreateMiddleContent>
+        <NiBangNeBangCreateContentInput
+          placeholder="글 내용을 작성해주세요."
+          value={content}
+          onChange={(e) => {
+            setContent(e.target.value);
+          }}
+        />
+      </NiBangNeBangCreateMiddleContent>
+      <NiBangNeBangStarRating value={rating} onChange={setRating} />
+      <NiBangNeBangCreateBottomContent>
+        <NiBangNeBangCreateCancleBtn
+          onClick={(e) => {
+            // handleCreatePost();
+            handlePost(e);
+          }}
+        >
+          😽 등록
+        </NiBangNeBangCreateCancleBtn>
+        <NiBangNeBangCreateBtn
+          onClick={() => {
+            navigator("/NiBangNeBanglog");
+          }}
+        >
+          😽 취소
+        </NiBangNeBangCreateBtn>
+      </NiBangNeBangCreateBottomContent>
+    </NiBangNeBangCreateWrapper>
   );
 };
 
