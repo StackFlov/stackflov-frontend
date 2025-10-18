@@ -6,12 +6,31 @@ import {
   NiBangNeBangWrapper,
 } from "../styles/components/NiBangNeBangStyled";
 import NiBangNeBangSelector from "../components/NiBangNeBang/NiBangNeBangSelector";
+import axios from "axios";
+import Cookies from "js-cookie";
 
 function NiBangNeBang() {
   const [map, setMap] = useState(null);
   const [visiblePosts, setVisiblePosts] = useState([]);
   const markers = useRef([]);
   const [nowCategory, setNowCategory] = useState();
+
+  useEffect(() => {
+    axios
+      .get(
+        `https://api.stackflov.com/map/reviews`,
+
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      )
+      .then((res) => {
+        console.log(res.data);
+      });
+  }, []);
 
   return (
     <NiBangNeBangWrapper>

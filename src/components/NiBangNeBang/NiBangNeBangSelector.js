@@ -6,8 +6,10 @@ import {
   NiBangNeBangSelectorWrapper,
   TraceCreateDiv,
 } from "../../styles/components/NiBangNeBangSelectorStyled";
+import { useNavigate } from "react-router-dom";
 
 const NiBangNeBangSelector = ({ nowCategory, setNowCategory }) => {
+  const navigator = useNavigate();
   return (
     <NiBangNeBangSelectorWrapper>
       <NiBangNeBangSelectors>
@@ -53,7 +55,7 @@ const NiBangNeBangSelector = ({ nowCategory, setNowCategory }) => {
         </NiBangNeBangSelectorItem>
         <TraceCreateDiv
           onClick={() => {
-            navigator("/trace/create");
+            navigator("/nibangnebang/create");
           }}
         >
           글쓰기
