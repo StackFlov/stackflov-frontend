@@ -24,6 +24,7 @@ const NiBangNeMangList = ({
   setVisiblePosts,
   nowCategory,
   setNowCategory,
+  reviews,
 }) => {
   const [viewList, setViewList] = useState();
   const [list, setList] = useState([]);
@@ -95,33 +96,30 @@ const NiBangNeMangList = ({
   useEffect(() => {
     if (!map) return;
 
-    samplePosts.forEach(({ address, ...post }) =>
-      geocodeAddress(address, post)
-    );
+    // samplePosts가 2중 배열이므로 평탄화하여 처리
+    samplePosts
+      .flat()
+      .forEach(({ address, ...post }) => geocodeAddress(address, post));
   }, [map]);
 
-  useEffect(() => {
-    const response = axios
-      .get(
-        "https://api.stackflov.com/boards?page=0&size=10",
-
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true, // ← 백엔드에서 allowCredentials(true)면 이거 필수
-        }
-      )
-      .then((res) => {
-        setList(res.data.content);
-      });
-  }, []);
+  // useEffect(() => {
+  //   axios
+  //     .get("https://api.stackflov.com/boards?page=0&size=10", {
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       withCredentials: true,
+  //     })
+  //     .then((res) => {
+  //       setList(res.data.content);
+  //     });
+  // }, []);
 
   useEffect(() => {
     const view = list.map((item) => {
-      if (nowCategory == item.category || nowCategory == 99) {
+      if (nowCategory === item.category || nowCategory === 99) {
         return (
-          <NiBangNeBangListItem>
+          <NiBangNeBangListItem key={item.id}>
             <ItemWrapper
               onClick={() => {
                 navigator(`/trace/detail/${item.id}`);
@@ -133,34 +131,17 @@ const NiBangNeMangList = ({
               <NiBangNeBangListContent>
                 <NiBangNeBangListTitle>{item.title}</NiBangNeBangListTitle>
                 <NiBangNeBangListUser>
-                  {/* <PersonOutlineIcon
-                    style={{ fontSize: "40px", padding: "0 5px 0 0" }}
-                  /> */}
                   {item.authorNickname}
                 </NiBangNeBangListUser>
                 <NiBangNeBangListViews>
-                  {/* <RemoveRedEyeIcon
-                    style={{ fontSize: "40px", padding: "0 5px 0 0" }}
-                  />
-                  {item.viewCount} */}
+                  {/* 조회수 등 표시 가능 */}
                 </NiBangNeBangListViews>
-                {/* <NiBangNeBangGood>
-                  <ThumbUpOffAltIcon
-                    style={{ fontSize: "40px", padding: "0 5px 0 0" }}
-                  />
-                  {item.good}
-                </NiBangNeBangGood>
-                <NiBangNeBangBookMark>
-                  <BookmarkBorderIcon
-                    style={{ fontSize: "40px", padding: "0 5px 0 0" }}
-                  />
-                  {item.bookMark}
-                </NiBangNeBangBookMark> */}
               </NiBangNeBangListContent>
             </ItemWrapper>
           </NiBangNeBangListItem>
         );
       }
+      return null;
     });
     setViewList(view);
   }, [nowCategory, list]);
@@ -173,7 +154,7 @@ const NiBangNeMangList = ({
         ) : (
           <ul>
             {visiblePosts.map((item) => (
-              <NiBangNeBangListItem>
+              <NiBangNeBangListItem key={item.id}>
                 <ItemWrapper
                   onClick={() => {
                     navigator(`/trace/detail/${item.id}`);
@@ -187,29 +168,11 @@ const NiBangNeMangList = ({
                       {item.content}
                     </NiBangNeBangListTitle>
                     <NiBangNeBangListUser>
-                      {/* <PersonOutlineIcon
-                    style={{ fontSize: "40px", padding: "0 5px 0 0" }}
-                  /> */}
                       {item.authorNickname}
                     </NiBangNeBangListUser>
                     <NiBangNeBangListViews>
-                      {/* <RemoveRedEyeIcon
-                    style={{ fontSize: "40px", padding: "0 5px 0 0" }}
-                  />
-                  {item.viewCount} */}
+                      {/* 조회수 등 */}
                     </NiBangNeBangListViews>
-                    {/* <NiBangNeBangGood>
-                  <ThumbUpOffAltIcon
-                    style={{ fontSize: "40px", padding: "0 5px 0 0" }}
-                  />
-                  {item.good}
-                </NiBangNeBangGood>
-                <NiBangNeBangBookMark>
-                  <BookmarkBorderIcon
-                    style={{ fontSize: "40px", padding: "0 5px 0 0" }}
-                  />
-                  {item.bookMark}
-                </NiBangNeBangBookMark> */}
                   </NiBangNeBangListContent>
                 </ItemWrapper>
               </NiBangNeBangListItem>

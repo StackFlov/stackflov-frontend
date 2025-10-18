@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { samplePosts } from "../../utils/dummyAddress";
 
-const NiBangNeBangMap = () => {
+const NiBangNeBangMap = ({ map, setMap }) => {
   const mapRef = useRef(null);
   const markersRef = useRef([]);
   const infowindowRef = useRef(null);
@@ -34,12 +34,13 @@ const NiBangNeBangMap = () => {
         center: new window.kakao.maps.LatLng(37.566826, 126.9786567),
         level: 4,
       };
-      const map = new window.kakao.maps.Map(container, options);
-      mapRef.current = map;
+      const mapInstance = new window.kakao.maps.Map(container, options);
+      mapRef.current = mapInstance;
       infowindowRef.current = new window.kakao.maps.InfoWindow({ zIndex: 1 });
       setMapLoaded(true);
+      setMap(mapInstance);
     });
-  }, []);
+  }, [setMap]);
 
   // 주소 → 좌표 변환 및 마커 생성 (모두 생성 후 완료 로그)
   useEffect(() => {
@@ -51,9 +52,11 @@ const NiBangNeBangMap = () => {
     markersRef.current.forEach(({ marker }) => marker.setMap(null));
     markersRef.current = [];
 
-    // samplePosts에 대해 좌표 변환 후 마커 생성
+    // samplePosts가 2중 배열이므로 펼침
+    const flatPosts = samplePosts.flat();
+
     Promise.all(
-      samplePosts.map(
+      flatPosts.map(
         (post) =>
           new Promise((resolve) => {
             geocoder.addressSearch(post.address, (result, status) => {
@@ -68,10 +71,8 @@ const NiBangNeBangMap = () => {
                   position: coords,
                 });
 
-                // 마커 보관 (id 매핑용)
                 markersRef.current.push({ marker, data: post });
 
-                // 마커 호버 시 인포윈도우 열기/닫기
                 window.kakao.maps.event.addListener(marker, "mouseover", () => {
                   infowindowRef.current.setContent(
                     `<div style="padding:5px;">${post.content}</div>`
@@ -91,27 +92,25 @@ const NiBangNeBangMap = () => {
     });
   }, [mapLoaded]);
 
-  // 검색어에 따라 samplePosts 내 content 필터링
+  // 검색어에 따라 samplePosts 내 내용 필터링
   useEffect(() => {
     if (searchKeyword.trim() === "") {
       setFilteredPosts([]);
     } else {
+      const flatPosts = samplePosts.flat();
       setFilteredPosts(
-        samplePosts.filter((post) =>
+        flatPosts.filter((post) =>
           post.content.toLowerCase().includes(searchKeyword.toLowerCase())
         )
       );
     }
   }, [searchKeyword]);
 
-  // 검색어 변경 처리
   const handleSearchChange = (e) => {
     setSearchKeyword(e.target.value);
   };
 
-  // 검색 결과 클릭 시 해당 마커 위치로 지도 이동 및 인포윈도우 표시
   const handleResultClick = (post) => {
-    console.log("클릭된 post:", post);
     if (!mapRef.current) {
       console.warn("지도 로드 전입니다.");
       return;
@@ -123,9 +122,7 @@ const NiBangNeBangMap = () => {
     }
 
     const position = found.marker.getPosition();
-    console.log("지도 이동 위치:", position);
 
-    // 부드럽게 이동하려면 panTo, 즉시 이동은 setCenter 사용
     if (typeof mapRef.current.panTo === "function") {
       mapRef.current.panTo(position);
     } else {
@@ -133,7 +130,6 @@ const NiBangNeBangMap = () => {
     }
     mapRef.current.setLevel(3);
 
-    // 인포윈도우 열기
     infowindowRef.current.setContent(
       `<div style="padding:5px;">${post.content}</div>`
     );
@@ -150,7 +146,6 @@ const NiBangNeBangMap = () => {
         borderRadius: 10,
       }}
     >
-      {/* 지도 내부에 반투명 검색 오버레이 */}
       <div
         style={{
           position: "absolute",
@@ -200,7 +195,6 @@ const NiBangNeBangMap = () => {
           )
         ) : null}
       </div>
-
       <div
         id="map"
         style={{

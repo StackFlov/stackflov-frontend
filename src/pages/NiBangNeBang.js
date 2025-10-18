@@ -11,6 +11,7 @@ import Cookies from "js-cookie";
 
 function NiBangNeBang() {
   const [map, setMap] = useState(null);
+  const [reviews, setReviews] = useState([]);
   const [visiblePosts, setVisiblePosts] = useState([]);
   const markers = useRef([]);
   const [nowCategory, setNowCategory] = useState();
@@ -28,7 +29,8 @@ function NiBangNeBang() {
         }
       )
       .then((res) => {
-        console.log(res.data);
+        console.log(res.data.content);
+        setReviews(res.data.content);
       });
   }, []);
 
@@ -45,6 +47,7 @@ function NiBangNeBang() {
         setMap={setMap}
         visiblePosts={visiblePosts}
         setVisiblePosts={setVisiblePosts}
+        reviews={reviews}
       />
       <NiBangNeMangList
         markers={markers}
@@ -54,6 +57,7 @@ function NiBangNeBang() {
         setVisiblePosts={setVisiblePosts}
         nowCategory={nowCategory}
         setNowCategory={setNowCategory}
+        reviews={reviews}
       />
     </NiBangNeBangWrapper>
   );
