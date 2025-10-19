@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import NiBangNeBangMap from "../components/NiBangNeBang/NiBangNeBangMap";
 import NiBangNeMangList from "../components/NiBangNeBang/NiBangNeMangList";
 import {
@@ -7,32 +7,31 @@ import {
 } from "../styles/components/NiBangNeBangStyled";
 import NiBangNeBangSelector from "../components/NiBangNeBang/NiBangNeBangSelector";
 import axios from "axios";
-import Cookies from "js-cookie";
 
 function NiBangNeBang() {
   const [map, setMap] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [visiblePosts, setVisiblePosts] = useState([]);
   const markers = useRef([]);
-  const [nowCategory, setNowCategory] = useState();
+  const [nowCategory, setNowCategory] = useState(99);
 
   useEffect(() => {
     axios
-      .get(
-        `https://api.stackflov.com/map/reviews`,
-
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
-        }
-      )
+      .get(`https://api.stackflov.com/map/reviews`, {
+        withCredentials: true,
+      })
       .then((res) => {
-        setReviews(res.data.content);
-        console.log(res.data.content);
+        setReviews(res.data.content || []);
+        console.log("전체 리뷰 데이터 로드:", res.data.content);
       });
   }, []);
+
+  const filteredVisiblePosts = useMemo(() => {
+    if (nowCategory === 99) {
+      return visiblePosts;
+    }
+    return visiblePosts.filter((post) => post.category === nowCategory);
+  }, [visiblePosts, nowCategory]);
 
   return (
     <NiBangNeBangWrapper>
@@ -41,24 +40,14 @@ function NiBangNeBang() {
         nowCategory={nowCategory}
         setNowCategory={setNowCategory}
       />
+
       <NiBangNeBangMap
-        markers={markers}
-        map={map}
-        setMap={setMap}
-        visiblePosts={visiblePosts}
-        setVisiblePosts={setVisiblePosts}
         reviews={reviews}
-      />
-      <NiBangNeMangList
-        markers={markers}
-        map={map}
         setMap={setMap}
-        visiblePosts={visiblePosts}
+        markers={markers}
         setVisiblePosts={setVisiblePosts}
-        nowCategory={nowCategory}
-        setNowCategory={setNowCategory}
-        reviews={reviews}
       />
+      <NiBangNeMangList postsToDisplay={filteredVisiblePosts} />
     </NiBangNeBangWrapper>
   );
 }

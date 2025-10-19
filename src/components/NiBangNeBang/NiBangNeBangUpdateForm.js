@@ -60,24 +60,20 @@ const NiBangNeBangUpdateForm = () => {
     const formData = new FormData();
     const images = [];
 
-    // 1. DTO에 해당하는 데이터를 객체로 만듭니다.
-    // API 명세와 다르게 address가 필요하다면 여기에 포함시키세요.
     const reviewData = {
       title: title,
       rating: rating,
       content: content,
+      address: address,
     };
 
-    // 2. JSON 데이터를 'application/json' 타입의 Blob으로 만듭니다.
     formData.append(
-      "data", // 서버에서 JSON 데이터를 받는 key (예: 'reviewRequestDto', 'data' 등)
+      "data",
       new Blob([JSON.stringify(reviewData)], { type: "application/json" })
     );
 
-    // 3. 이미지 파일들을 formData에 추가합니다.
     // if (images && images.length > 0) {
     //   images.forEach((file) => {
-    //     // 서버에서 파일을 받는 key (예: 'images', 'imageFiles' 등)
     //     if (file) formData.append("images", file);
     //   });
     // }
@@ -85,11 +81,9 @@ const NiBangNeBangUpdateForm = () => {
     try {
       const response = await axios.put(
         `https://api.stackflov.com/map/reviews/${id}`,
-        formData, // FormData 객체 전송
+        formData,
         {
           headers: {
-            // 중요: FormData 사용 시 Content-Type은 axios가 자동으로 설정하도록 비워둡니다.
-            // 수동으로 'multipart/form-data'를 설정하면 boundary 값이 누락되어 오류가 발생합니다.
             Authorization: `Bearer ${accessToken}`,
           },
           withCredentials: true,
