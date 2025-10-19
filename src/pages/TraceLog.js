@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import TraceCategorySelector from "../components/TraceLogs/TraceCategorySelector";
 import TraceList from "../components/TraceLogs/TraceList";
 
 const TraceLog = () => {
-  const [nowCategory, setNowCategory] = useState("99");
+  const [nowCategory, setNowCategory] = useState(99);
 
   return (
     <div>
@@ -11,7 +11,8 @@ const TraceLog = () => {
         nowCategory={nowCategory}
         setNowCategory={setNowCategory}
       />
-      <TraceList nowCategory={nowCategory} setNowCategory={setNowCategory} />
+
+      <TraceList nowCategory={nowCategory} />
     </div>
   );
 };
