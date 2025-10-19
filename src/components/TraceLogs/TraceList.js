@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { TraceListDummyData } from "../../utils/dummyDatas";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   ItemWrapper,
   TraceListContent,
@@ -24,222 +23,172 @@ import axios from "axios";
 import Cookies from "js-cookie";
 
 const TraceList = ({ nowCategory, setNowCategory }) => {
-  const [viewList, setViewList] = useState();
-  const [list, setList] = useState([]);
+  const [list, setList] = useState([]); // API로 받은 원본 데이터 리스트
   const navigator = useNavigate();
   const accessToken = Cookies.get("accessToken");
 
-  const handleTraceGood = (id) => {
-    axios
-      .post(
-        `https://api.stackflov.com/likes`,
-        { boardId: id },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          withCredentials: true,
-        }
-      )
-      .catch((error) => {
-        console.error("게시글 작성 실패:", error);
-      });
-  };
-
-  const handleTraceUnGood = (id) => {
-    if (!accessToken) {
-      console.error("액세스 토큰이 없습니다. 로그인이 필요합니다.");
-      return;
-    }
-
-    axios
-      .delete(
-        `https://api.stackflov.com/likes?boardId=${id}`,
-
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          withCredentials: true,
-        }
-      )
-      .then((response) => {
-        console.log("좋아요 취소 성공:", response);
-      })
-      .catch((error) => {
-        if (error.response) {
-          console.error(
-            `좋아요 취소 실패 (상태 코드: ${error.response.status}):`,
-            error.response.data
-          );
-          if (error.response.status === 401) {
-            alert("인증 정보가 유효하지 않습니다. 다시 로그인해주세요.");
-          }
-        } else {
-          console.error("네트워크 오류 또는 서버 응답 없음:", error.message);
-        }
-      });
-  };
-
-  const handleTraceBookMakr = (id) => {
-    axios
-      .post(
-        `https://api.stackflov.com/bookmarks`,
-        { boardId: id },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          withCredentials: true,
-        }
-      )
-      .catch((error) => {
-        console.error("게시글 작성 실패:", error);
-        // 실패 시 처리
-      });
-  };
-
-  const handleTraceUnBookMakr = (id) => {
-    axios
-      .delete(
-        `https://api.stackflov.com/bookmarks`, // 실제 API 엔드포인트 URL
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          withCredentials: true,
-          // DELETE 요청 시 body 데이터는 'data' 키 안에 객체로 전달합니다.
-          data: {
-            boardId: id,
-          },
-        }
-      )
-      .then((response) => {
-        console.log("북마크 삭제 성공:", response.data);
-        // 성공 시 UI 업데이트 등의 후속 처리를 여기에 작성합니다.
-        alert("북마크가 삭제되었습니다.");
-      })
-      .catch((error) => {
-        console.error("북마크 삭제 실패:", error);
-        // 실패 시 사용자에게 알림을 표시하는 등의 처리를 할 수 있습니다.
-        if (error.response) {
-          // 서버가 응답했지만 상태 코드가 2xx 범위가 아닐 때
-          alert(
-            `오류: ${
-              error.response.data.message || "북마크 삭제에 실패했습니다."
-            }`
-          );
-        } else {
-          // 요청 설정 중에 에러가 발생했거나 네트워크 에러일 때
-          alert("네트워크 오류가 발생했습니다. 다시 시도해주세요.");
-        }
-      });
-  };
-
+  // --- 데이터 로딩 ---
   useEffect(() => {
-    const response = axios
-      .get(
-        "https://api.stackflov.com/boards",
+    // accessToken이 없으면 API를 호출하지 않음
+    if (!accessToken) return;
 
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          withCredentials: true, // ← 백엔드에서 allowCredentials(true)면 이거 필수
-        }
-      )
+    axios
+      .get("https://api.stackflov.com/boards", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        withCredentials: true,
+      })
       .then((res) => {
-        setList(res.data.content);
+        // 데이터가 배열이 아니거나 없으면 빈 배열로 초기화
+        setList(Array.isArray(res.data.content) ? res.data.content : []);
+      })
+      .catch((err) => {
+        console.error("게시글 목록 로딩 실패:", err);
       });
-  }, []);
+  }, [accessToken]); // accessToken이 변경될 때마다 다시 로드
 
-  useEffect(() => {
-    const view = list.map((item) => {
-      if (nowCategory == item.category || nowCategory == 99) {
-        return (
-          <TraceListItem>
+  const handleLikeToggle = (id, isLiked) => {
+    const method = isLiked ? "delete" : "post";
+    const url = isLiked
+      ? `https://api.stackflov.com/likes?boardId=${id}`
+      : `https://api.stackflov.com/likes`;
+
+    axios({
+      method: method,
+      url: url,
+      data: isLiked ? null : { boardId: id }, // POST일 때만 data 포함
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      withCredentials: true,
+    })
+      .then(() => {
+        // API 성공 시, UI 상태 즉시 업데이트
+        setList((prevList) =>
+          prevList.map((item) =>
+            item.id === id ? { ...item, liked: !isLiked } : item
+          )
+        );
+      })
+      .catch((error) => {
+        console.error("좋아요 처리 실패:", error.response || error);
+      });
+  };
+
+  // --- 북마크 토글 핸들러 ---
+  const handleBookmarkToggle = (id, isBookmarked) => {
+    console.log(isBookmarked);
+    const method = isBookmarked ? "delete" : "post";
+    const url = isBookmarked
+      ? `https://api.stackflov.com/bookmarks`
+      : `https://api.stackflov.com/bookmarks`;
+
+    axios({
+      method: method,
+      url: url,
+      data: isBookmarked == false ? null : { boardId: id }, // POST일 때만 data 포함
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      withCredentials: true,
+    })
+      .then(() => {
+        // API 성공 시, UI 상태 즉시 업데이트
+        setList((prevList) =>
+          prevList.map((item) =>
+            item.id === id ? { ...item, bookmarked: !isBookmarked } : item
+          )
+        );
+      })
+      .catch((error) => {
+        console.error("북마크 처리 실패:", error.response || error);
+      });
+  };
+
+  // --- 렌더링할 목록 필터링 ---
+  // useMemo를 사용해 nowCategory나 list가 변경될 때만 재계산
+  const filteredList = useMemo(() => {
+    if (nowCategory === 99) {
+      return list; // '전체' 카테고리면 모든 목록 반환
+    }
+    return list.filter((item) => item.category === nowCategory);
+  }, [nowCategory, list]);
+
+  return (
+    <TraceListWrapper>
+      <TraceListItemWrapper>
+        {filteredList.map((item) => (
+          <TraceListItem key={item.id}>
             <ItemWrapper>
               <TraceListCreatedAt>
                 {item.createdAt?.slice(0, 10)}
               </TraceListCreatedAt>
               <TraceListContent>
                 <TraceListTitle
-                  onClick={() => {
-                    navigator(`/trace/detail/${item.id}`);
-                  }}
+                  onClick={() => navigator(`/trace/detail/${item.id}`)}
                 >
                   {item.title}
                 </TraceListTitle>
+
                 <TraceListUser>
                   <PersonOutlineIcon
                     style={{ fontSize: "40px", padding: "0 5px 0 0" }}
                   />
                   {item.authorNickname}
                 </TraceListUser>
+
                 <TraceListViews>
                   <RemoveRedEyeIcon
                     style={{ fontSize: "40px", padding: "0 5px 0 0" }}
                   />
-                  {item.viewCount}
+                  {/* 숫자 카운트가 유효할 때만 표시 */}
+                  {typeof item.viewCount === "number" && item.viewCount}
                 </TraceListViews>
-                {item.liked == false ? (
-                  <TraceListGood
-                    onClick={(e) => {
-                      handleTraceGood(item.id);
-                    }}
-                  >
+
+                <TraceListGood
+                  onClick={() => handleLikeToggle(item.id, item.liked)}
+                >
+                  {item.liked ? (
+                    <FavoriteIcon
+                      style={{
+                        color: "red",
+                        fontSize: "40px",
+                        padding: "0 5px 0 0",
+                      }}
+                    />
+                  ) : (
                     <FavoriteBorderIcon
                       style={{ fontSize: "40px", padding: "0 5px 0 0" }}
                     />
-                    {item.good}
-                  </TraceListGood>
-                ) : (
-                  <TraceListGood
-                    onClick={(e) => {
-                      handleTraceUnGood(item.id);
-                    }}
-                  >
-                    <FavoriteIcon
-                      style={{ fontSize: "40px", padding: "0 5px 0 0" }}
-                    />
-                    {item.good}
-                  </TraceListGood>
-                )}
-                <TraceListBookMark>
-                  {item.bookmarked == false ? (
-                    <BookmarkBorderIcon
-                      onClick={() => {
-                        handleTraceBookMakr(item.id);
-                      }}
+                  )}
+                  {/* 숫자 카운트 표시 */}
+                  {typeof item.good === "number" && item.good > 0 && item.good}
+                </TraceListGood>
+
+                {/* === 북마크 버튼 === */}
+                <TraceListBookMark
+                  onClick={() => handleBookmarkToggle(item.id, item.bookmarked)}
+                >
+                  {item.bookmarked ? (
+                    <TurnedInIcon
                       style={{ fontSize: "40px", padding: "0 5px 0 0" }}
                     />
                   ) : (
-                    <TurnedInIcon
-                      onClick={() => {
-                        handleTraceUnBookMakr(item.id);
-                      }}
+                    <BookmarkBorderIcon
                       style={{ fontSize: "40px", padding: "0 5px 0 0" }}
                     />
                   )}
 
-                  {item.bookMark}
+                  {typeof item.bookMark === "number" &&
+                    item.bookMark > 0 &&
+                    item.bookMark}
                 </TraceListBookMark>
               </TraceListContent>
             </ItemWrapper>
           </TraceListItem>
-        );
-      }
-    });
-    setViewList(view);
-  }, [nowCategory, list]);
-  return (
-    <TraceListWrapper>
-      <TraceListItemWrapper>{viewList}</TraceListItemWrapper>
+        ))}
+      </TraceListItemWrapper>
     </TraceListWrapper>
   );
 };
