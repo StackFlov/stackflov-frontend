@@ -118,7 +118,7 @@ const NiBangNeMangList = ({
           <NiBangNeBangListItem key={item.id}>
             <ItemWrapper
               onClick={() => {
-                navigator(`/trace/detail/${item.id}`);
+                navigator(`/nibangnebang/${item.id}`);
               }}
             >
               <NiBangNeBangListCreatedAt>

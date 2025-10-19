@@ -40,6 +40,7 @@ import Cookies from "js-cookie";
 const NiBangNeBangDetail = () => {
   const [traceInfo, setTraceInfo] = useState({});
   const [me, setMe] = useState({});
+  const [view, setView] = useState();
   const accessToken = Cookies.get("accessToken");
   const navigator = useNavigate();
 
@@ -65,51 +66,67 @@ const NiBangNeBangDetail = () => {
           }
         });
         setTraceInfo(exportResult[0]);
+        axios
+          .get("https://api.stackflov.com/users/me", {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            withCredentials: true,
+          })
+          .then((userData) => {
+            setMe(userData.data);
+          });
       });
   }, []);
 
-  return (
-    <TraceDetailWrapper>
-      <TraceDetailTopContent>
-        <TraceDiv>자취로그</TraceDiv>
-        <TraceTitleDiv>{traceInfo.title}</TraceTitleDiv>
-      </TraceDetailTopContent>
-      <TraceDetailMiddleContent>
-        <TraceCreatedAtDiv>
-          작성일 : {traceInfo?.createdAt?.slice(0, 10)}
-        </TraceCreatedAtDiv>
-        {traceInfo.authorEmail === me.email && (
-          <TraceUpdateDiv
-            onClick={() => {
-              navigator(`/nibangnebang/update/${id}`);
-            }}
-          >
-            수정
-          </TraceUpdateDiv>
-        )}
-        <TraceContentDiv>{traceInfo.content}</TraceContentDiv>
-      </TraceDetailMiddleContent>
-      <TraceDetailBottomContent>
-        <UserImageDiv>
-          {me.profileImage === null ? (
-            <AccountCircleIcon style={{ fontSize: "150px" }} />
-          ) : (
-            <img
-              src={me.profileImage}
-              alt="user"
-              width="150"
-              height="150"
-              style={{ borderRadius: "50%" }}
-            />
+  useEffect(() => {
+    const test = (
+      <TraceDetailWrapper>
+        <TraceDetailTopContent>
+          <TraceDiv>자취로그</TraceDiv>
+          <TraceTitleDiv>{traceInfo.title}</TraceTitleDiv>
+        </TraceDetailTopContent>
+        <TraceDetailMiddleContent>
+          <TraceCreatedAtDiv>
+            작성일 : {traceInfo?.createdAt?.slice(0, 10)}
+          </TraceCreatedAtDiv>
+          {traceInfo.authorNickname === me.nickname && (
+            <TraceUpdateDiv
+              onClick={() => {
+                navigator(`/nibangnebang/update/${id}`);
+              }}
+            >
+              수정
+            </TraceUpdateDiv>
           )}
-        </UserImageDiv>
-        <UserInfoDiv>
-          <UserNickName>{me.email}</UserNickName>
-          <UserFollowBtn>😽 팔로우하기</UserFollowBtn>
-        </UserInfoDiv>
-      </TraceDetailBottomContent>
-    </TraceDetailWrapper>
-  );
+          <TraceContentDiv>{traceInfo.content}</TraceContentDiv>
+        </TraceDetailMiddleContent>
+        <TraceDetailBottomContent>
+          <UserImageDiv>
+            {me.profileImage === null ? (
+              <AccountCircleIcon style={{ fontSize: "150px" }} />
+            ) : (
+              <img
+                src={me.profileImage}
+                alt="user"
+                width="150"
+                height="150"
+                style={{ borderRadius: "50%" }}
+              />
+            )}
+          </UserImageDiv>
+          <UserInfoDiv>
+            <UserNickName>{me.email}</UserNickName>
+            <UserFollowBtn>😽 팔로우하기</UserFollowBtn>
+          </UserInfoDiv>
+        </TraceDetailBottomContent>
+      </TraceDetailWrapper>
+    );
+    setView(test);
+  }, [me]);
+
+  return <>{view}</>;
 };
 
 export default NiBangNeBangDetail;
