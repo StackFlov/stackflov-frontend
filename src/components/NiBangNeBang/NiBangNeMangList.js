@@ -16,17 +16,21 @@ import axios from "axios";
 import Cookies from "js-cookie";
 
 const NiBangNeMangList = ({ postsToDisplay }) => {
-  const [me, setMe] = useState();
+  const [listItems, setListItems] = useState([]);
+  const [me, setMe] = useState(null);
+
   const accessToken = Cookies.get("accessToken");
   const navigator = useNavigate();
 
   useEffect(() => {
+    setListItems(postsToDisplay);
+  }, [postsToDisplay]);
+
+  useEffect(() => {
+    if (!accessToken) return;
     axios
       .get("https://api.stackflov.com/users/me", {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: { Authorization: `Bearer ${accessToken}` },
         withCredentials: true,
       })
       .then((res) => {
@@ -35,27 +39,33 @@ const NiBangNeMangList = ({ postsToDisplay }) => {
       .catch((err) => {
         console.error("Error fetching user data:", err);
       });
-  }, []);
+  }, [accessToken]);
 
   const handleNiBangNeBangDel = (id) => {
-    console.log(accessToken);
-    axios
-      .delete(
-        `https://api.stackflov.com/map/review/${id}`,
-        { reviewId: id },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-          withCredentials: true,
-        }
-      )
-      .catch((error) => {
-        console.error("게시글 작성 실패:", error);
-        // 실패 시 처리
-      });
+    if (window.confirm("정말로 이 리뷰를 삭제하시겠습니까?")) {
+      axios
+        .delete(
+          `https://api.stackflov.com/map/reviews/${id}`,
+          { reviewId: id },
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+            withCredentials: true,
+          }
+        )
+        .then(() => {
+          setListItems((prevItems) =>
+            prevItems.filter((item) => item.id !== id)
+          );
+          alert("리뷰가 삭제되었습니다.");
+        })
+        .catch((error) => {
+          console.error("리뷰 삭제 실패:", error.response || error);
+          alert("삭제에 실패했습니다. 권한이 있는지 확인해주세요.");
+        });
+    }
   };
 
+  // 좋아요 추가 핸들러
   const handleNiBangNeBangGood = (id) => {
     axios
       .post(
@@ -69,57 +79,49 @@ const NiBangNeMangList = ({ postsToDisplay }) => {
           withCredentials: true,
         }
       )
+      .then(() => {
+        // 상태 업데이트: isLike 상태만 true로 변경
+        setListItems((prevItems) =>
+          prevItems.map((item) =>
+            item.id === id ? { ...item, isLike: true } : item
+          )
+        );
+      })
       .catch((error) => {
-        console.error("게시글 작성 실패:", error);
+        console.error("좋아요 추가 실패:", error.response || error);
       });
   };
 
+  // 좋아요 취소 핸들러
   const handleNiBangNeBangUnGood = (id) => {
-    if (!accessToken) {
-      console.error("액세스 토큰이 없습니다. 로그인이 필요합니다.");
-      return;
-    }
-
     axios
-      .delete(
-        `https://api.stackflov.com/likes?reviewId=${id}`,
-
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          withCredentials: true,
-        }
-      )
-      .then((response) => {
-        console.log("좋아요 취소 성공:", response);
+      .delete(`https://api.stackflov.com/likes?reviewId=${id}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        withCredentials: true,
+      })
+      .then(() => {
+        // 상태 업데이트: isLike 상태만 false로 변경
+        setListItems((prevItems) =>
+          prevItems.map((item) =>
+            item.id === id ? { ...item, isLike: false } : item
+          )
+        );
       })
       .catch((error) => {
-        if (error.response) {
-          console.error(
-            `좋아요 취소 실패 (상태 코드: ${error.response.status}):`,
-            error.response.data
-          );
-          if (error.response.status === 401) {
-            alert("인증 정보가 유효하지 않습니다. 다시 로그인해주세요.");
-          }
-        } else {
-          console.error("네트워크 오류 또는 서버 응답 없음:", error.message);
-        }
+        console.error("좋아요 취소 실패:", error.response || error);
       });
   };
 
   return (
     <div>
-      {postsToDisplay.length === 0 ? (
+      {listItems.length === 0 ? (
         <p>
           지도에 표시된 게시글이 없거나, 선택한 카테고리에 해당하는 글이
           없습니다.
         </p>
       ) : (
         <ul>
-          {postsToDisplay.map((item) => (
+          {listItems.map((item) => (
             <NiBangNeBangListItem key={item.id}>
               <ItemWrapper>
                 <NiBangNeBangListCreatedAt>
@@ -134,34 +136,35 @@ const NiBangNeMangList = ({ postsToDisplay }) => {
                   <NiBangNeBangListUser>
                     {item.authorNickname}
                   </NiBangNeBangListUser>
-                  {item.isLike == false ? (
+
+                  {/* === 변경된 부분 === */}
+                  {item.isLike ? (
                     <NiBangNeBangListGood
-                      onClick={() => {
-                        handleNiBangNeBangGood(item.id);
-                      }}
+                      onClick={() => handleNiBangNeBangUnGood(item.id)}
+                    >
+                      <FavoriteIcon
+                        style={{
+                          color: "red",
+                          fontSize: "40px",
+                          padding: "0 5px 0 0",
+                        }}
+                      />
+                      {/* 좋아요 숫자 표시 안 함 */}
+                    </NiBangNeBangListGood>
+                  ) : (
+                    <NiBangNeBangListGood
+                      onClick={() => handleNiBangNeBangGood(item.id)}
                     >
                       <FavoriteBorderIcon
                         style={{ fontSize: "40px", padding: "0 5px 0 0" }}
                       />
-                      {item.good}
-                    </NiBangNeBangListGood>
-                  ) : (
-                    <NiBangNeBangListGood
-                      onClick={() => {
-                        handleNiBangNeBangUnGood(item.id);
-                      }}
-                    >
-                      <FavoriteIcon
-                        style={{ fontSize: "40px", padding: "0 5px 0 0" }}
-                      />
-                      {item.good}
+                      {/* 좋아요 숫자 표시 안 함 */}
                     </NiBangNeBangListGood>
                   )}
-                  {item.authorNickname == me?.nickname && (
+
+                  {me && item.authorNickname === me.nickname && (
                     <NiBangNeBangDelBtn
-                      onClick={() => {
-                        handleNiBangNeBangDel(item.id);
-                      }}
+                      onClick={() => handleNiBangNeBangDel(item.id)}
                     >
                       삭제
                     </NiBangNeBangDelBtn>

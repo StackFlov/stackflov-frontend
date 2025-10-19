@@ -24,6 +24,7 @@ const NiBangNeBangUpdateForm = () => {
   const [address, setAddress] = useState();
   const [content, setContent] = useState();
   const [rating, setRating] = useState(0);
+  const navigator = useNavigate();
 
   const accessToken = Cookies.get("accessToken");
 
@@ -90,7 +91,7 @@ const NiBangNeBangUpdateForm = () => {
         }
       );
       console.log("리뷰 수정 성공:", response);
-      navigator("/NiBangNeBanglog");
+      navigator("/nibangnebang");
     } catch (error) {
       console.error(
         "리뷰 수정 실패:",
@@ -127,6 +128,7 @@ const NiBangNeBangUpdateForm = () => {
         <NiBangNeBangCreateCancleBtn
           onClick={(e) => {
             handleUpdate(e);
+            navigator("/nibangnebang");
           }}
         >
           😽 등록

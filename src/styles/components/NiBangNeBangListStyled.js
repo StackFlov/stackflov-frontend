@@ -73,7 +73,7 @@ export const NiBangNeBangListViews = styled.li`
 `;
 
 export const NiBangNeBangListGood = styled.li`
-  width: 120px;
+  width: 60px;
   height: 40px;
   display: flex;
   justify-content: center;
@@ -100,5 +100,4 @@ export const NiBangNeBangDelBtn = styled.li`
   align-items: center;
   font-size: 21px;
   float: left;
-  background-color: red;
 `;
