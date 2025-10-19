@@ -2,7 +2,7 @@ import SockJS from "sockjs-client";
 import { Client as StompClient } from "@stomp/stompjs";
 
 /** 서버 브로커 규칙에 맞춘 토픽 유틸 */
-export const topicOf = (roomId) => `/topic/chat.${roomId}`;
+export const topicOf = (roomId) => `/sub/chat/room.${roomId}`;
 
 /**
  * ChatSocket: SockJS + STOMP 래퍼
@@ -27,7 +27,8 @@ export class ChatSocket {
     this.onDisconnect = onDisconnect;
     this.onError = onError;
     this.debug = debug;
-    this.tokenSupplier = tokenSupplier || (async () => "");
+    this.tokenSupplier = tokenSupplier || (() => "");
+    this._didFirstConnect = false;
 
     // 서버 경로
     this.baseWs = endpoints.baseWs || "https://api.stackflov.com";
@@ -46,22 +47,19 @@ export class ChatSocket {
     const sockUrl = `${this.baseWs}${this.sockJsPath}`;
     const sockFactory = () => new SockJS(sockUrl);
 
+    const getAuthHeaders = () => {
+      try {
+        const t = this.tokenSupplier ? this.tokenSupplier() : localStorage.getItem("accessToken");
+        return t ? { Authorization: `Bearer ${t}` } : {};
+      } catch { return {}; }
+    };
+
     const client = new StompClient({
       webSocketFactory: sockFactory,
       reconnectDelay: 5000, // 자동 재연결
 
       // ✅ 매 연결 시점마다 최신 토큰을 CONNECT 헤더에 주입
-      beforeConnect: async () => {
-        try {
-          const token = await this.tokenSupplier();
-          client.connectHeaders = token
-            ? { Authorization: `Bearer ${token}` }
-            : {}; // 토큰 없으면 서버가 거부함
-        } catch (e) {
-          this.log("beforeConnect tokenSupplier error:", e);
-          client.connectHeaders = {};
-        }
-      },
+      connectHeaders: getAuthHeaders(),
 
       debug: this.debug ? (str) => console.log("[STOMP]", str) : undefined,
 
@@ -69,8 +67,11 @@ export class ChatSocket {
         this.log("connected");
 
         // 재연결 시 기존 구독 복구
-        this._onReconnectedResubscribe();
-
+        if (this._didFirstConnect) {
+         this._onReconnectedResubscribe();
+       } else {
+         this._didFirstConnect = true;
+       }
         if (this.onConnect) this.onConnect();
       },
 
@@ -84,6 +85,7 @@ export class ChatSocket {
       },
 
       onWebSocketClose: (evt) => {
+        client.connectHeaders = getAuthHeaders();
         this.log("websocket closed", evt && evt.code);
         if (this.onDisconnect) this.onDisconnect();
       },
@@ -124,10 +126,19 @@ export class ChatSocket {
     return !!(this.client && this.client.connected);
   }
 
+  hasSubscription(destination) {
+   return !!this.subscriptions[destination];
+  }
   /** 구독 */
   subscribe(destination, handler) {
     if (!this.client || !this.client.connected) {
       throw new Error("STOMP not connected");
+    }
+    if (this.subscriptions[destination]) {
+     return () => {
+       try { this.subscriptions[destination]?.sub?.unsubscribe(); } catch {}
+       delete this.subscriptions[destination];
+     };
     }
     const sub = this.client.subscribe(destination, (frame) => {
       try {

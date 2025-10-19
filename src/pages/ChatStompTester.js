@@ -60,11 +60,8 @@ export default function ChatStompTester() {
     // ChatSocket 생성 (tokenSupplier로 항상 최신 토큰을 사용)
     const chat = new ChatSocket({
       roomId: rid,
-      debug: false,
-      tokenSupplier: async () => {
-        const t = await getFreshAccessToken();
-        return t || ""; // 빈 문자열이면 서버에서 거부됨
-      },
+      debug: true,
+      tokenSupplier: () => localStorage.getItem("accessToken") || "",
       onConnect: () => {
         setStatus("connected");
         appendLog("connected");
@@ -72,10 +69,12 @@ export default function ChatStompTester() {
         // 구독
         const dest = topicOf(rid);
         try {
-          chat.subscribe(dest, (payload) => {
-            // payload는 JSON 파싱 성공 시 객체, 실패 시 문자열
-            appendLog(`RECV: ${typeof payload === "string" ? payload : JSON.stringify(payload)}`);
-          });
+          if (!chat.hasSubscription(dest)) {
+            chat.subscribe(dest, (payload) => {
+              appendLog(`RECV: ${typeof payload === "string" ? payload : JSON.stringify(payload)}`);
+            });
+            appendLog(`subscribed: ${dest}`);
+          }
           appendLog(`subscribed: ${dest}`);
         } catch (e) {
           appendLog(`subscribe error: ${e?.message || e}`);
@@ -119,11 +118,11 @@ export default function ChatStompTester() {
 
     // 서버의 @MessageMapping 규칙에 맞게 destination 수정하세요.
     // 예: /pub/chat.send.{roomId}
-    const dest = `/pub/chat.send.${roomId}`;
-    const body = { roomId, content: message || "(empty)" };
+    const dest = `/pub/chat/message`;
+    const body = { roomId: Number(roomId), message: message || "(empty)" };
 
     try {
-      chat.send(dest, body);
+      chat.send(dest, body, { "content-type": "application/json" });
       appendLog(`SEND: ${JSON.stringify(body)} -> ${dest}`);
     } catch (e) {
       appendLog(`send error: ${e?.message || e}`);

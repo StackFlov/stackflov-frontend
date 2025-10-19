@@ -41,6 +41,15 @@ const LoginForm = () => {
         .then((res) => {
           Cookies.set("accessToken", res.data.accessToken); // res.data에 토큰이 있다고 가정
           Cookies.set("refreshToken", res.data.refreshToken); // res.data에 토큰이 있다고 가정
+          if (res.data?.accessToken) {
+            localStorage.setItem("accessToken", res.data.accessToken);
+            // 선택: axios 기본 Authorization 헤더도 세팅
+            axios.defaults.headers.common["Authorization"] =
+              `Bearer ${res.data.accessToken}`;
+          }
+          if (res.data?.refreshToken) {
+            localStorage.setItem("refreshToken", res.data.refreshToken);
+          }
           navigator("/tracelog");
         });
 
