@@ -65,6 +65,11 @@ const LoginForm = () => {
               onChange={(e) => {
                 setId(e.target.value);
               }}
+              onKeyDown={(e) => {
+                if (e.key == "Enter") {
+                  handleLogin();
+                }
+              }}
             />
           </FormInputWrapper>
           <FormInputWrapper>
@@ -75,6 +80,11 @@ const LoginForm = () => {
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key == "Enter") {
+                  handleLogin();
+                }
               }}
             />
           </FormInputWrapper>
