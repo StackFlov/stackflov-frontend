@@ -88,14 +88,12 @@ const TraceList = ({ nowCategory, setNowCategory }) => {
     if (!accessToken) return alert("로그인이 필요합니다.");
 
     const method = isBookmarked ? "delete" : "post";
-    const url = isBookmarked
-      ? `https://api.stackflov.com/bookmarks?boardId=${id}`
-      : `https://api.stackflov.com/bookmarks`;
+    const url = `https://api.stackflov.com/bookmarks`;
 
     axios({
       method: method,
       url: url,
-      data: isBookmarked ? null : { boardId: id },
+      data: { boardId: id },
       headers: { Authorization: `Bearer ${accessToken}` },
       withCredentials: true,
     })
