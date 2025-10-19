@@ -7,6 +7,7 @@ import {
 } from "../styles/components/NiBangNeBangStyled";
 import NiBangNeBangSelector from "../components/NiBangNeBang/NiBangNeBangSelector";
 import axios from "axios";
+import Cookies from "js-cookie";
 
 function NiBangNeBang() {
   const [map, setMap] = useState(null);
@@ -14,10 +15,14 @@ function NiBangNeBang() {
   const [visiblePosts, setVisiblePosts] = useState([]);
   const markers = useRef([]);
   const [nowCategory, setNowCategory] = useState(99);
+  const accessToken = Cookies.get("accessToken");
 
   useEffect(() => {
     axios
       .get(`https://api.stackflov.com/map/reviews`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
         withCredentials: true,
       })
       .then((res) => {

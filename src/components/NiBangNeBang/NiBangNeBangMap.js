@@ -108,7 +108,6 @@ const NiBangNeBangMap = ({ reviews, setMap, markers, setVisiblePosts }) => {
           })
       )
     ).then(() => {
-      console.log("모든 마커 생성 완료", markers.current);
       // 마커를 모두 생성한 후, 현재 지도 범위 기준으로 리스트를 한 번 업데이트
       const bounds = mapRef.current.getBounds();
       const visible = markers.current

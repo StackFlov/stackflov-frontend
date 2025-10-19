@@ -91,3 +91,14 @@ export const NiBangNeBangListBookMark = styled.li`
   font-size: 28px;
   float: left;
 `;
+
+export const NiBangNeBangDelBtn = styled.li`
+  width: 70px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 21px;
+  float: left;
+  background-color: red;
+`;
