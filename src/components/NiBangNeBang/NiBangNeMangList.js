@@ -44,14 +44,10 @@ const NiBangNeMangList = ({ postsToDisplay }) => {
   const handleNiBangNeBangDel = (id) => {
     if (window.confirm("정말로 이 리뷰를 삭제하시겠습니까?")) {
       axios
-        .delete(
-          `https://api.stackflov.com/map/reviews/${id}`,
-          { reviewId: id },
-          {
-            headers: { Authorization: `Bearer ${accessToken}` },
-            withCredentials: true,
-          }
-        )
+        .delete(`https://api.stackflov.com/map/reviews/${id}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          withCredentials: true,
+        })
         .then(() => {
           setListItems((prevItems) =>
             prevItems.filter((item) => item.id !== id)
