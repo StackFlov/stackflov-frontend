@@ -27,6 +27,12 @@ import NiBangNeBangCreateForm from "./components/NiBangNeBang/NiBangNeBangCreate
 import NiBangNeBangUpdateForm from "./components/NiBangNeBang/NiBangNeBangUpdateForm";
 import NiBangNeBangDetail from "./components/NiBangNeBang/NiBangNeBangDetail";
 
+//공지
+import Notices from "./pages/Notices";
+import NoticeDetail from "./pages/NoticeDetail";
+import AdminNoticeList from "./pages/admin/AdminNoticeList";
+import AdminNoticeEdit from "./pages/admin/AdminNoticeEdit";
+
 import ChatRoom from "./pages/chatRoom";
 
 const App = () => {
@@ -87,6 +93,12 @@ const App = () => {
           <Route path="/admin/reviews" element={<AdminReviews />} />
 
           <Route path="/chat" element={<ChatRoom />} />
+
+          <Route path="/notices" element={<Notices />} />
+          <Route path="/notices/:noticeId" element={<NoticeDetail />} />
+          <Route path="/admin/notices" element={<AdminNoticeList />} />
+          <Route path="/admin/notices/new" element={<AdminNoticeEdit />} />
+          <Route path="/admin/notices/:noticeId/edit" element={<AdminNoticeEdit />} />
         </Route>
       </Routes>
     </div>
