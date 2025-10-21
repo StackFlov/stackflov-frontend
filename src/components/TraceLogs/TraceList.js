@@ -31,28 +31,45 @@ const TraceList = ({ nowCategory, setNowCategory }) => {
   useEffect(() => {
     const accessToken = Cookies.get("accessToken");
 
-    if (!accessToken) {
-      setLoading(false);
-      setList([]);
-      return;
-    }
+    // if (!accessToken) {
+    //   setLoading(false);
+    //   setList([]);
+    //   return;
+    // }
 
     setLoading(true);
-    axios
-      .get("https://api.stackflov.com/boards", {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        withCredentials: true,
-      })
-      .then((res) => {
-        setList(Array.isArray(res.data.content) ? res.data.content : []);
-      })
-      .catch((err) => {
-        console.error("게시글 목록 로딩 실패:", err);
-        setList([]);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    if (accessToken) {
+      axios
+        .get("https://api.stackflov.com/boards", {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          withCredentials: true,
+        })
+        .then((res) => {
+          setList(Array.isArray(res.data.content) ? res.data.content : []);
+        })
+        .catch((err) => {
+          console.error("게시글 목록 로딩 실패:", err);
+          setList([]);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    } else {
+      axios
+        .get("https://api.stackflov.com/boards", {
+          withCredentials: true,
+        })
+        .then((res) => {
+          setList(Array.isArray(res.data.content) ? res.data.content : []);
+        })
+        .catch((err) => {
+          console.error("게시글 목록 로딩 실패:", err);
+          setList([]);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
   }, []);
 
   const handleLikeToggle = (id, isLiked) => {
