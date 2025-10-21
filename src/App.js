@@ -27,6 +27,8 @@ import NiBangNeBangCreateForm from "./components/NiBangNeBang/NiBangNeBangCreate
 import NiBangNeBangUpdateForm from "./components/NiBangNeBang/NiBangNeBangUpdateForm";
 import NiBangNeBangDetail from "./components/NiBangNeBang/NiBangNeBangDetail";
 
+import ChatRoom from "./pages/chatRoom";
+
 const App = () => {
   return (
     <div>
@@ -83,6 +85,8 @@ const App = () => {
           />
           <Route path="/admin/banned-words" element={<AdminBannedWords />} />
           <Route path="/admin/reviews" element={<AdminReviews />} />
+
+          <Route path="/chat" element={<ChatRoom />} />
         </Route>
       </Routes>
     </div>
@@ -90,3 +94,4 @@ const App = () => {
 };
 
 export default App;
+
