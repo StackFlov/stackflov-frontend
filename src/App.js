@@ -33,8 +33,8 @@ const App = () => {
       <Header />
       <Routes>
         <Route>
-          <Route exact path="/" element={<Main />} />
-          <Route exact path="/tracelog" element={<TraceLog />} />
+          {/* <Route exact path="/" element={<Main />} /> */}
+          <Route exact path="/" element={<TraceLog />} />
           <Route exact path="/trace/detail/:no" element={<TraceDetail />} />
           <Route exact path="/trace/create" element={<TraceCreateForm />} />
           <Route exact path="/trace/update/:no" element={<TraceUpdateForm />} />

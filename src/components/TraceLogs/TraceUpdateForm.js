@@ -69,7 +69,7 @@ const TraceUpdateForm = () => {
       );
 
       console.log("성공:", response.data);
-      navigator("/tracelog");
+      navigator("/");
     } catch (error) {
       console.error(
         "게시글 작성 실패:",
@@ -174,7 +174,7 @@ const TraceUpdateForm = () => {
         </TraceUpdateCancleBtn>
         <TraceUpdateBtn
           onClick={() => {
-            navigator("/tracelog");
+            navigator("/");
           }}
         >
           😽 취소

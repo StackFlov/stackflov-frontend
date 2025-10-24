@@ -78,8 +78,8 @@ const Header = () => {
         </Logo>
       </LogoWrapper>
       <LinkWrapper>
-        <HeaderItem nowNavigator={getActive("/tracelog")}>
-          <div onClick={() => navigate("/tracelog")}>자취로그</div>
+        <HeaderItem nowNavigator={getActive("/")}>
+          <div onClick={() => navigate("/")}>자취로그</div>
         </HeaderItem>
         <HeaderItem nowNavigator={getActive("/nibangnebang")}>
           <div onClick={() => navigate("/nibangnebang")}>니방내방</div>
