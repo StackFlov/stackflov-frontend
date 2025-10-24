@@ -188,6 +188,27 @@ const TraceDetail = () => {
       });
   };
 
+  const handleFollowed = () => {
+    axios
+      .post(
+        "https://api.stackflov.com/follows/follow",
+        {
+          followedId: traceInfo.authorId,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          withCredentials: true,
+        }
+      )
+      .then((res) => {})
+      .catch((err) => {
+        console.error("Error creating reply:", err);
+      });
+  };
+
   useEffect(() => {
     axios
       .get(`https://api.stackflov.com/boards/${no}`, {
@@ -243,7 +264,13 @@ const TraceDetail = () => {
         </UserImageDiv>
         <UserInfoDiv>
           <UserNickName>{me.email}</UserNickName>
-          <UserFollowBtn>😽 팔로우하기</UserFollowBtn>
+          <UserFollowBtn
+            onClick={() => {
+              handleFollowed();
+            }}
+          >
+            😽 팔로우하기
+          </UserFollowBtn>
         </UserInfoDiv>
       </TraceDetailBottomContent>
 
