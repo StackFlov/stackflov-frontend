@@ -78,14 +78,18 @@ export const IdCheckButton = styled.button`
   width: 80px;
   height: 33px;
   margin: 0 0 0 0.5rem;
-  background-color: black;
+  background-color: ${(props) => {
+    return props.backgroundColor;
+  }};
   color: #ffffff;
   border: none;
   transition-duration: 500ms;
   border-radius: 8px;
   &:hover {
     color: black;
-    background-color: rgba(208, 208, 208, 0.5);
+    background-color: ${(props) => {
+      return props.backgroundColor;
+    }};
   }
 `;
 
