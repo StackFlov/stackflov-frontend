@@ -27,6 +27,12 @@ import NiBangNeBangCreateForm from "./components/NiBangNeBang/NiBangNeBangCreate
 import NiBangNeBangUpdateForm from "./components/NiBangNeBang/NiBangNeBangUpdateForm";
 import NiBangNeBangDetail from "./components/NiBangNeBang/NiBangNeBangDetail";
 
+import Notices from "./pages/Notices";
+import NoticeDetail from "./pages/NoticeDetail";
+import AdminNoticeList from "./pages/admin/AdminNoticeList";
+import AdminNoticeEdit from "./pages/admin/AdminNoticeEdit";
+import Notifications from "./pages/Notifications";
+
 const App = () => {
   return (
     <div>
@@ -83,6 +89,17 @@ const App = () => {
           />
           <Route path="/admin/banned-words" element={<AdminBannedWords />} />
           <Route path="/admin/reviews" element={<AdminReviews />} />
+
+          <Route path="/notices" element={<Notices />} />
+          <Route path="/notices/:noticeId" element={<NoticeDetail />} />
+          <Route path="/admin/notices" element={<AdminNoticeList />} />
+          <Route path="/admin/notices/new" element={<AdminNoticeEdit />} />
+
+          <Route
+            path="/admin/notices/:noticeId/edit"
+            element={<AdminNoticeEdit />}
+          />
+          <Route path="/notifications" element={<Notifications />} />
         </Route>
       </Routes>
     </div>

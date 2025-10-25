@@ -68,6 +68,7 @@ export default function AdminDashboard() {
         <LinkBtn to="/admin/reports">신고 관리</LinkBtn>
         <LinkBtn to="/admin/banned-words">금지어 관리</LinkBtn>
         <LinkBtn to="/admin/dashboard/detailed">상세 통계</LinkBtn>
+        <LinkBtn to="/admin/notices">공지 관리</LinkBtn>
       </LinkRow>
     </PageWrap>
   );
