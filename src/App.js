@@ -36,6 +36,8 @@ import AdminNoticeEdit from "./pages/admin/AdminNoticeEdit";
 //알림
 import Notifications from "./pages/Notifications";
 
+import Feed from "./pages/Feed";
+
 import ChatRoom from "./pages/chatRoom";
 
 const App = () => {
@@ -103,6 +105,7 @@ const App = () => {
           <Route path="/admin/notices/new" element={<AdminNoticeEdit />} />
           <Route path="/admin/notices/:noticeId/edit" element={<AdminNoticeEdit />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/feed" element={<Feed />} />
         </Route>
       </Routes>
     </div>
