@@ -3,21 +3,37 @@ import api from "../../utils/api";
 
 // 공통 스타일
 import {
-  PageWrap, Header, Title, Sub,
-  SearchCard, Row, Select, Input, Spacer,
-  PrimaryBtn, GhostBtn,
-  TableCard, Table, Th, Td,
-  ErrorText, InfoText, Empty
+  PageWrap,
+  Header,
+  Title,
+  Sub,
+  SearchCard,
+  Row,
+  Select,
+  Input,
+  Spacer,
+  PrimaryBtn,
+  GhostBtn,
+  TableCard,
+  Table,
+  Th,
+  Td,
+  ErrorText,
+  InfoText,
+  Empty,
 } from "../../styles/components/admin/AdminCommonStyled";
 
 // 대시보드 카드/그리드 재사용 (없다면 주석 처리하고 임시 SumCard 써도 OK)
 import {
-  CardsGrid, StatCard, CardTitle, CardValue
+  CardsGrid,
+  StatCard,
+  CardTitle,
+  CardValue,
 } from "../../styles/components/admin/AdminDashboardStyled";
 
 // 기간 프리셋
 const PRESETS = [
-  { v: "7d",  label: "최근 7일" },
+  { v: "7d", label: "최근 7일" },
   { v: "30d", label: "최근 30일" },
   { v: "90d", label: "최근 90일" },
   { v: "custom", label: "사용자 지정" },
@@ -25,11 +41,11 @@ const PRESETS = [
 
 export default function AdminDetailedStats() {
   const [preset, setPreset] = useState("7d");
-  const [from, setFrom]     = useState("");   // YYYY-MM-DD
-  const [to, setTo]         = useState("");   // YYYY-MM-DD
+  const [from, setFrom] = useState(""); // YYYY-MM-DD
+  const [to, setTo] = useState(""); // YYYY-MM-DD
   const [loading, setLoading] = useState(false);
-  const [err, setErr]         = useState(null);
-  const [stats, setStats]     = useState(null);
+  const [err, setErr] = useState(null);
+  const [stats, setStats] = useState(null);
 
   const params = useMemo(() => {
     const p = {};
@@ -37,7 +53,7 @@ export default function AdminDetailedStats() {
       p.range = preset;
     } else {
       if (from) p.startDate = from;
-      if (to)   p.endDate   = to;
+      if (to) p.endDate = to;
     }
     return p;
   }, [preset, from, to]);
@@ -46,7 +62,9 @@ export default function AdminDetailedStats() {
     setLoading(true);
     setErr(null);
     try {
-      const { data } = await api.get("/admin/dashboard/detailed-stats", { params });
+      const { data } = await api.get("/admin/dashboard/detailed-stats", {
+        params,
+      });
       setStats(data || {});
     } catch (e) {
       setErr(e?.response?.data?.message || e.message || "불러오기 실패");
@@ -55,12 +73,16 @@ export default function AdminDetailedStats() {
     }
   };
 
-  useEffect(() => { load(); /* preset/from/to 바뀔 때마다 재조회 */ }, [/* eslint-disable-line */ params]);
+  useEffect(() => {
+    load(); /* preset/from/to 바뀔 때마다 재조회 */
+  }, [/* eslint-disable-line */ params]);
 
-  const entries = stats && typeof stats === "object" ? Object.entries(stats) : [];
+  const entries =
+    stats && typeof stats === "object" ? Object.entries(stats) : [];
 
   // 합계/최근값 유틸
-  const sum  = (arr, key) => Array.isArray(arr) ? arr.reduce((a, r) => a + (Number(r[key]) || 0), 0) : 0;
+  const sum = (arr, key) =>
+    Array.isArray(arr) ? arr.reduce((a, r) => a + (Number(r[key]) || 0), 0) : 0;
   // const last = (arr, key) => Array.isArray(arr) && arr.length ? (Number(arr[arr.length - 1][key]) || 0) : 0;
 
   return (
@@ -74,14 +96,28 @@ export default function AdminDetailedStats() {
       <SearchCard>
         <Row>
           <Select value={preset} onChange={(e) => setPreset(e.target.value)}>
-            {PRESETS.map(p => <option key={p.v} value={p.v}>{p.label}</option>)}
+            {PRESETS.map((p) => (
+              <option key={p.v} value={p.v}>
+                {p.label}
+              </option>
+            ))}
           </Select>
 
           {preset === "custom" && (
             <>
-              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} style={{ flex: "0 0 180px" }} />
+              <Input
+                type="date"
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+                style={{ flex: "0 0 180px" }}
+              />
               <span>~</span>
-              <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} style={{ flex: "0 0 180px" }} />
+              <Input
+                type="date"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+                style={{ flex: "0 0 180px" }}
+              />
             </>
           )}
 
@@ -92,18 +128,31 @@ export default function AdminDetailedStats() {
 
       {/* 요약 카드 (합계 기준) */}
       <CardsGrid style={{ marginBottom: 12 }}>
-        <DashCard title="신규 사용자(합계)" value={fmt(sum(stats?.dailySignups,  "count"))} />
-        <DashCard title="신규 게시글(합계)" value={fmt(sum(stats?.dailyBoards,   "count"))} />
-        <DashCard title="신규 댓글(합계)"   value={fmt(sum(stats?.dailyComments, "count"))} />
-        <DashCard title="신규 리뷰(합계)"   value={fmt(sum(stats?.dailyReviews,  "count"))} />
+        <DashCard
+          title="신규 사용자(합계)"
+          value={fmt(sum(stats?.dailySignups, "count"))}
+        />
+        <DashCard
+          title="신규 게시글(합계)"
+          value={fmt(sum(stats?.dailyBoards, "count"))}
+        />
+        <DashCard
+          title="신규 댓글(합계)"
+          value={fmt(sum(stats?.dailyComments, "count"))}
+        />
+        <DashCard
+          title="신규 리뷰(합계)"
+          value={fmt(sum(stats?.dailyReviews, "count"))}
+        />
       </CardsGrid>
 
       {loading && <InfoText>불러오는 중…</InfoText>}
       {err && <ErrorText>오류: {String(err)}</ErrorText>}
 
       {/* 원본 키-값 표 */}
-      {!loading && !err && (
-        entries.length === 0 ? (
+      {!loading &&
+        !err &&
+        (entries.length === 0 ? (
           <Empty>데이터 없음</Empty>
         ) : (
           <TableCard>
@@ -124,8 +173,7 @@ export default function AdminDetailedStats() {
               </tbody>
             </Table>
           </TableCard>
-        )
-      )}
+        ))}
     </PageWrap>
   );
 }
@@ -139,7 +187,7 @@ function DashCard({ title, value }) {
   );
 }
 
-const fmt   = (n) => (typeof n === "number" ? n.toLocaleString() : n ?? "-");
+const fmt = (n) => (typeof n === "number" ? n.toLocaleString() : n ?? "-");
 const isObj = (v) => v && typeof v === "object";
 const isArr = (v) => Array.isArray(v);
 
@@ -160,12 +208,15 @@ function renderValue(value) {
 function MiniSeriesTable({ data }) {
   // DailyStatDto: { date, count } 또는 { day/date, value/count } 방어적 처리
   const pick = (row, keys) => (row ? keys.find((k) => k in row) : undefined);
-  const dateKey  = data.length ? pick(data[0], ["date", "day"]) : "date";
+  const dateKey = data.length ? pick(data[0], ["date", "day"]) : "date";
   const countKey = data.length ? pick(data[0], ["count", "value"]) : "count";
 
   const fmtDate = (d) =>
     Array.isArray(d)
-      ? `${d[0]}-${String(d[1]).padStart(2, "0")}-${String(d[2]).padStart(2, "0")}`
+      ? `${d[0]}-${String(d[1]).padStart(2, "0")}-${String(d[2]).padStart(
+          2,
+          "0"
+        )}`
       : d;
 
   return (
@@ -173,7 +224,9 @@ function MiniSeriesTable({ data }) {
       <thead>
         <tr>
           <Th w={140}>날짜</Th>
-          <Th w={120} style={{ textAlign: "right" }}>수치</Th>
+          <Th w={120} style={{ textAlign: "right" }}>
+            수치
+          </Th>
         </tr>
       </thead>
       <tbody>

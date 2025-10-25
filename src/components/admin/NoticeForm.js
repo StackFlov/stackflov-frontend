@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Form, Field, Input, TextArea, Actions, SubmitBtn } from "../../styles/components/admin/NoticeFormStyled";
+import {
+  Form,
+  Field,
+  Input,
+  TextArea,
+  Actions,
+  SubmitBtn,
+} from "../../styles/components/admin/NoticeFormStyled";
 
 export default function NoticeForm({ initial, busy, onSubmit }) {
   const [title, setTitle] = useState(initial?.title ?? "");

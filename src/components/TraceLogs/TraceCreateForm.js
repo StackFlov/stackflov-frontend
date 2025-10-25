@@ -45,7 +45,7 @@ const TraceCreateForm = () => {
         }
       )
       .then((response) => {
-        navigator("/tracelog");
+        navigator("/");
       })
       .catch((error) => {
         console.error("게시글 작성 실패:", error);
@@ -95,7 +95,7 @@ const TraceCreateForm = () => {
       );
 
       console.log("성공:", response.data);
-      navigator("/tracelog");
+      navigator("/");
     } catch (error) {
       console.error(
         "게시글 작성 실패:",
@@ -172,7 +172,7 @@ const TraceCreateForm = () => {
         </TraceCreateCancleBtn>
         <TraceCreateBtn
           onClick={() => {
-            navigator("/tracelog");
+            navigator("/");
           }}
         >
           😽 취소

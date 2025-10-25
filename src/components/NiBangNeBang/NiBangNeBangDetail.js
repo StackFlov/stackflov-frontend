@@ -95,7 +95,6 @@ const NiBangNeBangDetail = () => {
       .then((res) => {
         setReplyInput("");
         fetchReplies();
-
       })
       .catch((err) => {
         console.error("Error creating reply:", err);
@@ -132,16 +131,13 @@ const NiBangNeBangDetail = () => {
   // 🔽 댓글 삭제 핸들러 (TraceDetail에서 복사)
   const handleReplyDel = (replyId) => {
     axios
-      .delete(
-        `https://api.stackflov.com/comments/${replyId}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          withCredentials: true,
-        }
-      )
+      .delete(`https://api.stackflov.com/comments/${replyId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        withCredentials: true,
+      })
       .then((res) => {
         fetchReplies();
       })
@@ -172,17 +168,19 @@ const NiBangNeBangDetail = () => {
           }
         });
         setTraceInfo(exportResult[0]);
-        axios
-          .get("https://api.stackflov.com/users/me", {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${accessToken}`,
-            },
-            withCredentials: true,
-          })
-          .then((userData) => {
-            setMe(userData.data);
-          });
+        if (accessToken != undefined) {
+          axios
+            .get("https://api.stackflov.com/users/me", {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${accessToken}`,
+              },
+              withCredentials: true,
+            })
+            .then((userData) => {
+              setMe(userData.data);
+            });
+        }
 
         // 🔽 초기 댓글 로딩 로직 추가 (TraceDetail에서 복사)
         axios
@@ -265,7 +263,9 @@ const NiBangNeBangDetail = () => {
             <ReplyDiv key={idx}>
               <ReplyContentWrapper>
                 <ReplyHeader>
-                  <ReplyUserUserNameDiv>{item.authorEmail}</ReplyUserUserNameDiv>
+                  <ReplyUserUserNameDiv>
+                    {item.authorEmail}
+                  </ReplyUserUserNameDiv>
                   <ReplyCreateAtDiv>
                     {item.createdAt ? item.createdAt.slice(0, 10) : ""}
                   </ReplyCreateAtDiv>

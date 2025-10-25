@@ -41,7 +41,7 @@ const LoginForm = () => {
         .then((res) => {
           Cookies.set("accessToken", res.data.accessToken); // res.data에 토큰이 있다고 가정
           Cookies.set("refreshToken", res.data.refreshToken); // res.data에 토큰이 있다고 가정
-          navigator("/tracelog");
+          navigator("/");
         });
 
       // setGeneratedData(response.data);

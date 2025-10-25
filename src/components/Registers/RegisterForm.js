@@ -80,16 +80,16 @@ const RegisterForm = () => {
           role: "USER",
         };
 
-        const response = await axios.post(
-          "https://api.stackflov.com/auth/register",
-          body, // ← body 따로 감싸지 않음
-          {
+        const response = await axios
+          .post("https://api.stackflov.com/auth/register", body, {
             headers: {
               "Content-Type": "application/json",
             },
-            withCredentials: true, // ← 백엔드에서 allowCredentials(true)면 이거 필수
-          }
-        );
+            withCredentials: true,
+          })
+          .then(() => {
+            navigator("/");
+          });
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -114,7 +114,15 @@ const RegisterForm = () => {
                 setId(e.target.value);
               }}
             />
-            <IdCheckButton>중복 확인</IdCheckButton>
+            <IdCheckButton
+              disabled={isRegisterAble}
+              backgroundColor={isRegisterAble == true ? "black" : "gray"}
+              onClick={() => {
+                setIsRegisterAble(true);
+              }}
+            >
+              중복 확인
+            </IdCheckButton>
           </InputItem>
           <InputItem>
             <InputLabel width={100}>비밀번호</InputLabel>
