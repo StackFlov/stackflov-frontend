@@ -56,6 +56,7 @@ export default function AdminNoticeEdit() {
 
   if (!isNew && !initial && !err)
     return <LoadingText>불러오는 중...</LoadingText>;
+
   if (err) return <ErrorText>공지 정보를 불러오지 못했습니다.</ErrorText>;
 
   return (
