@@ -60,7 +60,7 @@ const TraceDetail = () => {
   useEffect(() => {
     const token = Cookies.get("accessToken");
 
-    if (token) {
+    if (token != undefined) {
       axios
         .get("https://api.stackflov.com/users/me", {
           headers: {
@@ -75,22 +75,22 @@ const TraceDetail = () => {
         .catch((err) => {
           console.error("Error fetching user data:", err);
         });
-
-      axios
-        .get(`https://api.stackflov.com/comments/board/${no}`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
-        })
-        .then((res) => {
-          setReplys(res.data);
-        })
-        .catch((err) => {
-          console.error("Error fetching user data:", err);
-        });
     }
+
+    axios
+      .get(`https://api.stackflov.com/comments/board/${no}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        withCredentials: true,
+      })
+      .then((res) => {
+        setReplys(res.data);
+      })
+      .catch((err) => {
+        console.error("Error fetching user data:", err);
+      });
   }, [accessToken, no]);
 
   // 댓글 등록 핸들러
@@ -100,7 +100,6 @@ const TraceDetail = () => {
         "https://api.stackflov.com/comments",
         {
           boardId: no,
-
           content: replyInput,
         },
         {
@@ -127,7 +126,6 @@ const TraceDetail = () => {
         `https://api.stackflov.com/comments/${replyNo}`,
         {
           boardId: no,
-
           content: replyUpdateInput,
         },
         {
