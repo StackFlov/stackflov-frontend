@@ -7,10 +7,12 @@ import {
   TraceCreateDiv,
 } from "../../styles/components/NiBangNeBangSelectorStyled";
 import { useLocation, useNavigate } from "react-router-dom";
+import Cookies from "js-cookie";
 
 const NiBangNeBangSelector = ({ nowCategory, setNowCategory }) => {
   const location = useLocation();
   const navigator = useNavigate();
+  const accessToken = Cookies.get("accessToken");
   return (
     <NiBangNeBangSelectorWrapper>
       <NiBangNeBangSelectors>
@@ -60,7 +62,11 @@ const NiBangNeBangSelector = ({ nowCategory, setNowCategory }) => {
         )}
         <TraceCreateDiv
           onClick={() => {
-            navigator("/nibangnebang/create");
+            if (accessToken != undefined) {
+              navigator("/nibangnebang/create");
+            } else {
+              alert("로그인이 필요한 기능입니다.");
+            }
           }}
         >
           글쓰기

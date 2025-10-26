@@ -29,30 +29,35 @@ const NiBangNeBangUpdateForm = () => {
   const accessToken = Cookies.get("accessToken");
 
   useEffect(() => {
-    axios
-      .get(
-        `https://api.stackflov.com/map/reviews`,
+    if (accessToken != undefined) {
+      axios
+        .get(
+          `https://api.stackflov.com/map/reviews`,
 
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
-        }
-      )
-      .then((res) => {
-        const results = res.data.content;
-        const exportResult = results.filter((item) => {
-          if (item.id == id) {
-            return item;
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            withCredentials: true,
           }
+        )
+        .then((res) => {
+          const results = res.data.content;
+          const exportResult = results.filter((item) => {
+            if (item.id == id) {
+              return item;
+            }
+          });
+          console.log(exportResult[0]);
+          setTitle(exportResult[0].title);
+          setContent(exportResult[0].content);
+          setRating(exportResult[0].rating);
+          setAddress(exportResult[0].address);
         });
-        console.log(exportResult[0]);
-        setTitle(exportResult[0].title);
-        setContent(exportResult[0].content);
-        setRating(exportResult[0].rating);
-        setAddress(exportResult[0].address);
-      });
+    } else {
+      alert("로그인이 필요한 기능입니다.");
+      navigator("/login");
+    }
   }, []);
 
   const handleUpdate = async (e) => {

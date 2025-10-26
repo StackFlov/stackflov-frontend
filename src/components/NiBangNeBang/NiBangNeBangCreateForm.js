@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -23,8 +23,16 @@ const NiBangNeBangCreateForm = () => {
   const [address, setAddress] = useState();
   const [content, setContent] = useState();
   const [rating, setRating] = useState(0);
+  const navigator = useNavigate();
 
   const accessToken = Cookies.get("accessToken");
+
+  useEffect(() => {
+    if (accessToken == undefined) {
+      alert("로그인이 필요한 기능입니다.");
+      navigator("/login");
+    }
+  }, []);
 
   const handlePost = async (e) => {
     e.preventDefault();

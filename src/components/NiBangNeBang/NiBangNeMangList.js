@@ -63,49 +63,57 @@ const NiBangNeMangList = ({ postsToDisplay }) => {
 
   // 좋아요 추가 핸들러
   const handleNiBangNeBangGood = (id) => {
-    axios
-      .post(
-        `https://api.stackflov.com/likes`,
-        { reviewId: id },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          withCredentials: true,
-        }
-      )
-      .then(() => {
-        // 상태 업데이트: isLike 상태만 true로 변경
-        setListItems((prevItems) =>
-          prevItems.map((item) =>
-            item.id === id ? { ...item, isLike: true } : item
-          )
-        );
-      })
-      .catch((error) => {
-        console.error("좋아요 추가 실패:", error.response || error);
-      });
+    if (me != null) {
+      axios
+        .post(
+          `https://api.stackflov.com/likes`,
+          { reviewId: id },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            withCredentials: true,
+          }
+        )
+        .then(() => {
+          // 상태 업데이트: isLike 상태만 true로 변경
+          setListItems((prevItems) =>
+            prevItems.map((item) =>
+              item.id === id ? { ...item, isLike: true } : item
+            )
+          );
+        })
+        .catch((error) => {
+          console.error("좋아요 추가 실패:", error.response || error);
+        });
+    } else {
+      alert("로그인이 필요한 기능입니다.");
+    }
   };
 
   // 좋아요 취소 핸들러
   const handleNiBangNeBangUnGood = (id) => {
-    axios
-      .delete(`https://api.stackflov.com/likes?reviewId=${id}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        withCredentials: true,
-      })
-      .then(() => {
-        // 상태 업데이트: isLike 상태만 false로 변경
-        setListItems((prevItems) =>
-          prevItems.map((item) =>
-            item.id === id ? { ...item, isLike: false } : item
-          )
-        );
-      })
-      .catch((error) => {
-        console.error("좋아요 취소 실패:", error.response || error);
-      });
+    if (me != null) {
+      axios
+        .delete(`https://api.stackflov.com/likes?reviewId=${id}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          withCredentials: true,
+        })
+        .then(() => {
+          // 상태 업데이트: isLike 상태만 false로 변경
+          setListItems((prevItems) =>
+            prevItems.map((item) =>
+              item.id === id ? { ...item, isLike: false } : item
+            )
+          );
+        })
+        .catch((error) => {
+          console.error("좋아요 취소 실패:", error.response || error);
+        });
+    } else {
+      alert("로그인이 필요한 기능입나다.");
+    }
   };
 
   return (

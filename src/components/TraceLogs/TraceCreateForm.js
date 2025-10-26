@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   TraceCategoryDiv,
@@ -23,6 +23,13 @@ const TraceCreateForm = () => {
   const accessToken = Cookies.get("accessToken");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+
+  useEffect(() => {
+    if (accessToken == undefined) {
+      alert("로그인이 필요한 기능입니다.");
+      navigator("/login");
+    }
+  }, []);
 
   const handleCreatePost = () => {
     axios

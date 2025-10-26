@@ -7,8 +7,11 @@ import {
   TraceCreateDiv,
   TraceLogBigTitleWrapper,
 } from "../../styles/components/TraceCategorySelectorStyled";
+import Cookies from "js-cookie";
 
 const TraceCategorySelector = ({ nowCategory, setNowCategory }) => {
+  const accessToken = Cookies.get("accessToken");
+
   const navigator = useNavigate();
   const [selectCategory, setSelectCategory] = useState(99);
   return (
@@ -57,7 +60,11 @@ const TraceCategorySelector = ({ nowCategory, setNowCategory }) => {
         </TraceCategorySelectorItem>
         <TraceCreateDiv
           onClick={() => {
-            navigator("/trace/create");
+            if (accessToken == undefined) {
+              alert("로그인이 필요한 기능입니다.");
+            } else {
+              navigator("/trace/create");
+            }
           }}
         >
           글쓰기
