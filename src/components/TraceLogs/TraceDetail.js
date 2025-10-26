@@ -45,6 +45,7 @@ const TraceDetail = () => {
   const [replyUpdateInput, setReplyUpdateInput] = useState("");
   const [updateAble, setUpdateAble] = useState(false);
   const [me, setMe] = useState({});
+  const [followings, setFollowings] = useState([]);
   const [editingReplyId, setEditingReplyId] = useState(null);
   const accessToken = Cookies.get("accessToken");
   const navigator = useNavigate();
@@ -71,6 +72,31 @@ const TraceDetail = () => {
         })
         .then((res) => {
           setMe(res.data);
+          axios
+            .get(
+              `https://api.stackflov.com/follows/following/${res.data.id}`,
+              {
+                followedId: res.data.id,
+              },
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                withCredentials: true,
+              }
+            )
+            .then((res2) => {
+              const data = res2.data;
+              const newData = [];
+              data.map((item) => {
+                newData.push(item.id);
+              });
+              setFollowings(newData);
+            })
+            .catch((err) => {
+              console.error("Error fetching user data:", err);
+            });
         })
         .catch((err) => {
           console.error("Error fetching user data:", err);
@@ -95,28 +121,32 @@ const TraceDetail = () => {
 
   // 댓글 등록 핸들러
   const handleReplyCreate = () => {
-    axios
-      .post(
-        "https://api.stackflov.com/comments",
-        {
-          boardId: no,
-          content: replyInput,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
+    if (me.id != undefined) {
+      axios
+        .post(
+          "https://api.stackflov.com/comments",
+          {
+            boardId: no,
+            content: replyInput,
           },
-          withCredentials: true,
-        }
-      )
-      .then((res) => {
-        setReplyInput("");
-        fetchReplies();
-      })
-      .catch((err) => {
-        console.error("Error creating reply:", err);
-      });
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            withCredentials: true,
+          }
+        )
+        .then((res) => {
+          setReplyInput("");
+          fetchReplies();
+        })
+        .catch((err) => {
+          console.error("Error creating reply:", err);
+        });
+    } else {
+      alert("로그인이 필요한 기능입니다.");
+    }
   };
 
   // 댓글 수정 핸들러
@@ -207,6 +237,27 @@ const TraceDetail = () => {
       });
   };
 
+  const handleUnFollowed = () => {
+    axios
+      .delete(
+        `https://api.stackflov.com/follows/${traceInfo.authorId}`,
+        {
+          followedId: traceInfo.authorId,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          withCredentials: true,
+        }
+      )
+      .then((res) => {})
+      .catch((err) => {
+        console.error("Error creating reply:", err);
+      });
+  };
+
   useEffect(() => {
     axios
       .get(`https://api.stackflov.com/boards/${no}`, {
@@ -262,13 +313,31 @@ const TraceDetail = () => {
         </UserImageDiv>
         <UserInfoDiv>
           <UserNickName>{me.email}</UserNickName>
-          <UserFollowBtn
-            onClick={() => {
-              handleFollowed();
-            }}
-          >
-            😽 팔로우하기
-          </UserFollowBtn>
+          {followings.indexOf(traceInfo.authorId) == -1 ? (
+            <UserFollowBtn
+              onClick={() => {
+                if (me.id != undefined) {
+                  handleFollowed();
+                } else {
+                  alert("로그인이 필요한 기능입니다.");
+                }
+              }}
+            >
+              😽 팔로우하기
+            </UserFollowBtn>
+          ) : (
+            <UserFollowBtn
+              onClick={() => {
+                if (me.id != undefined) {
+                  handleUnFollowed();
+                } else {
+                  alert("로그인이 필요한 기능입니다.");
+                }
+              }}
+            >
+              😽 언팔로우하기
+            </UserFollowBtn>
+          )}
         </UserInfoDiv>
       </TraceDetailBottomContent>
 
