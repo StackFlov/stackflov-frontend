@@ -15,6 +15,26 @@ export const TraceDetailWrapper = styled.div`
   }
 `;
 
+export const TraceImagesWrapper = styled.div`
+  width: 100%;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee; /* 본문과 구분선 (선택 사항) */
+
+  /* 이미지 스타일 */
+  img {
+    width: 100%;
+    max-width: 600px; /* 이미지 최대 너비 (디자인에 맞게 조절) */
+    height: auto;
+    object-fit: cover;
+    margin-top: 15px;
+    border-radius: 8px;
+    display: block; /* 이미지 간 정렬을 위해 */
+    margin-left: auto;
+    margin-right: auto;
+  }
+`;
+
 export const TraceDetailTopContent = styled.div`
   width: 100%;
   max-width: 1400px;

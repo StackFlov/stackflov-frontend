@@ -67,9 +67,21 @@ const Header = () => {
     }
   }, [accessToken]);
 
-  const getActive = (path) =>
-    location.pathname.startsWith(path) ? "bold" : "thin";
+  const getActive = (path) => {
+  const p = location.pathname;
 
+  // 자취로그 그룹: /, /trace/**, /boards/**
+  if (path === "/") {
+    const homeGroup = ["/", "/trace", "/boards"];
+    const active = homeGroup.some(prefix =>
+      p === prefix || p.startsWith(prefix + "/")
+    );
+    return active ? "bold" : "thin";
+  }
+
+  // 일반 메뉴는 정확히 일치 또는 하위경로 매칭
+  return (p === path || p.startsWith(path + "/")) ? "bold" : "thin";
+};
   return (
     <HeaderWrapper>
       <LogoWrapper>
@@ -83,6 +95,9 @@ const Header = () => {
         </HeaderItem>
         <HeaderItem nowNavigator={getActive("/nibangnebang")}>
           <div onClick={() => navigate("/nibangnebang")}>니방내방</div>
+        </HeaderItem>
+        <HeaderItem nowNavigator={getActive("/notices")}>
+        <div onClick={() => navigate("/notices")}>공지사항</div>
         </HeaderItem>
       </LinkWrapper>
       <LoginWrapper>
