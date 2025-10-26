@@ -118,7 +118,12 @@ const RegisterForm = () => {
               disabled={isRegisterAble}
               backgroundColor={isRegisterAble == true ? "black" : "gray"}
               onClick={() => {
-                setIsRegisterAble(true);
+                if (id == "test@test.com") {
+                  alert("이미 존재하는 아이디입니다.");
+                } else {
+                  alert("사용 가능한 아이디입니다.");
+                  setIsRegisterAble(true);
+                }
               }}
             >
               중복 확인

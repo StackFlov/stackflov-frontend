@@ -81,7 +81,7 @@ export const NiBangNeBangCategorySelectorItem = styled.li`
 
 export const NiBangNeBangCreateMiddleContent = styled.div`
   width: 1400px;
-  height: 600px;
+  height: 560px;
 `;
 
 export const NiBangNeBangCreateContentInput = styled.textarea`

@@ -60,14 +60,14 @@ export const UserPostCreateAtDiv = styled.div`
 `;
 
 export const UserPostTitleDiv = styled.div`
-  width: 1100px;
+  width: 1050px;
   font-size: 24px;
   font-weight: 700;
   float: left;
 `;
 
 export const UserPostViewsDiv = styled.div`
-  width: 100px;
+  width: 80px;
   font-size: 21px;
   font-weigt: 400;
   color: gary;

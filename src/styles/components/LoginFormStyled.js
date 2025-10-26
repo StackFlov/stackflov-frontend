@@ -12,7 +12,7 @@ export const MainContainer = styled.div`
   width: 375px;
   height: 608px;
   background-color: #ffffff;
-  margin: 0 35%;
+  margin: 0 0 0 42.5%;
 `;
 
 export const FormItemsWrapper = styled.ul`

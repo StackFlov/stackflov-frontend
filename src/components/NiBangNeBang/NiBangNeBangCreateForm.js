@@ -42,7 +42,7 @@ const NiBangNeBangCreateForm = () => {
 
     const data = {
       title,
-      address: "서울특별시 금천구",
+      address: address,
       content,
       rating: rating,
     };
@@ -69,7 +69,7 @@ const NiBangNeBangCreateForm = () => {
         }
       );
       console.log("성공:", response);
-      navigator("/NiBangNeBanglog");
+      navigator("/nibangnebang");
     } catch (error) {
       console.error(
         "게시글 작성 실패:",
@@ -91,7 +91,6 @@ const NiBangNeBangCreateForm = () => {
           }}
         />
       </NiBangNeBangCreateTopContent>
-
       <NiBangNeBangCreateMiddleContent>
         <NiBangNeBangCreateContentInput
           placeholder="글 내용을 작성해주세요."
@@ -101,6 +100,14 @@ const NiBangNeBangCreateForm = () => {
           }}
         />
       </NiBangNeBangCreateMiddleContent>
+      주소입력 :
+      <input
+        style={{ marginLeft: "20px" }}
+        placeholder="ex)서울특별시 종로구"
+        onChange={(e) => {
+          setAddress(e.target.value);
+        }}
+      />
       <NiBangNeBangStarRating value={rating} onChange={setRating} />
       <NiBangNeBangCreateBottomContent>
         <NiBangNeBangCreateCancleBtn
@@ -112,7 +119,7 @@ const NiBangNeBangCreateForm = () => {
         </NiBangNeBangCreateCancleBtn>
         <NiBangNeBangCreateBtn
           onClick={() => {
-            navigator("/NiBangNeBanglog");
+            navigator("/nibangnebang");
           }}
         >
           😽 취소
