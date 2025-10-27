@@ -1,6 +1,6 @@
 // src/pages/admin/AdminUserBoards.js
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useParams, useSearchParams, useNavigate } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import api from "../../utils/api";
 import {
   PageWrap, Header, Title, Sub,
@@ -11,18 +11,22 @@ import {
 
 const PAGE_SIZE = 10;
 
-// 공통 복구 헬퍼 (소/대문자 폴백)
-async function reactivateContent(type, id) {
-  try {
-    await api.put(`/admin/content/${type.toLowerCase()}/${id}/reactivate`);
-  } catch {
-    await api.put(`/admin/content/${type.toUpperCase()}/${id}/reactivate`);
-  }
-}
+const getBoardId = (b) =>
+  b?.id ??
+  b?.boardId ??
+  b?.board_id ??
+  b?.boardNo ??
+  b?.no ??
+  b?.board?.id ??
+  null;
+
+const getCreatedAt = (b) => b?.createdAt ?? b?.created_at ?? b?.created_date ?? null;
+const getTitle = (b) => b?.title ?? b?.subject ?? b?.name ?? "";
+const isActive = (b) => (b?.active ?? b?.isActive ?? b?.status === "ACTIVE") !== false;
 
 export default function AdminUserBoards() {
-  const params = useParams();                  // /admin/users/:userId/boards
-  const [sp] = useSearchParams();              // /admin/users/boards?userId=...
+  const params = useParams();
+  const [sp] = useSearchParams();
   const userId = params.userId || sp.get("userId");
 
   const [items, setItems] = useState([]);
@@ -40,7 +44,7 @@ export default function AdminUserBoards() {
     setErr(null);
     try {
       const { data } = await api.get(`/admin/users/${userId}/boards`, { params: query });
-      const content = data?.content ?? [];
+      const content = Array.isArray(data?.content) ? data.content : [];
       setItems(content);
       setMeta({
         totalPages: data?.totalPages ?? 1,
@@ -55,13 +59,16 @@ export default function AdminUserBoards() {
     }
   };
 
-  useEffect(() => { load(); }, [/* eslint-disable-line */ query, userId]);
+  useEffect(() => { load(); }, [userId, query]);
 
-  const deactivateOne = async (boardId) => {
+  const deactivateOne = async (boardObj) => {
+    const boardId = getBoardId(boardObj);
+    if (!boardId) return alert("게시글 ID가 없습니다.");
     if (!window.confirm(`게시글 #${boardId} 을(를) 비활성화할까요?`)) return;
+
     setBusyRow(boardId);
     try {
-      await api.delete(`/admin/boards/${boardId}`);
+      await api.delete(`/admin/boards/${encodeURIComponent(boardId)}`);
       await load();
     } catch (e) {
       alert(`비활성화 실패: ${e?.response?.data?.message || e.message}`);
@@ -71,11 +78,14 @@ export default function AdminUserBoards() {
   };
 
   const navigate = useNavigate();
-  const reactivateOne = async (boardId) => {
+  const reactivateOne = async (boardObj) => {
+    const boardId = getBoardId(boardObj);
+    if (!boardId) return alert("게시글 ID가 없습니다.");
     if (!window.confirm(`게시글 #${boardId} 을(를) 복구할까요?`)) return;
+
     setBusyRow(boardId);
     try {
-      await reactivateContent("board", boardId);
+      await api.put(`/admin/content/board/${encodeURIComponent(boardId)}/reactivate`);
       await load();
     } catch (e) {
       alert(`복구 실패: ${e?.response?.data?.message || e.message}`);
@@ -85,7 +95,6 @@ export default function AdminUserBoards() {
   };
 
   const fmtDate = (d) => (d ? String(d).slice(0, 10) : "-");
-  const isActive = (b) => (b.active ?? b.isActive) !== false;
 
   return (
     <PageWrap>
@@ -94,19 +103,16 @@ export default function AdminUserBoards() {
         <Sub>선택 사용자(<b>{userId ?? "-"}</b>)의 게시글 상태를 조회/관리합니다.</Sub>
       </Header>
 
-      {/* 상단 바 */}
       <SearchCard>
         <Row>
-        <GhostBtn onClick={() => navigate("/admin/users")}>사용자 목록으로</GhostBtn>
-        <PrimaryBtn onClick={load}>새로고침</PrimaryBtn>
-      </Row>
+          <GhostBtn onClick={() => navigate("/admin/users")}>사용자 목록으로</GhostBtn>
+          <PrimaryBtn onClick={load}>새로고침</PrimaryBtn>
+        </Row>
       </SearchCard>
 
-      {/* 상태 */}
       {loading && <InfoText>불러오는 중…</InfoText>}
       {err && <ErrorText>오류: {String(err)}</ErrorText>}
 
-      {/* 테이블 */}
       {!loading && !err && (
         items.length === 0 ? (
           <Empty>결과 없음</Empty>
@@ -124,10 +130,14 @@ export default function AdminUserBoards() {
                 </thead>
                 <tbody>
                   {items.map((b) => {
+                    const id = getBoardId(b);
                     const active = isActive(b);
+                    const title = getTitle(b);
+                    const createdAt = getCreatedAt(b);
+
                     return (
-                      <tr key={b.id}>
-                        <Td title={b.title} ellipsis>{b.title}</Td>
+                      <tr key={id ?? title}>
+                        <Td title={title} ellipsis>{title}</Td>
                         <Td w={140}>
                           {active ? (
                             <Badge type="success">ACTIVE</Badge>
@@ -135,22 +145,22 @@ export default function AdminUserBoards() {
                             <Badge type="danger">INACTIVE</Badge>
                           )}
                         </Td>
-                        <Td w={180}>{fmtDate(b.createdAt)}</Td>
+                        <Td w={180}>{fmtDate(createdAt)}</Td>
                         <Td w={260}>
                           <Actions>
                             {active ? (
                               <MutedBtn
-                                disabled={busyRow === b.id}
-                                onClick={() => deactivateOne(b.id)}
+                                disabled={busyRow === id}
+                                onClick={() => deactivateOne(b)}
                               >
-                                {busyRow === b.id ? "처리 중…" : "비활성화"}
+                                {busyRow === id ? "처리 중…" : "비활성화"}
                               </MutedBtn>
                             ) : (
                               <PrimaryBtn
-                                disabled={busyRow === b.id}
-                                onClick={() => reactivateOne(b.id)}
+                                disabled={busyRow === id}
+                                onClick={() => reactivateOne(b)}
                               >
-                                {busyRow === b.id ? "처리 중…" : "복구"}
+                                {busyRow === id ? "처리 중…" : "복구"}
                               </PrimaryBtn>
                             )}
                           </Actions>
@@ -162,7 +172,6 @@ export default function AdminUserBoards() {
               </Table>
             </TableCard>
 
-            {/* 페이지네이션 */}
             <Pagination>
               <MutedBtn disabled={meta.first} onClick={() => setPage((p) => Math.max(0, p - 1))}>
                 이전

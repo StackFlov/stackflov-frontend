@@ -1,3 +1,4 @@
+// src/pages/Notices.js
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import api from "../utils/api";
@@ -19,7 +20,11 @@ export default function Notices() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(null);
 
-  const query = useMemo(() => ({ page, size: PAGE_SIZE, sort: "createdAt,DESC" }), [page]);
+  // 서버가 지원하면 active=true 로만 내려오도록 시도 (무시돼도 안전)
+  const query = useMemo(
+    () => ({ page, size: PAGE_SIZE, sort: "createdAt,DESC", active: true }),
+    [page]
+  );
 
   useEffect(() => {
     (async () => {
@@ -27,12 +32,21 @@ export default function Notices() {
       setErr(null);
       try {
         const { data } = await api.get("/notices", { params: query });
-        setItems(data.content ?? []);
+
+        // 서버 응답 배열 취득
+        const list = Array.isArray(data?.content) ? data.content : [];
+
+        // 백엔드 수정 없이 프론트에서 방어적으로 필터링
+        // active 필드가 명시적으로 false 인 항목은 숨김
+        const filtered = list.filter((n) => n?.active !== false);
+
+        setItems(filtered);
+        // 주의: totalPages 등 메타는 서버 기준이라 클라 필터로 인해 빈 페이지가 생길 수 있음
         setMeta({
-          totalPages: data.totalPages,
-          number: data.number,
-          first: data.first,
-          last: data.last,
+          totalPages: data?.totalPages ?? 0,
+          number: data?.number ?? 0,
+          first: !!data?.first,
+          last: !!data?.last,
         });
       } catch (e) {
         setErr(e);
@@ -42,7 +56,9 @@ export default function Notices() {
     })();
   }, [query]);
 
-  useEffect(() => { setParams({ page }); }, [page, setParams]);
+  useEffect(() => {
+    setParams({ page });
+  }, [page, setParams]);
 
   const go = (p) => {
     if (p < 0 || p >= meta.totalPages) return;
@@ -65,9 +81,11 @@ export default function Notices() {
                 <TitleCell>
                   <Link to={`/notices/${n.id}`}>{n.title}</Link>
                 </TitleCell>
-                <MetaCell>{n.authorNickname}</MetaCell>
+                <MetaCell>{n.authorNickname || "관리자"}</MetaCell>
                 <MetaCell>조회 {n.viewCount ?? 0}</MetaCell>
-                <MetaCell>{new Date(n.createdAt).toLocaleString()}</MetaCell>
+                <MetaCell>
+                  {n.createdAt ? new Date(n.createdAt).toLocaleString() : "-"}
+                </MetaCell>
               </Row>
             ))}
           </TableWrap>

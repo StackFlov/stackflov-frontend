@@ -12,6 +12,12 @@ import {
 
 const PAGE_SIZE = 10;
 
+const ROLE_VALUES = ["USER", "ADMIN"];
+const STATUS_VALUES = ["ACTIVE", "INACTIVE"]; // 서버는 boolean active만 받음
+
+const normalizeRole = (v) => (v || "").replace(/^ROLE_/, "");
+const toActiveBool = (status) => status === "ACTIVE";
+
 export default function AdminUsers() {
   const [page, setPage] = useState(0);
   const [q, setQ] = useState("");
@@ -19,14 +25,14 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(null);
   const [busyId, setBusyId] = useState(null);
-  const [memoUser, setMemoUser] = useState(null); // {id, email, name}
+  const [memoUser, setMemoUser] = useState(null);
 
   async function fetchPage(p = 0) {
     setLoading(true);
     setErr(null);
     try {
       const { data } = await api.get("/admin/users", {
-        params: { page: p, size: PAGE_SIZE /*, q: q.trim()*/ },
+        params: { page: p, size: PAGE_SIZE },
       });
       setResp(data);
       setPage(p);
@@ -42,12 +48,20 @@ export default function AdminUsers() {
   const content = resp?.content || [];
   const totalPages = resp?.totalPages ?? 0;
 
-  // 액션들
-  const updateRole = async (userId, role, el) => {
-    if (!role) return;
+  const updateRole = async (userId, roleRaw, el) => {
+    const role = normalizeRole(roleRaw);
+    if (!ROLE_VALUES.includes(role)) {
+      alert("허용되지 않는 역할 값입니다.");
+      if (el) el.value = "";
+      return;
+    }
     setBusyId(userId);
     try {
-      await api.put(`/admin/users/${userId}/role`, { role });
+      await api.put(
+        `/admin/users/${userId}/role`,
+        { role },
+        { headers: { "Content-Type": "application/json" }, withCredentials: true }
+      );
       await fetchPage(page);
     } catch (e) {
       alert(`역할 변경 실패: ${e?.response?.data?.message || e.message}`);
@@ -58,10 +72,19 @@ export default function AdminUsers() {
   };
 
   const updateStatus = async (userId, status, el) => {
-    if (!status) return;
+    if (!STATUS_VALUES.includes(status)) {
+      alert("허용되지 않는 상태 값입니다.");
+      if (el) el.value = "";
+      return;
+    }
+    const active = toActiveBool(status); // 서버 DTO: { active: boolean }
     setBusyId(userId);
     try {
-      await api.put(`/admin/users/${userId}/status`, { status });
+      await api.put(
+        `/admin/users/${userId}/status`,
+        { active },
+        { headers: { "Content-Type": "application/json" }, withCredentials: true }
+      );
       await fetchPage(page);
     } catch (e) {
       alert(`상태 변경 실패: ${e?.response?.data?.message || e.message}`);
@@ -79,7 +102,11 @@ export default function AdminUsers() {
     }
     setBusyId(userId);
     try {
-      await api.put(`/admin/users/${userId}/suspend`, { period });
+      await api.put(
+        `/admin/users/${userId}/suspend`,
+        { period },
+        { headers: { "Content-Type": "application/json" }, withCredentials: true }
+      );
       await fetchPage(page);
     } catch (e) {
       alert(`정지 처리 실패: ${e?.response?.data?.message || e.message}`);
@@ -99,7 +126,6 @@ export default function AdminUsers() {
         <Sub>역할/상태/정지 처리를 관리하고, 게시글·댓글 열람으로 이어집니다.</Sub>
       </Header>
 
-      {/* 검색 바 */}
       <SearchCard>
         <Row>
           <Input
@@ -141,7 +167,7 @@ export default function AdminUsers() {
                       "-";
                     const role   = u.role || (u.roles && u.roles.join(", ")) || "-";
                     const status = u.status || (u.active ? "ACTIVE" : "INACTIVE");
-                    const nick   = u.nickname || u.name || "-"; // ← 닉네임 우선
+                    const nick   = u.nickname || u.name || "-";
 
                     return (
                       <tr key={u.userId}>
@@ -151,7 +177,7 @@ export default function AdminUsers() {
                         <Td w={80}>{status}</Td>
                         <Td w={90}>{created}</Td>
                         <Td>
-                           <Actions>
+                          <Actions>
                             <PrimaryBtn
                               compact
                               onClick={() => setMemoUser({ id: u.userId, email: u.email, name: nick })}
@@ -167,8 +193,8 @@ export default function AdminUsers() {
                               aria-label="역할 변경"
                             >
                               <option value="" disabled>역할 변경</option>
-                              <option value="ROLE_USER">ROLE_USER</option>
-                              <option value="ROLE_ADMIN">ROLE_ADMIN</option>
+                              <option value="USER">USER</option>
+                              <option value="ADMIN">ADMIN</option>
                             </Select>
 
                             <Select
@@ -199,7 +225,6 @@ export default function AdminUsers() {
                               <option value="PERMANENT">영구</option>
                             </Select>
 
-                            {/* ★ 게시글/댓글 버튼: 개수 > 0일 때만 노출 */}
                             {Number(u.boardCount) > 0 && (
                               <PrimaryBtn
                                 as={Link}
@@ -242,7 +267,6 @@ export default function AdminUsers() {
         )
       )}
 
-      {/* 사용자 메모 모달 */}
       {memoUser && (
         <AdminUserMemos
           user={memoUser}
