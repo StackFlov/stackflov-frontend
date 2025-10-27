@@ -27,6 +27,8 @@ import {
   ReplyContentWrapper,
   ReplyHeader,
   TraceUpdateDiv,
+  TraceImagesWrapper,
+  MetaRow,
 } from "../../styles/components/TraceDetailStyled";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import axios from "axios";
@@ -35,15 +37,56 @@ import Cookies from "js-cookie";
 const DEFAULT_PROFILE =
   "https://d3sutbt651osyh.cloudfront.net/assets/profile/default.png";
 
-// 메타(작성일/수정) 영역의 레이아웃 보정용
-const MetaRow = styled.div`
+const SingleImageBox = styled.div`
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 8px 0 12px;
+  max-width: 680px;
+  aspect-ratio: 16 / 9;
+  margin: 16px 0 0;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;     /* cover 로 바꾸면 꽉 채움(일부 잘릴 수 있음) */
+    display: block;
+  }
+
+  @media (max-width: 1400px) { max-width: 560px; }
+  @media (max-width: 600px)  { max-width: 100%; }
 `;
+
+// ✅ 여러 장일 때 그리드
+const MultiGrid = styled.div`
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+`;
+
+// ✅ 그리드 카드(4:3, 꽉 채움)
+const MultiCard = styled.div`
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #eef2f7;
+  background: #f9fafb;
+
+  img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+`;
+
+// 메타(작성일/수정) 영역의 레이아웃 보정용
 
 // 이미지 그리드
 const ImagesGrid = styled.div`
@@ -254,14 +297,18 @@ const NiBangNeBangDetail = () => {
 
         {/* 리뷰 이미지 그리드 */}
         {Array.isArray(detail.imageUrls) && detail.imageUrls.length > 0 && (
-          <ImagesGrid>
-            {detail.imageUrls.map((url, idx) => (
-              <ImageCard key={`${url}-${idx}`}>
-                <img src={url} alt={`review-${idx}`} />
-              </ImageCard>
-            ))}
-          </ImagesGrid>
-        )}
+   <TraceImagesWrapper>
+     {detail.imageUrls.map((url, idx) => (
+       <img
+         key={`${url}-${idx}`}
+         src={url}
+         alt={`review-${idx}`}
+         loading="lazy"
+         decoding="async"
+       />
+     ))}
+   </TraceImagesWrapper>
+ )}
       </TraceDetailMiddleContent>
 
       {/* 하단(작성자) */}

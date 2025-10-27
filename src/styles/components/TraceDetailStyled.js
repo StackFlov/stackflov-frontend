@@ -33,14 +33,21 @@ export const TraceImagesWrapper = styled.div`
   /* 이미지 스타일 */
   img {
     width: 100%;
-    max-width: 600px; /* 이미지 최대 너비 (디자인에 맞게 조절) */
-    height: auto;
-    object-fit: cover;
-    margin-top: 15px;
-    border-radius: 8px;
-    display: block; /* 이미지 간 정렬을 위해 */
-    margin-left: auto;
-    margin-right: auto;
+    max-width: 680px;       /* 원하는 최대 폭 */
+    height: 360px;          /* ✅ 높이 고정: 화면마다 통일 */
+    object-fit: contain;    /* ✅ 이미지 잘림 없음(여백 허용) */
+    background: #f8fafc;    /* 빈 공간 배경 */
+    border: 1px solid #eef2f7;
+    border-radius: 12px;
+    display: block;
+    margin: 15px auto 0;
+  }
+
+  @media (max-width: 1400px) {
+    img { height: 280px; max-width: 560px; }
+  }
+  @media (max-width: 600px) {
+    img { height: 200px; max-width: 100%; }
   }
 `;
 
@@ -95,15 +102,18 @@ export const TraceTitleDiv = styled.div`
 `;
 
 export const TraceCategoryDiv = styled.div`
-  width: 110px;
-  min-width: 80px;
+  flex: 0 0 auto;               /* 부모 flex 컨테이너에서도 크기 고정 안 됨 */
+  width: auto;                  /* 고정 폭 해제 */
+  min-width: max-content;       /* 내용만큼 확보 */
+  display: inline-flex;         /* 내부 배치 안정화 */
+  align-items: center;
   font-size: 16px;
   font-weight: bold;
-  margin-left: 12px;
+  margin-left: 10px;
 
   @media (max-width: 1400px) {
-    font-size: 14px;
-    width: 80px;
+    font-size: 14px; 
+    min-width: max-content;
   }
   @media (max-width: 600px) {
     width: 100%;
@@ -113,25 +123,31 @@ export const TraceCategoryDiv = styled.div`
 `;
 
 export const TraceCategorySelectorItem = styled.li`
-  width: 100px;
-  padding: 8px 12px;
-  height: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 100px;      /* 더 짧게 */
+  padding: 4px 10px;     /* 세로/가로 여백 축소 */
+  height: 40px;        /* 높이 ↓ */
   list-style: none;
   border: 2px solid #cdd8e3;
-  border-radius: 15px;
+  border-radius: 10px;
   margin: 8px 0 0 0;
   text-align: center;
   background-color: #cdd8e3;
-  font-size: 15px;
-
-  @media (max-width: 1400px) {
-    width: 60px;
-    font-size: 13px;
+  line-height: 1; 
+  font-size: 14px;
+   @media (max-width: 1400px) {
+   min-width: 92px;
+   font-size: 12px;
+   height: 36px;
   }
   @media (max-width: 600px) {
-    width: 50px;
-    font-size: 12px;
-    padding: 6px 8px;
+    min-width: 80px;
+   font-size: 12px;
+   padding: 4px 8px;
+   height: 34px;
   }
 `;
 
@@ -163,18 +179,33 @@ export const TraceCreatedAtDiv = styled.div`
 `;
 
 export const TraceUpdateDiv = styled.div`
-  min-width: 92px;
-  height: 36px;
-  display: flex;
-  align-items: center;
+  display: inline-flex;
+ align-items: center;
   justify-content: center;
-  border-radius: 20px;
-  padding: 0 12px;
-  font-size: 16px;
-  font-weight: bold;
-  color: black;
-  border: 2px solid rgba(208, 208, 208, 0.5);
-  transition-duration: 500ms;
+  height: 34px;           /* 살짝 키움 */
+  padding: 0 14px;        /* 좌우 여백 여유 */
+  border-radius: 18px;
+  font-size: 15px;        /* 가독성 ↑ */
+  font-weight: 700;
+  color: #111;
+  border: 1.5px solid rgba(200, 200, 200, 0.9);
+  background: #fff;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+
+  &:hover {
+    background: #f6f7f9;
+    border-color: rgba(150, 150, 150, 0.9);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+
+  @media (max-width: 1400px) {
+    height: 32px;
+    padding: 0 12px;
+    font-size: 14px;
+  }
 `;
 
 export const TraceContentDiv = styled.div`
@@ -242,7 +273,7 @@ export const UserInfoDiv = styled.div`
 export const UserNickName = styled.div`
   font-size: 21px;
   margin-bottom: 8px;
-  width: 20%;
+  width: 40%;
   @media (max-width: 1400px) {
     font-size: 16px;
   }
@@ -505,3 +536,46 @@ export const ImagesGrid = styled.div`
   justify-content: start;  /* 그리드 트랙 좌측 정렬 */
   justify-items: start;    /* 각 카드 좌측 정렬 */
 `;
+
+const ButtonsWrap = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const PillBtn = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  line-height: 1;
+  border: 1px solid
+    ${(p) =>
+      p.$variant === "danger" ? "#fecaca" : p.$variant === "ghost" ? "#e2e8f0" : "#cbd5e1"};
+  background:
+    ${(p) =>
+      p.$variant === "danger" ? "#fff1f2" : p.$variant === "ghost" ? "#ffffff" : "#f8fafc"};
+  color:
+    ${(p) =>
+      p.$variant === "danger" ? "#b91c1c" : p.$variant === "ghost" ? "#334155" : "#111827"};
+  cursor: pointer;
+  transition: background .15s ease, box-shadow .15s ease, transform .02s ease;
+  box-shadow: 0 1px 0 rgba(0,0,0,.04);
+
+  &:hover {
+    background:
+      ${(p) =>
+        p.$variant === "danger" ? "#ffe4e6" : p.$variant === "ghost" ? "#f8fafc" : "#eef2ff"};
+  }
+  &:active { transform: translateY(1px); }
+  &:disabled { opacity: .55; cursor: not-allowed; }
+`;
+
+const EditBtn = (props) => (
+  <PillBtn {...props}><span>✏️</span><span>수정</span></PillBtn>
+);
+const DeleteBtn = (props) => (
+  <PillBtn {...props} $variant="danger"><span>🗑️</span><span>삭제</span></PillBtn>
+);

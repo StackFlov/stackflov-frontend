@@ -162,12 +162,6 @@ export default function AdminReportsPending() {
                           >
                             {busyRow === r.reportId ? "처리 중…" : "승인(삭제)"}
                           </PrimaryBtn>
-                          <DangerBtn
-                            disabled={busyRow === r.reportId}
-                            onClick={() => processReport(r.reportId, "REJECTED")}
-                          >
-                            {busyRow === r.reportId ? "처리 중…" : "기각"}
-                          </DangerBtn>
                           <MutedBtn
                             disabled={busyRow === r.reportId}
                             onClick={() => processReport(r.reportId, "PENDING")}
