@@ -26,7 +26,6 @@ import {
   ReplyCreateBtn,
   ReplyContentWrapper,
   ReplyHeader,
-  TraceUpdateDiv,
   TraceImagesWrapper,
   MetaRow,
 } from "../../styles/components/TraceDetailStyled";
@@ -37,88 +36,82 @@ import Cookies from "js-cookie";
 const DEFAULT_PROFILE =
   "https://d3sutbt651osyh.cloudfront.net/assets/profile/default.png";
 
-const SingleImageBox = styled.div`
-  width: 100%;
-  max-width: 680px;
-  aspect-ratio: 16 / 9;
-  margin: 16px 0 0;
-  border-radius: 12px;
-  background: #f8fafc;
-  border: 1px solid #eef2f7;
-  overflow: hidden;
-  display: flex; align-items: center; justify-content: center;
+/* -------------------------------
+   공통 pill 버튼 (TraceDetail과 동일)
+----------------------------------*/
+const ButtonsRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
 
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;     /* cover 로 바꾸면 꽉 채움(일부 잘릴 수 있음) */
-    display: block;
+const PillBtn = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  line-height: 1;
+  border: 1px solid
+    ${(p) =>
+      p.$variant === "danger"
+        ? "#fecaca"
+        : p.$variant === "ghost"
+        ? "#e2e8f0"
+        : p.$variant === "success"
+        ? "#86efac"
+        : "#cbd5e1"};
+  background: ${(p) =>
+    p.$variant === "danger"
+      ? "#fff1f2"
+      : p.$variant === "ghost"
+      ? "#ffffff"
+      : p.$variant === "success"
+      ? "#ecfdf5"
+      : "#f8fafc"};
+  color: ${(p) =>
+    p.$variant === "danger"
+      ? "#b91c1c"
+      : p.$variant === "ghost"
+      ? "#334155"
+      : p.$variant === "success"
+      ? "#065f46"
+      : "#111827"};
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.02s ease;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+
+  &:hover {
+    background: ${(p) =>
+      p.$variant === "danger"
+        ? "#ffe4e6"
+        : p.$variant === "ghost"
+        ? "#f8fafc"
+        : p.$variant === "success"
+        ? "#dcfce7"
+        : "#eef2ff"};
   }
-
-  @media (max-width: 1400px) { max-width: 560px; }
-  @media (max-width: 600px)  { max-width: 100%; }
+  &:active { transform: translateY(1px); }
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
 `;
 
-// ✅ 여러 장일 때 그리드
-const MultiGrid = styled.div`
-  width: 100%;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 12px;
-  margin-top: 16px;
-`;
+const EditBtn = (props) => (
+  <PillBtn {...props}>
+    <span>✏️</span>
+    <span>수정</span>
+  </PillBtn>
+);
+const DeleteBtn = (props) => (
+  <PillBtn {...props} $variant="danger">
+    <span>🗑️</span>
+    <span>삭제</span>
+  </PillBtn>
+);
 
-// ✅ 그리드 카드(4:3, 꽉 채움)
-const MultiCard = styled.div`
-  position: relative;
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid #eef2f7;
-  background: #f9fafb;
-
-  img {
-    position: absolute; inset: 0;
-    width: 100%; height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-`;
-
-// 메타(작성일/수정) 영역의 레이아웃 보정용
-
-// 이미지 그리드
-const ImagesGrid = styled.div`
-  width: 100%;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 12px;
-  margin-top: 16px;
-  justify-content: start;
-  justify-items: start;
-`;
-
-// 고정 비율 카드
-const ImageCard = styled.div`
-  position: relative;
-  width: 100%;
-  padding-top: 66.66%; /* 3:2 비율 (원하면 100%로 정사각형) */
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid #eee;
-  background: #f9fafb;
-
-  img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-`;
-
+/* =====================================
+   컴포넌트
+===================================== */
 const NiBangNeBangDetail = () => {
   const { id } = useParams(); // reviewId
   const navigate = useNavigate();
@@ -255,6 +248,34 @@ const NiBangNeBangDetail = () => {
     return detail.authorEmail === me.email;
   }, [detail, me]);
 
+  // ✅ 리뷰 삭제 (컴포넌트 내부 & isAuthor 이후 선언)
+  const handleReviewDelete = async () => {
+    if (!isAuthor) {
+      alert("작성자만 삭제할 수 있습니다.");
+      return;
+    }
+    if (!window.confirm("이 리뷰를 삭제할까요?")) return;
+
+    try {
+      await axios.delete(`https://api.stackflov.com/map/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        withCredentials: true,
+      });
+      alert("삭제되었습니다.");
+      navigate("/nibangnebang"); // 목록 경로에 맞게 수정
+    } catch (err) {
+      console.error("Error deleting review:", err?.response || err);
+      const msg =
+        err?.response?.status === 403
+          ? "삭제 권한이 없습니다."
+          : "삭제에 실패했습니다.";
+      alert(msg);
+    }
+  };
+
   if (!detail) {
     return <div style={{ padding: 24 }}>로딩 중…</div>;
   }
@@ -273,42 +294,41 @@ const NiBangNeBangDetail = () => {
       </TraceDetailTopContent>
 
       {/* 중단(메타/내용/이미지) */}
-      <TraceDetailMiddleContent style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+      <TraceDetailMiddleContent
+        style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}
+      >
         <MetaRow>
-          {/* 기존 스타일의 float/width를 무시하기 위해 style로 덮어쓰기 */}
           <TraceCreatedAtDiv style={{ float: "none", width: "auto", padding: "8px 0" }}>
             작성일 : {detail?.createdAt?.slice(0, 10)}
           </TraceCreatedAtDiv>
 
           {isAuthor && (
-            <TraceUpdateDiv
-              onClick={() => navigate(`/nibangnebang/update/${id}`)}
-              style={{ float: "none", height: 36, minWidth: 92, padding: "0 12px", display: "flex", alignItems: "center", justifyContent: "center" }}
-            >
-              수정
-            </TraceUpdateDiv>
+            <ButtonsRow>
+              <EditBtn onClick={() => navigate(`/nibangnebang/update/${id}`)} />
+              <DeleteBtn onClick={handleReviewDelete} />
+            </ButtonsRow>
           )}
         </MetaRow>
 
-        {/* 본문 내용 (float 해제 + 100% 너비) */}
+        {/* 본문 내용 */}
         <TraceContentDiv style={{ whiteSpace: "pre-wrap", float: "none", width: "100%" }}>
           {detail.content}
         </TraceContentDiv>
 
-        {/* 리뷰 이미지 그리드 */}
+        {/* 리뷰 이미지 */}
         {Array.isArray(detail.imageUrls) && detail.imageUrls.length > 0 && (
-   <TraceImagesWrapper>
-     {detail.imageUrls.map((url, idx) => (
-       <img
-         key={`${url}-${idx}`}
-         src={url}
-         alt={`review-${idx}`}
-         loading="lazy"
-         decoding="async"
-       />
-     ))}
-   </TraceImagesWrapper>
- )}
+          <TraceImagesWrapper>
+            {detail.imageUrls.map((url, idx) => (
+              <img
+                key={`${url}-${idx}`}
+                src={url}
+                alt={`review-${idx}`}
+                loading="lazy"
+                decoding="async"
+              />
+            ))}
+          </TraceImagesWrapper>
+        )}
       </TraceDetailMiddleContent>
 
       {/* 하단(작성자) */}

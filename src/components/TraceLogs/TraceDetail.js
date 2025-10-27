@@ -308,6 +308,32 @@ const TraceDetail = () => {
       )
       .catch((err) => console.error("Error unfollow:", err));
   };
+  const handleBoardDelete = async () => {
+  if (!me?.email || me.email !== traceInfo.authorEmail) {
+    alert("작성자만 삭제할 수 있습니다.");
+    return;
+  }
+  if (!window.confirm("이 게시글을 삭제할까요?")) return;
+
+  try {
+    await axios.delete(`https://api.stackflov.com/boards/${no}`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      withCredentials: true,
+    });
+    alert("삭제되었습니다.");
+    navigator("/trace"); // 목록 라우트에 맞게 필요시 경로 수정
+  } catch (err) {
+    console.error("Error deleting board:", err?.response || err);
+    const msg =
+      err?.response?.status === 403
+        ? "삭제 권한이 없습니다."
+        : "삭제에 실패했습니다.";
+    alert(msg);
+  }
+};
 
   // === 이미지 처리 ===
   const imgSrc = useMemo(
@@ -346,13 +372,11 @@ const TraceDetail = () => {
      작성일 : {traceInfo?.createdAt?.slice(0, 10)}
    </TraceCreatedAtDiv>
    {me?.email && traceInfo.authorEmail === me.email && (
-     <TraceUpdateDiv
-       onClick={() => navigator(`/trace/update/${no}`)}
-       style={{ height: 36, minWidth: 92, display: "flex", alignItems: "center", justifyContent: "center" }}
-     >
-       수정
-     </TraceUpdateDiv>
-   )}
+  <ButtonsRow>
+    <EditBtn onClick={() => navigator(`/trace/update/${no}`)} />
+    <DeleteBtn onClick={handleBoardDelete} />
+  </ButtonsRow>
+)}
  </MetaRow>
 
         <TraceContentDiv>{traceInfo.content}</TraceContentDiv>
