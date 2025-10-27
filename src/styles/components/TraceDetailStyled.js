@@ -1,6 +1,15 @@
 import styled from "styled-components";
 import "../../Fonts/fonts.css";
 
+export const MetaRow = styled.div`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 8px 0 12px;
+`;
+
 export const TraceDetailWrapper = styled.div`
   margin: 0 auto;
   width: 100%;
@@ -104,9 +113,9 @@ export const TraceCategoryDiv = styled.div`
 `;
 
 export const TraceCategorySelectorItem = styled.li`
-  width: 70px;
+  width: 100px;
   padding: 8px 12px;
-  height: 20px;
+  height: 50px;
   list-style: none;
   border: 2px solid #cdd8e3;
   border-radius: 15px;
@@ -143,53 +152,37 @@ export const TraceDetailMiddleContent = styled.div`
 `;
 
 export const TraceCreatedAtDiv = styled.div`
-  padding: 12px 0;
-  font-size: 21px;
-  font-weight: bold;
+  padding: 8px 0;
+  font-size: 18px;
+  font-weight: 600;
   color: #b6b6b6;
-
-  width: 1250px;
-  float: left;
   @media (max-width: 1400px) {
     font-size: 15px;
     padding: 6px 0;
   }
-  @media (max-width: 600px) {
-    font-size: 12px;
-    padding: 2px 0;
-  }
 `;
 
 export const TraceUpdateDiv = styled.div`
-  width: 100px;
-  height: 20px;
+  min-width: 92px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 20px;
-  padding: 12px 0;
-  font-size: 18px;
+  padding: 0 12px;
+  font-size: 16px;
   font-weight: bold;
   color: black;
-  float: left;
   border: 2px solid rgba(208, 208, 208, 0.5);
   transition-duration: 500ms;
-  &:hover {
-    border: 2px solid rgba(208, 208, 208, 0.5);
-    background-color: rgba(208, 208, 208, 0.5);
-  }
 `;
 
 export const TraceContentDiv = styled.div`
   font-size: 28px;
   word-break: break-word;
-  width: 1250px;
-  float: left;
+  width: 100%;
   @media (max-width: 1400px) {
     font-size: 18px;
-  }
-  @media (max-width: 600px) {
-    font-size: 14px;
   }
 `;
 
@@ -501,4 +494,14 @@ export const ReplyContentDiv = styled.div`
     font-size: 11px;
     margin-top: 2px;
   }
+`;
+
+export const ImagesGrid = styled.div`
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+  justify-content: start;  /* 그리드 트랙 좌측 정렬 */
+  justify-items: start;    /* 각 카드 좌측 정렬 */
 `;
