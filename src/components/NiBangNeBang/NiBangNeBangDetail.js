@@ -32,19 +32,19 @@ import {
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import axios from "axios";
 import Cookies from "js-cookie";
+import ReportButton from "../../components/report/ReportButton";
 
 const DEFAULT_PROFILE =
   "https://d3sutbt651osyh.cloudfront.net/assets/profile/default.png";
 
 /* -------------------------------
-   공통 pill 버튼 (TraceDetail과 동일)
+   공통 pill 버튼(자취로그와 동일)
 ----------------------------------*/
 const ButtonsRow = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
 `;
-
 const PillBtn = styled.button`
   display: inline-flex;
   align-items: center;
@@ -81,7 +81,6 @@ const PillBtn = styled.button`
   cursor: pointer;
   transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.02s ease;
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
-
   &:hover {
     background: ${(p) =>
       p.$variant === "danger"
@@ -95,7 +94,6 @@ const PillBtn = styled.button`
   &:active { transform: translateY(1px); }
   &:disabled { opacity: 0.55; cursor: not-allowed; }
 `;
-
 const EditBtn = (props) => (
   <PillBtn {...props}>
     <span>✏️</span>
@@ -106,6 +104,18 @@ const DeleteBtn = (props) => (
   <PillBtn {...props} $variant="danger">
     <span>🗑️</span>
     <span>삭제</span>
+  </PillBtn>
+);
+const SaveBtn = (props) => (
+  <PillBtn {...props} $variant="success">
+    <span>💾</span>
+    <span>저장</span>
+  </PillBtn>
+);
+const CancelBtn = (props) => (
+  <PillBtn {...props} $variant="ghost">
+    <span>↩️</span>
+    <span>취소</span>
   </PillBtn>
 );
 
@@ -147,7 +157,7 @@ const NiBangNeBangDetail = () => {
   // 2) 내 정보(로그인 시): /users/me
   useEffect(() => {
     if (!accessToken) return;
-    if (fetchedMeRef.current) return; // StrictMode 가드
+    if (fetchedMeRef.current) return;
     fetchedMeRef.current = true;
 
     axios
@@ -175,7 +185,6 @@ const NiBangNeBangDetail = () => {
       .then((res) => setReplies(res.data))
       .catch((err) => console.error("Error fetching replies:", err));
   };
-
   useEffect(() => {
     loadReplies();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -242,13 +251,13 @@ const NiBangNeBangDetail = () => {
       .catch((err) => console.error("Error deleting reply:", err));
   };
 
-  // 작성자 본인 여부
+  // 본인 작성자 여부
   const isAuthor = useMemo(() => {
     if (!detail || !me) return false;
     return detail.authorEmail === me.email;
   }, [detail, me]);
 
-  // ✅ 리뷰 삭제 (컴포넌트 내부 & isAuthor 이후 선언)
+  // 리뷰 삭제
   const handleReviewDelete = async () => {
     if (!isAuthor) {
       alert("작성자만 삭제할 수 있습니다.");
@@ -276,9 +285,7 @@ const NiBangNeBangDetail = () => {
     }
   };
 
-  if (!detail) {
-    return <div style={{ padding: 24 }}>로딩 중…</div>;
-  }
+  if (!detail) return <div style={{ padding: 24 }}>로딩 중…</div>;
 
   return (
     <TraceDetailWrapper>
@@ -287,9 +294,19 @@ const NiBangNeBangDetail = () => {
         <TraceDiv>니방내방</TraceDiv>
         <TraceTitleDiv>{detail.title}</TraceTitleDiv>
         <TraceCategoryDiv>
-          <TraceCategorySelectorItem>
-            {detail.address || "주소 미기재"}
-          </TraceCategorySelectorItem>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {/* 🚩 게시글 신고 (REVIEW) */}
+            <ReportButton
+              contentId={Number(id)}
+              contentType="REVIEW"
+              accessToken={accessToken}
+              size="sm"
+              variant="pill"
+            />
+            <TraceCategorySelectorItem>
+              {detail.address || "주소 미기재"}
+            </TraceCategorySelectorItem>
+          </div>
         </TraceCategoryDiv>
       </TraceDetailTopContent>
 
@@ -387,41 +404,43 @@ const NiBangNeBangDetail = () => {
           <ReplyDiv key={item.id}>
             <ReplyContentWrapper>
               <ReplyHeader>
-                <ReplyUserUserNameDiv>{item.authorEmail}</ReplyUserUserNameDiv>
-                <ReplyCreateAtDiv>
-                  {item.createdAt ? item.createdAt.slice(0, 10) : ""}
-                </ReplyCreateAtDiv>
+                {/* 왼쪽: 작성자/일자 */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <ReplyUserUserNameDiv>{item.authorEmail}</ReplyUserUserNameDiv>
+                  <ReplyCreateAtDiv>
+                    {item.createdAt ? item.createdAt.slice(0, 10) : ""}
+                  </ReplyCreateAtDiv>
+                </div>
 
-                {imAuthor &&
-                  (!isEditing ? (
-                    <>
-                      <button
-                        onClick={() => {
-                          setEditingReplyId(item.id);
-                          setReplyUpdateInput(item.content);
-                        }}
-                        style={{ marginLeft: 10 }}
-                      >
-                        수정
-                      </button>
-                      <button
-                        onClick={() => handleReplyDel(item.id)}
-                        style={{ marginLeft: 10 }}
-                      >
-                        삭제
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => handleReplyUpdate(item.id)}
-                        style={{ marginLeft: 10, marginRight: 5 }}
-                      >
-                        저장
-                      </button>
-                      <button onClick={() => setEditingReplyId(null)}>취소</button>
-                    </>
-                  ))}
+                {/* 오른쪽: 신고 + 액션 버튼들(자취로그와 동일) */}
+                <ButtonsRow>
+                  {/* 🚩 댓글 신고 */}
+                  <ReportButton
+                    contentId={item.id}
+                    contentType="COMMENT"
+                    accessToken={accessToken}
+                    size="sm"
+                    variant="pill"
+                  />
+
+                  {imAuthor &&
+                    (!isEditing ? (
+                      <>
+                        <EditBtn
+                          onClick={() => {
+                            setEditingReplyId(item.id);
+                            setReplyUpdateInput(item.content);
+                          }}
+                        />
+                        <DeleteBtn onClick={() => handleReplyDel(item.id)} />
+                      </>
+                    ) : (
+                      <>
+                        <SaveBtn onClick={() => handleReplyUpdate(item.id)} />
+                        <CancelBtn onClick={() => setEditingReplyId(null)} />
+                      </>
+                    ))}
+                </ButtonsRow>
               </ReplyHeader>
 
               {isEditing ? (
