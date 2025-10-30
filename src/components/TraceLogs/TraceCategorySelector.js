@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+// src/components/trace/TraceCategorySelector.jsx
+import React from "react";
 import { useNavigate } from "react-router-dom";
+import Cookies from "js-cookie";
 import {
   TraceCategorySelectorItem,
   TraceCategorySelectors,
@@ -7,65 +9,44 @@ import {
   TraceCreateDiv,
   TraceLogBigTitleWrapper,
 } from "../../styles/components/TraceCategorySelectorStyled";
-import Cookies from "js-cookie";
 
 const TraceCategorySelector = ({ nowCategory, setNowCategory }) => {
   const accessToken = Cookies.get("accessToken");
+  const navigate = useNavigate();
 
-  const navigator = useNavigate();
-  const [selectCategory, setSelectCategory] = useState(99);
+  const categories = [
+    { key: 99, label: "전체" },
+    { key: 0, label: "🏠 자취" },
+    { key: 1, label: "⚡ 번개" },
+    { key: 2, label: "🍯 꿀팁" },
+    { key: 3, label: "🍙 레시피" },
+  ];
+
   return (
     <TraceCategorySelectorWrapper>
       <TraceLogBigTitleWrapper>자취로그</TraceLogBigTitleWrapper>
+
       <TraceCategorySelectors>
-        <TraceCategorySelectorItem
-          selectCategory={nowCategory == 99 ? true : false}
-          onClick={() => {
-            setNowCategory(99);
-          }}
-        >
-          전체
-        </TraceCategorySelectorItem>
-        <TraceCategorySelectorItem
-          selectCategory={nowCategory == 1 ? true : false}
-          onClick={() => {
-            setNowCategory(1);
-          }}
-        >
-          🏠 자취
-        </TraceCategorySelectorItem>
-        <TraceCategorySelectorItem
-          selectCategory={nowCategory == 2 ? true : false}
-          onClick={() => {
-            setNowCategory(2);
-          }}
-        >
-          ⚡ 번개
-        </TraceCategorySelectorItem>
-        <TraceCategorySelectorItem
-          selectCategory={nowCategory == 3 ? true : false}
-          onClick={() => {
-            setNowCategory(3);
-          }}
-        >
-          🍯️ 꿀팁
-        </TraceCategorySelectorItem>
-        <TraceCategorySelectorItem
-          selectCategory={nowCategory == 4 ? true : false}
-          onClick={() => {
-            setNowCategory(4);
-          }}
-        >
-          🍙 레시피
-        </TraceCategorySelectorItem>
+        {categories.map((c, i) => (
+          <li key={c.key} style={{ listStyle: "none" }}>
+            <TraceCategorySelectorItem
+              $active={nowCategory === c.key}
+              aria-pressed={nowCategory === c.key}
+              onClick={() => setNowCategory(c.key)}
+              style={{ "--stagger": `${i * 60}ms` }}  /* 스태거 리빌 */
+            >
+              {c.label}
+            </TraceCategorySelectorItem>
+          </li>
+        ))}
+
         <TraceCreateDiv
           onClick={() => {
-            if (accessToken == undefined) {
-              alert("로그인이 필요한 기능입니다.");
-            } else {
-              navigator("/trace/create");
-            }
+            if (!accessToken) return alert("로그인이 필요한 기능입니다.");
+            navigate("/trace/create");
           }}
+          style={{ "--stagger": `${categories.length * 60}ms` }}
+          title="글쓰기"
         >
           글쓰기
         </TraceCreateDiv>

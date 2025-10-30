@@ -1,82 +1,117 @@
+// src/styles/components/HeaderStyled.js
 import styled from "styled-components";
 import "../../Fonts/fonts.css";
 
+/* 바깥 헤더 바(blur + sticky) */
+export const HeaderBar = styled.header`
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: saturate(140%) blur(6px);
+  background: rgba(255, 255, 255, 0.85);
+  border-bottom: 1px solid #eef0f3;
+`;
+
+/* 내부 컨테이너 */
 export const HeaderWrapper = styled.div`
   width: 100%;
-  height: 36px;
-  font-size: 24px;
-  font-weight: thin;
-  font-family: "INTERVARIABLE";
+  max-width: 1200px;
+  height: 60px;
+  margin: 0 auto;
+  padding: 0 16px;
 
-  /* ✔ flex 레이아웃 */
+  font-size: 16px;
+  font-family: "INTERVARIABLE", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: #111827;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 0 8px;
   box-sizing: border-box;
 `;
 
-/* 개별 메뉴 아이템 */
-export const HeaderItem = styled.div`
-  height: 106px;
-  display: flex;
-  align-items: center;
-  margin-left: 1rem;
-  font-weight: ${(props) => props.nowNavigator};
-
-  div {
-    transition: background-color 500ms, font-weight 500ms;
-    padding: 5px 8px;
-    cursor: pointer;
-    border-radius: 10px;
-    background-color: ${(props) =>
-      props.nowNavigator === "thin" ? "#ffffff" : "rgba(208, 208, 208, 0.8)"};
-
-    &:hover {
-      background-color: rgba(208, 208, 208, 0.5);
-      font-weight: bold;
-    }
-  }
-`;
-
-export const HeaderItemWrapper = styled.div`
-  height: 106px;
-`;
-
-/* 로고 영역: 내용만큼 */
+/* 좌측 로고 */
 export const LogoWrapper = styled.div`
   display: flex;
   align-items: center;
-  flex: 0 0 auto;
   min-width: 120px;
 `;
 
-export const Logo = styled.li`
-  display: flex;
+export const Logo = styled.a`
+  display: inline-flex;
   align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+  font-weight: 800;
+  font-size: 18px;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.9;
+  }
 `;
 
-/* 가운데 메뉴: 유동 폭 */
-export const LinkWrapper = styled.div`
-  height: 106px;
+/* 중앙 네비 */
+export const LinkWrapper = styled.nav`
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1 1 auto;      /* 남는 공간 사용 */
-  gap: 20px;
-  min-width: 320px;    /* 너무 좁아지지 않게 가드 */
+  flex: 1 1 auto;
+  gap: 10px;
+  min-width: 280px;
 `;
 
-/* 오른쪽: 알림 · Login · Profile */
+/* 우측 영역 */
 export const LoginWrapper = styled.div`
-  height: 106px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  gap: 10px;
   flex: 0 0 auto;
-  gap: 16px;
-  white-space: nowrap;  /* 줄바꿈 방지 */
+  white-space: nowrap;
+`;
+
+/* 공통 pill 버튼 */
+export const HeaderItem = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+
+  border: 1px solid ${({ $active }) => ($active ? "rgba(99,102,241,.45)" : "#d7dee6")};
+  background: ${({ $active }) => ($active ? "rgba(99,102,241,.08)" : "#fff")};
+  color: #111827;
+  font-weight: ${({ $active }) => ($active ? 700 : 500)};
+  font-size: 14px;
+
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    background: ${({ $active }) => ($active ? "rgba(99,102,241,.12)" : "#f8fafc")};
+    border-color: ${({ $active }) => ($active ? "rgba(99,102,241,.55)" : "#c7d2de")};
+  }
+  &:active {
+    transform: translateY(1px);
+  }
+  &:focus-visible {
+    outline: 2px solid rgba(99, 102, 241, 0.35);
+    outline-offset: 2px;
+  }
+`;
+
+/* 그룹 래퍼 (옵션) */
+export const HeaderItemWrapper = styled.div`
+  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 `;
 
 export const LoginButton = styled.div``;
