@@ -9,8 +9,6 @@ import {
   TraceListWrapper,
   TraceListTitle,
   TraceListViews,
-  TraceListGood,
-  TraceListBookMark,
   TraceListUser,
   MetaRow,
   RightActions,
