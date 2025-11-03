@@ -1,4 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+// src/components/trace/TraceDetail.jsx
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   TraceDiv,
@@ -24,24 +31,18 @@ import {
   ReplyCreateBtn,
   ReplyContentWrapper,
   ReplyHeader,
-  TraceUpdateDiv,
   TraceImagesWrapper,
+  MetaRow,
 } from "../../styles/components/TraceDetailStyled";
-import { MetaRow } from "../../styles/components/TraceDetailStyled";
 import styled from "styled-components";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import axios from "axios";
 import Cookies from "js-cookie";
 import ReportButton from "../../components/report/ReportButton";
 
-const DEFAULT_PROFILE =
-  "https://d3sutbt651osyh.cloudfront.net/assets/profile/default.png";
-
-/* =========================
-   공통 라운드 버튼 스타일
-   ========================= */
+/* ---------- Local pill buttons ---------- */
 const ButtonsRow = styled.div`
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
 `;
@@ -127,6 +128,11 @@ const CancelBtn = (props) => (
   </PillBtn>
 );
 
+/* ---------- Const ---------- */
+const DEFAULT_PROFILE =
+  "https://d3sutbt651osyh.cloudfront.net/assets/profile/default.png";
+const EXIT_MS = 260;
+
 const TraceDetail = () => {
   const [traceInfo, setTraceInfo] = useState({});
   const [replys, setReplys] = useState([]);
@@ -137,16 +143,36 @@ const TraceDetail = () => {
   const [editingReplyId, setEditingReplyId] = useState(null);
   const [imgErr, setImgErr] = useState(false);
 
+  // per-reply animation: 'enter' | 'new' | 'exit'
+  const [animMap, setAnimMap] = useState({});
+  const prevIdsRef = useRef(new Set());
+
   const accessToken = Cookies.get("accessToken");
   const navigator = useNavigate();
   const { no } = useParams();
 
-  const category = { 0: "🏠 자취", 1: "⚡ 번개", 2: "🍯️ 꿀팁", 3: "🍙 레시피" };
+  // reveal animations
+  const wrapperRef = useRef(null);
+  useEffect(() => {
+    const root = wrapperRef.current;
+    if (!root) return;
+    const revealNodes = root.querySelectorAll("[data-reveal='true']");
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (!e.isIntersecting) return;
+          const delay = Number(e.target.getAttribute("data-delay") || 0);
+          setTimeout(() => e.target.setAttribute("data-show", "true"), delay);
+          io.unobserve(e.target);
+        });
+      },
+      { threshold: 0.15, rootMargin: "0px 0px -8% 0px" }
+    );
+    revealNodes.forEach((n) => io.observe(n));
+    return () => io.disconnect();
+  }, [traceInfo.id, replys.length]);
 
-  // 개발모드(StrictMode) 중복 호출 방지
-  const fetchedMeRef = useRef(false);
-
-  // 게시글 상세
+  // board
   useEffect(() => {
     axios
       .get(`https://api.stackflov.com/boards/${no}`, {
@@ -157,11 +183,11 @@ const TraceDetail = () => {
       .catch((err) => console.error("Error fetching board:", err));
   }, [no]);
 
-  // 내 정보 및 팔로잉(로그인 시)
+  // me & followings
+  const fetchedMeRef = useRef(false);
   useEffect(() => {
     const token = Cookies.get("accessToken");
-    if (!token) return;
-    if (fetchedMeRef.current) return;
+    if (!token || fetchedMeRef.current) return;
     fetchedMeRef.current = true;
 
     axios
@@ -186,39 +212,39 @@ const TraceDetail = () => {
         );
       })
       .then((res2) => {
-        if (res2) setFollowings(res2.data.map((u) => u.id));
+        if (res2?.data) setFollowings(res2.data.map((u) => u.id));
       })
       .catch((err) => console.error("Error fetching me/followings:", err));
-  }, [accessToken]);
+  }, []);
 
-  // 댓글 목록
-  useEffect(() => {
+  // replies
+  const fetchReplies = useCallback(() => {
     axios
       .get(`https://api.stackflov.com/comments/board/${no}`, {
         headers: { "Content-Type": "application/json" },
         withCredentials: true,
       })
-      .then((res) => setReplys(res.data))
-      .catch((err) => console.error("Error fetching comments:", err));
+      .then((res) => {
+        const next = Array.isArray(res.data) ? res.data : [];
+        const prev = prevIdsRef.current;
+        const added = next.filter((r) => !prev.has(r.id));
+        if (added.length) {
+          setAnimMap((m) => ({
+            ...m,
+            ...Object.fromEntries(added.map((x) => [x.id, "new"])),
+          }));
+        }
+        prevIdsRef.current = new Set(next.map((r) => r.id));
+        setReplys(next);
+      })
+      .catch((err) => console.error("Error fetching replies:", err));
   }, [no]);
 
-  const fetchReplies = () => {
-    axios
-      .get(`https://api.stackflov.com/comments/board/${no}`, {
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
-      })
-      .then((res) => setReplys(res.data))
-      .catch((err) => console.error("Error fetching replies:", err));
-  };
+  useEffect(() => {
+    fetchReplies();
+  }, [fetchReplies]);
 
-  // 팔로우 여부
-  const isFollowing = useMemo(() => {
-    if (!traceInfo.authorId) return false;
-    return followings.includes(traceInfo.authorId);
-  }, [followings, traceInfo.authorId]);
-
-  // 댓글 등록/수정/삭제
+  // create
   const handleReplyCreate = () => {
     if (!me?.id) return alert("로그인이 필요한 기능입니다.");
     axios
@@ -240,6 +266,7 @@ const TraceDetail = () => {
       .catch((err) => console.error("Error creating reply:", err));
   };
 
+  // update
   const handleReplyUpdate = (replyNo) => {
     axios
       .put(
@@ -261,20 +288,42 @@ const TraceDetail = () => {
       .catch((err) => console.error("Error updating reply:", err));
   };
 
+  // delete (optimistic + exit anim)
   const handleReplyDel = (id) => {
-    axios
-      .delete(`https://api.stackflov.com/comments/${id}`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        withCredentials: true,
-      })
-      .then(() => fetchReplies())
-      .catch((err) => console.error("Error deleting reply:", err));
+    setAnimMap((m) => ({ ...m, [id]: "exit" }));
+
+    setTimeout(() => {
+      // optimistic remove
+      setReplys((prev) => {
+        const next = prev.filter((r) => r.id !== id);
+        prevIdsRef.current = new Set(next.map((r) => r.id));
+        return next;
+      });
+      if (editingReplyId === id) {
+        setEditingReplyId(null);
+        setReplyUpdateInput("");
+      }
+
+      axios
+        .delete(`https://api.stackflov.com/comments/${id}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          withCredentials: true,
+        })
+        .then(() => {
+          // keep optimistic state; if you prefer strict sync: fetchReplies();
+        })
+        .catch((err) => {
+          console.error("Error deleting reply:", err);
+          // restore with server truth
+          fetchReplies();
+        });
+    }, EXIT_MS);
   };
 
-  // 팔로우/언팔로우
+  // follow/unfollow
   const handleFollowed = () => {
     if (!me?.id) return alert("로그인이 필요한 기능입니다.");
     axios
@@ -308,84 +357,92 @@ const TraceDetail = () => {
       )
       .catch((err) => console.error("Error unfollow:", err));
   };
+
+  // board delete
   const handleBoardDelete = async () => {
-  if (!me?.email || me.email !== traceInfo.authorEmail) {
-    alert("작성자만 삭제할 수 있습니다.");
-    return;
-  }
-  if (!window.confirm("이 게시글을 삭제할까요?")) return;
+    if (!me?.email || me.email !== traceInfo.authorEmail) {
+      alert("작성자만 삭제할 수 있습니다.");
+      return;
+    }
+    if (!window.confirm("이 게시글을 삭제할까요?")) return;
 
-  try {
-    await axios.delete(`https://api.stackflov.com/boards/${no}`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      withCredentials: true,
-    });
-    alert("삭제되었습니다.");
-    navigator("/trace"); // 목록 라우트에 맞게 필요시 경로 수정
-  } catch (err) {
-    console.error("Error deleting board:", err?.response || err);
-    const msg =
-      err?.response?.status === 403
-        ? "삭제 권한이 없습니다."
-        : "삭제에 실패했습니다.";
-    alert(msg);
-  }
-};
+    try {
+      await axios.delete(`https://api.stackflov.com/boards/${no}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        withCredentials: true,
+      });
+      alert("삭제되었습니다.");
+      navigator("/trace");
+    } catch (err) {
+      console.error("Error deleting board:", err?.response || err);
+      const msg =
+        err?.response?.status === 403
+          ? "삭제 권한이 없습니다."
+          : "삭제에 실패했습니다.";
+      alert(msg);
+    }
+  };
 
-  // === 이미지 처리 ===
+  // image
   const imgSrc = useMemo(
     () => traceInfo.authorProfileImageUrl || DEFAULT_PROFILE,
     [traceInfo.authorProfileImageUrl]
   );
+  useEffect(() => setImgErr(false), [imgSrc]);
 
-  useEffect(() => {
-    setImgErr(false);
-  }, [imgSrc]);
+  const isFollowing = useMemo(() => {
+    if (!traceInfo.authorId) return false;
+    return followings.includes(traceInfo.authorId);
+  }, [followings, traceInfo.authorId]);
+
+  const category = { 0: "🏠 자취", 1: "⚡ 번개", 2: "🍯️ 꿀팁", 3: "🍙 레시피" };
 
   return (
-    <TraceDetailWrapper>
-      <TraceDetailTopContent>
+    <TraceDetailWrapper ref={wrapperRef}>
+      <TraceDetailTopContent data-reveal="true" data-delay="0">
         <TraceDiv>자취로그</TraceDiv>
+
         <TraceTitleDiv>{traceInfo.title}</TraceTitleDiv>
+
         <TraceCategoryDiv>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <ReportButton
-              contentId={Number(no)}
-              contentType="BOARD"
-              accessToken={accessToken}
-              size="sm"
-              variant="pill" // 게시글 상단도 pill 스타일로 통일하고 싶으면 유지
-            />
-            <TraceCategorySelectorItem>
-              {category[traceInfo.category]}
-            </TraceCategorySelectorItem>
-          </div>
+          <ReportButton
+            contentId={Number(no)}
+            contentType="BOARD"
+            accessToken={accessToken}
+            size="sm"
+            variant="pill"
+          />
+          <TraceCategorySelectorItem>
+            {category[traceInfo.category]}
+          </TraceCategorySelectorItem>
         </TraceCategoryDiv>
       </TraceDetailTopContent>
 
-      <TraceDetailMiddleContent>
+      <TraceDetailMiddleContent data-reveal="true" data-delay="60">
         <MetaRow>
-   <TraceCreatedAtDiv style={{ padding: "8px 0" }}>
-     작성일 : {traceInfo?.createdAt?.slice(0, 10)}
-   </TraceCreatedAtDiv>
-   {me?.email && traceInfo.authorEmail === me.email && (
-  <ButtonsRow>
-    <EditBtn onClick={() => navigator(`/trace/update/${no}`)} />
-    <DeleteBtn onClick={handleBoardDelete} />
-  </ButtonsRow>
-)}
- </MetaRow>
+          <TraceCreatedAtDiv>
+            작성일 : {traceInfo?.createdAt?.slice(0, 10) || ""}
+          </TraceCreatedAtDiv>
+
+          {me?.email && traceInfo.authorEmail === me.email && (
+            <ButtonsRow>
+              <EditBtn onClick={() => navigator(`/trace/update/${no}`)} />
+              <DeleteBtn onClick={handleBoardDelete} />
+            </ButtonsRow>
+          )}
+        </MetaRow>
 
         <TraceContentDiv>{traceInfo.content}</TraceContentDiv>
+
         <TraceImagesWrapper>
-          {traceInfo.imageUrls?.map((url, index) => (
+          {traceInfo.imageUrls?.map((url, idx) => (
             <img
-              key={index}
+              key={idx}
               src={url}
-              alt={`게시글 이미지 ${index + 1}`}
+              alt={`게시글 이미지 ${idx + 1}`}
               loading="lazy"
               decoding="async"
             />
@@ -393,32 +450,20 @@ const TraceDetail = () => {
         </TraceImagesWrapper>
       </TraceDetailMiddleContent>
 
-      <TraceDetailBottomContent>
-        <UserImageDiv
-          style={{
-            width: 150,
-            height: 150,
-            borderRadius: "50%",
-            overflow: "hidden",
-          }}
-        >
+      <TraceDetailBottomContent data-reveal="true" data-delay="120">
+        <UserImageDiv style={{ borderRadius: "50%", overflow: "hidden" }}>
           {imgErr ? (
-            <AccountCircleIcon style={{ fontSize: 120, color: "#c8ceda" }} />
+            <AccountCircleIcon style={{ fontSize: 72, color: "#c8ceda" }} />
           ) : (
             <img
               key={imgSrc}
               src={imgSrc}
               alt="author"
-              width={150}
-              height={150}
+              width={100}
+              height={100}
               loading="lazy"
               decoding="async"
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                display: "block",
-              }}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
               onError={(e) => {
                 e.currentTarget.onerror = null;
                 setImgErr(true);
@@ -429,11 +474,8 @@ const TraceDetail = () => {
 
         <UserInfoDiv>
           <UserNickName>{traceInfo.authorEmail}</UserNickName>
-
           {!isFollowing ? (
-            <UserFollowBtn onClick={handleFollowed}>
-              😽 팔로우하기
-            </UserFollowBtn>
+            <UserFollowBtn onClick={handleFollowed}>😽 팔로우하기</UserFollowBtn>
           ) : (
             <UserFollowBtn onClick={handleUnFollowed}>
               😽 언팔로우하기
@@ -442,7 +484,7 @@ const TraceDetail = () => {
         </UserInfoDiv>
       </TraceDetailBottomContent>
 
-      <ReplyCreateDiv>
+      <ReplyCreateDiv data-reveal="true" data-delay="160">
         <ReplyInput
           placeholder="댓글을 입력하세요"
           value={replyInput}
@@ -451,25 +493,31 @@ const TraceDetail = () => {
         <ReplyCreateBtn onClick={handleReplyCreate}>댓글 작성</ReplyCreateBtn>
       </ReplyCreateDiv>
 
-      {replys.map((item) => {
+      {replys.map((item, i) => {
         const isEditing = editingReplyId === item.id;
         return (
-          <ReplyDiv key={item.id}>
+          <ReplyDiv
+            key={item.id}
+            $anim={animMap[item.id] || "enter"}
+            onAnimationEnd={() => {
+              setAnimMap((m) => {
+                const { [item.id]: _drop, ...rest } = m;
+                return rest;
+              });
+            }}
+            data-reveal="true"
+            data-delay={200 + Math.min(i, 10) * 40}
+          >
             <ReplyContentWrapper>
               <ReplyHeader>
-                {/* 왼쪽: 작성자/일자 */}
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <ReplyUserUserNameDiv>
-                    {item.authorEmail}
-                  </ReplyUserUserNameDiv>
+                  <ReplyUserUserNameDiv>{item.authorEmail}</ReplyUserUserNameDiv>
                   <ReplyCreateAtDiv>
                     {item.createdAt?.slice(0, 10) || ""}
                   </ReplyCreateAtDiv>
                 </div>
 
-                {/* 오른쪽: 신고 맨 앞 + 액션 버튼들 */}
                 <ButtonsRow>
-                  {/* 🚩 신고 버튼 맨 앞 (pill 룩) */}
                   <ReportButton
                     contentId={item.id}
                     contentType="COMMENT"
@@ -478,24 +526,24 @@ const TraceDetail = () => {
                     variant="pill"
                   />
 
-                  {me?.email === item.authorEmail ? (
-                    !isEditing ? (
-                      <>
-                        <EditBtn
-                          onClick={() => {
-                            setEditingReplyId(item.id);
-                            setReplyUpdateInput(item.content);
-                          }}
-                        />
-                        <DeleteBtn onClick={() => handleReplyDel(item.id)} />
-                      </>
-                    ) : (
-                      <>
-                        <SaveBtn onClick={() => handleReplyUpdate(item.id)} />
-                        <CancelBtn onClick={() => setEditingReplyId(null)} />
-                      </>
-                    )
-                  ) : null}
+                  {me?.email === item.authorEmail && !isEditing && (
+                    <>
+                      <EditBtn
+                        onClick={() => {
+                          setEditingReplyId(item.id);
+                          setReplyUpdateInput(item.content);
+                        }}
+                      />
+                      <DeleteBtn onClick={() => handleReplyDel(item.id)} />
+                    </>
+                  )}
+
+                  {me?.email === item.authorEmail && isEditing && (
+                    <>
+                      <SaveBtn onClick={() => handleReplyUpdate(item.id)} />
+                      <CancelBtn onClick={() => setEditingReplyId(null)} />
+                    </>
+                  )}
                 </ButtonsRow>
               </ReplyHeader>
 
