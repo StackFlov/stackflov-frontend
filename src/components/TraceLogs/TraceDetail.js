@@ -375,7 +375,7 @@ const TraceDetail = () => {
         withCredentials: true,
       });
       alert("삭제되었습니다.");
-      navigator("/trace");
+      navigator("/");
     } catch (err) {
       console.error("Error deleting board:", err?.response || err);
       const msg =

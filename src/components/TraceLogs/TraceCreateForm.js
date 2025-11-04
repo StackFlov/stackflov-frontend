@@ -71,9 +71,7 @@ const TraceCreateForm = () => {
       }
     }
     setFiles(dedup);
-
-    // 같은 파일 재선택 가능하도록 초기화
-    e.target.value = "";
+    e.target.value = ""; // 같은 파일 재선택 가능
   };
 
   useEffect(() => {
@@ -84,6 +82,52 @@ const TraceCreateForm = () => {
 
   const removeImage = (idx) => {
     setFiles((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  // ✅ 응답에서 id를 최대한 뽑아 상세로 이동 (없으면 최신 1개 조회 후 이동)
+  const goToCreatedDetail = async (res) => {
+    // 1) 응답 본문
+    let id =
+      Number(res?.data?.id) ||
+      Number(res?.data?.boardId) ||
+      Number(res?.data?.data?.id) ||
+      Number(res?.data?.result?.id);
+
+    // 2) Location 헤더 (서버가 노출할 경우)
+    if (!Number.isFinite(id)) {
+      const loc = res?.headers && (res.headers["location"] || res.headers["Location"]);
+      if (loc) {
+        const m = String(loc).match(/(\d+)(?:\/)?$/);
+        if (m) id = Number(m[1]);
+      }
+    }
+
+    // 3) 최종 응답 URL
+    if (!Number.isFinite(id)) {
+      const url = res?.request?.responseURL;
+      if (url) {
+        const m = String(url).match(/(\d+)(?:\/)?$/);
+        if (m) id = Number(m[1]);
+      }
+    }
+
+    // 4) 그래도 못 찾으면 최신 글 1개(id desc) 조회
+    if (!Number.isFinite(id)) {
+      try {
+        const pageRes = await axios.get("https://api.stackflov.com/boards", {
+          params: { size: 1, sort: "id,desc" },
+          withCredentials: true,
+        });
+        const latest = pageRes?.data?.content?.[0];
+        if (latest?.id) id = Number(latest.id);
+      } catch (_) {}
+    }
+
+    if (Number.isFinite(id)) {
+      navigator(`/trace/detail/${id}`);
+    } else {
+      navigator("/trace");
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -120,9 +164,7 @@ const TraceCreateForm = () => {
         }
       );
 
-      const loc = res.headers?.location || res.headers?.Location;
-      if (loc) navigator(loc);
-      else navigator("/trace");
+      await goToCreatedDetail(res);
     } catch (error) {
       const msg =
         error?.response?.data?.message ||

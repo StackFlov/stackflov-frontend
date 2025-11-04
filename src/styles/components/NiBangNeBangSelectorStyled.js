@@ -19,7 +19,7 @@ export const TraceLogBigTitleWrapper = styled.div`
 export const NiBangNeBangSelectors = styled.ul`
   margin: 0 auto;
   width: 1200px;
-  height: 150px;
+  height: 70px;
 `;
 
 export const NiBangNeBangSelectorItem = styled.li`
