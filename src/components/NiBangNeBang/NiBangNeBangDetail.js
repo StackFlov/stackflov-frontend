@@ -1,20 +1,20 @@
-// src/pages/NiBangNeBangDetail.js
-import React, { useEffect, useRef, useState, useMemo } from "react";
+// src/components/NiBangNeBang/NiBangNeBangDetail.js
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import styled from "styled-components";
+import axios from "axios";
+import Cookies from "js-cookie";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+
 import {
   TraceDiv,
   TraceContentDiv,
   TraceCreatedAtDiv,
   TraceDetailBottomContent,
-  TraceCategorySelectorItem,
-  TraceDetailMiddleContent,
-  TraceDetailTopContent,
+  TraceCategoryDiv,
   TraceDetailWrapper,
   TraceTitleDiv,
   UserImageDiv,
   UserInfoDiv,
-  TraceCategoryDiv,
   UserNickName,
   UserFollowBtn,
   ReplyDiv,
@@ -29,71 +29,25 @@ import {
   TraceImagesWrapper,
   MetaRow,
 } from "../../styles/components/TraceDetailStyled";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import axios from "axios";
-import Cookies from "js-cookie";
+
+import {
+  TopSection,
+  MidSection,
+  TitleBar,
+  ButtonsRow,
+  PillBtn,
+  Chips,
+  Chip,
+  Stars,
+  Img,
+} from "../../styles/components/NiBangNeBangDetailStyled";
+
 import ReportButton from "../../components/report/ReportButton";
 
 const DEFAULT_PROFILE =
   "https://d3sutbt651osyh.cloudfront.net/assets/profile/default.png";
 
-/* -------------------------------
-   공통 pill 버튼(자취로그와 동일)
-----------------------------------*/
-const ButtonsRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-const PillBtn = styled.button`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 13px;
-  line-height: 1;
-  border: 1px solid
-    ${(p) =>
-      p.$variant === "danger"
-        ? "#fecaca"
-        : p.$variant === "ghost"
-        ? "#e2e8f0"
-        : p.$variant === "success"
-        ? "#86efac"
-        : "#cbd5e1"};
-  background: ${(p) =>
-    p.$variant === "danger"
-      ? "#fff1f2"
-      : p.$variant === "ghost"
-      ? "#ffffff"
-      : p.$variant === "success"
-      ? "#ecfdf5"
-      : "#f8fafc"};
-  color: ${(p) =>
-    p.$variant === "danger"
-      ? "#b91c1c"
-      : p.$variant === "ghost"
-      ? "#334155"
-      : p.$variant === "success"
-      ? "#065f46"
-      : "#111827"};
-  cursor: pointer;
-  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.02s ease;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
-  &:hover {
-    background: ${(p) =>
-      p.$variant === "danger"
-        ? "#ffe4e6"
-        : p.$variant === "ghost"
-        ? "#f8fafc"
-        : p.$variant === "success"
-        ? "#dcfce7"
-        : "#eef2ff"};
-  }
-  &:active { transform: translateY(1px); }
-  &:disabled { opacity: 0.55; cursor: not-allowed; }
-`;
+/** pill 버튼 조합 */
 const EditBtn = (props) => (
   <PillBtn {...props}>
     <span>✏️</span>
@@ -119,28 +73,22 @@ const CancelBtn = (props) => (
   </PillBtn>
 );
 
-/* =====================================
-   컴포넌트
-===================================== */
 const NiBangNeBangDetail = () => {
   const { id } = useParams(); // reviewId
   const navigate = useNavigate();
   const accessToken = Cookies.get("accessToken");
 
-  // 상세 / 로그인 사용자 / 댓글
   const [detail, setDetail] = useState(null);
   const [me, setMe] = useState(null);
   const [replies, setReplies] = useState([]);
 
-  // 입력/편집
   const [replyInput, setReplyInput] = useState("");
   const [replyUpdateInput, setReplyUpdateInput] = useState("");
   const [editingReplyId, setEditingReplyId] = useState(null);
 
-  // 개발모드 중복호출 가드
   const fetchedMeRef = useRef(false);
 
-  // 1) 리뷰 상세: /map/{id}
+  // 상세
   useEffect(() => {
     const headers = { "Content-Type": "application/json" };
     if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
@@ -154,10 +102,9 @@ const NiBangNeBangDetail = () => {
       .catch((err) => console.error("Error fetching review detail:", err));
   }, [id, accessToken]);
 
-  // 2) 내 정보(로그인 시): /users/me
+  // me
   useEffect(() => {
-    if (!accessToken) return;
-    if (fetchedMeRef.current) return;
+    if (!accessToken || fetchedMeRef.current) return;
     fetchedMeRef.current = true;
 
     axios
@@ -172,7 +119,7 @@ const NiBangNeBangDetail = () => {
       .catch((err) => console.error("Error fetching me:", err));
   }, [accessToken]);
 
-  // 3) 댓글 목록: /comments/review/{id}
+  // 댓글 로딩
   const loadReplies = () => {
     const headers = { "Content-Type": "application/json" };
     if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
@@ -183,14 +130,21 @@ const NiBangNeBangDetail = () => {
         withCredentials: true,
       })
       .then((res) => setReplies(res.data))
-      .catch((err) => console.error("Error fetching replies:", err));
+      .catch((err) => {
+        console.error("Error fetching replies:", err?.response || err);
+      });
   };
   useEffect(() => {
     loadReplies();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  // 댓글 생성
+  const isAuthor = useMemo(() => {
+    if (!detail || !me) return false;
+    return detail.authorEmail === me.email;
+  }, [detail, me]);
+
+  // 댓글 작성/수정/삭제
   const handleReplyCreate = () => {
     if (!accessToken || !me?.id) {
       alert("로그인이 필요한 기능입니다.");
@@ -215,7 +169,6 @@ const NiBangNeBangDetail = () => {
       .catch((err) => console.error("Error creating reply:", err));
   };
 
-  // 댓글 수정
   const handleReplyUpdate = (replyId) => {
     axios
       .put(
@@ -237,7 +190,6 @@ const NiBangNeBangDetail = () => {
       .catch((err) => console.error("Error updating reply:", err));
   };
 
-  // 댓글 삭제
   const handleReplyDel = (replyId) => {
     axios
       .delete(`https://api.stackflov.com/comments/${replyId}`, {
@@ -250,12 +202,6 @@ const NiBangNeBangDetail = () => {
       .then(() => loadReplies())
       .catch((err) => console.error("Error deleting reply:", err));
   };
-
-  // 본인 작성자 여부
-  const isAuthor = useMemo(() => {
-    if (!detail || !me) return false;
-    return detail.authorEmail === me.email;
-  }, [detail, me]);
 
   // 리뷰 삭제
   const handleReviewDelete = async () => {
@@ -274,14 +220,10 @@ const NiBangNeBangDetail = () => {
         withCredentials: true,
       });
       alert("삭제되었습니다.");
-      navigate("/nibangnebang"); // 목록 경로에 맞게 수정
+      navigate("/nibangnebang");
     } catch (err) {
       console.error("Error deleting review:", err?.response || err);
-      const msg =
-        err?.response?.status === 403
-          ? "삭제 권한이 없습니다."
-          : "삭제에 실패했습니다.";
-      alert(msg);
+      alert("삭제에 실패했습니다.");
     }
   };
 
@@ -290,29 +232,47 @@ const NiBangNeBangDetail = () => {
   return (
     <TraceDetailWrapper>
       {/* 상단 */}
-      <TraceDetailTopContent>
+      <TopSection>
         <TraceDiv>니방내방</TraceDiv>
-        <TraceTitleDiv>{detail.title}</TraceTitleDiv>
-        <TraceCategoryDiv>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {/* 🚩 게시글 신고 (REVIEW) */}
-            <ReportButton
-              contentId={Number(id)}
-              contentType="REVIEW"
-              accessToken={accessToken}
-              size="sm"
-              variant="pill"
-            />
-            <TraceCategorySelectorItem>
-              {detail.address || "주소 미기재"}
-            </TraceCategorySelectorItem>
-          </div>
-        </TraceCategoryDiv>
-      </TraceDetailTopContent>
+        <TitleBar>
+          <TraceTitleDiv style={{ margin: 0 }}>{detail.title}</TraceTitleDiv>
+        </TitleBar>
+      </TopSection>
 
-      {/* 중단(메타/내용/이미지) */}
-      <TraceDetailMiddleContent
-        style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}
+      {/* 주소/평점/신고 칩 */}
+      <TraceCategoryDiv style={{ float: "none", width: "100%" }}>
+        <Chips>
+          <Chip>
+            <span>📍</span>
+            <span>{detail.address || "주소 미기재"}</span>
+          </Chip>
+          <Chip>
+            <span>평점</span>
+            <Stars>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <span key={i}>{i < detail.rating ? "★" : "☆"}</span>
+              ))}
+            </Stars>
+          </Chip>
+
+          <ReportButton
+            contentId={Number(id)}
+            contentType="REVIEW"
+            accessToken={accessToken}
+            size="sm"
+            variant="pill"
+          />
+        </Chips>
+      </TraceCategoryDiv>
+
+      {/* 본문/이미지 */}
+      <MidSection
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          gap: 16,
+        }}
       >
         <MetaRow>
           <TraceCreatedAtDiv style={{ float: "none", width: "auto", padding: "8px 0" }}>
@@ -327,28 +287,30 @@ const NiBangNeBangDetail = () => {
           )}
         </MetaRow>
 
-        {/* 본문 내용 */}
         <TraceContentDiv style={{ whiteSpace: "pre-wrap", float: "none", width: "100%" }}>
           {detail.content}
         </TraceContentDiv>
 
-        {/* 리뷰 이미지 */}
         {Array.isArray(detail.imageUrls) && detail.imageUrls.length > 0 && (
-          <TraceImagesWrapper>
+          <TraceImagesWrapper style={{ gap: 14 }}>
             {detail.imageUrls.map((url, idx) => (
-              <img
+              <Img
                 key={`${url}-${idx}`}
                 src={url}
                 alt={`review-${idx}`}
                 loading="lazy"
                 decoding="async"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.style.display = "none";
+                }}
               />
             ))}
           </TraceImagesWrapper>
         )}
-      </TraceDetailMiddleContent>
+      </MidSection>
 
-      {/* 하단(작성자) */}
+      {/* 작성자 */}
       <TraceDetailBottomContent>
         <UserImageDiv
           style={{
@@ -404,7 +366,6 @@ const NiBangNeBangDetail = () => {
           <ReplyDiv key={item.id}>
             <ReplyContentWrapper>
               <ReplyHeader>
-                {/* 왼쪽: 작성자/일자 */}
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <ReplyUserUserNameDiv>{item.authorEmail}</ReplyUserUserNameDiv>
                   <ReplyCreateAtDiv>
@@ -412,9 +373,7 @@ const NiBangNeBangDetail = () => {
                   </ReplyCreateAtDiv>
                 </div>
 
-                {/* 오른쪽: 신고 + 액션 버튼들(자취로그와 동일) */}
                 <ButtonsRow>
-                  {/* 🚩 댓글 신고 */}
                   <ReportButton
                     contentId={item.id}
                     contentType="COMMENT"
