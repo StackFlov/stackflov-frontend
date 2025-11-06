@@ -21,7 +21,7 @@ const popIn = keyframes`
 export const NiBangNeBangCreateWrapper = styled.div`
   --ink: #111827;
   --muted: #6b7280;
-  --line: #e5e7eb;
+
   --brand: #6366f1;
   --accent: #8b5cf6;
   --surface: #f8fafc;
@@ -48,7 +48,34 @@ export const NiBangNeBangCreateTopContent = styled.header`
     left: 0; right: 0; bottom: -2px;
     height: 3px;
     border-radius: 2px;
-    background: linear-gradient(90deg, var(--brand), var(--accent));
+    border-bottom: 1px solid var(--line);
+    opacity: .75;
+  }
+
+  opacity: 0; transform: translateY(6px);
+  &[data-show="true"] { animation: ${rise} 420ms cubic-bezier(.2,.65,.2,1) both; }
+
+  @media (max-width: 560px) {
+    grid-template-columns: 72px 1fr;
+    &::after { height: 2px; bottom: -1px; }
+  }
+`;
+
+export const NiBangNeBangAddress = styled.header`
+  position: relative;
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 0 18px;
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -2px;
+    height: 3px;
+    border-radius: 2px;
+    border-bottom: 1px solid var(--line);
     opacity: .75;
   }
 
@@ -130,25 +157,24 @@ export const UploadRow = styled.div`
 export const UploadLabel = styled.label`
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
+  margin-top: 8px;
 
-  height: 40px;
-  padding: 0 14px;
-  border-radius: 12px;
-  cursor: pointer;
-  user-select: none;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 999px;
 
-  background: linear-gradient(180deg, #5a67ff, #3f51ff);
-  color: #fff;
   font-weight: 800;
   font-size: 14px;
-  letter-spacing: .01em;
+  color: #1e1b4b;
 
-  box-shadow: 0 10px 22px rgba(63,81,255,.22), 0 1px 0 rgba(0,0,0,.06);
-  transition: filter .15s ease, box-shadow .15s ease, transform .02s ease;
+  border: 1px solid rgba(99,102,241,.35);
+  background: linear-gradient(180deg, #fff, #f6f7ff);
 
-  &:hover { filter: brightness(1.03); box-shadow: 0 14px 26px rgba(63,81,255,.28); }
+  cursor: pointer;
+  transition: transform .02s ease, box-shadow .15s ease, background .15s ease;
+
+  &:hover  { box-shadow: 0 6px 18px rgba(99,102,241,.18); background: #f3f4ff; }
   &:active { transform: translateY(1px); }
 `;
 
