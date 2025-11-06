@@ -21,7 +21,7 @@ const popIn = keyframes`
 export const NiBangNeBangCreateWrapper = styled.div`
   --ink: #111827;
   --muted: #6b7280;
-
+  --line: #e5e7eb;
   --brand: #6366f1;
   --accent: #8b5cf6;
   --surface: #f8fafc;
@@ -89,7 +89,14 @@ export const NiBangNeBangAddress = styled.header`
 `;
 
 export const NiBangNeBangTitleDiv = styled.div`
-  font-size: 20px;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: .01em;
+`;
+
+export const NiBangNeBangAddrDiv = styled.div`
+  color: var(--muted);
+  font-size: 16px;
   font-weight: 900;
   letter-spacing: .01em;
 `;

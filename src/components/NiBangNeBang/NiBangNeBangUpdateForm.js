@@ -18,7 +18,8 @@ import {
   PreviewGrid,
   PreviewItem,
   RemoveThumbBtn,
-  NiBangNeBangAddress
+  NiBangNeBangAddress,
+  NiBangNeBangAddrDiv
 } from "../../styles/components/NiBangNeBangCreateFormStyled";
 import{
   SectionTitle
@@ -203,7 +204,7 @@ const NiBangNeBangUpdateForm = () => {
 
       {/* 주소 */}
       <NiBangNeBangAddress  data-show="true">
-        <NiBangNeBangTitleDiv>주소</NiBangNeBangTitleDiv>
+        <NiBangNeBangAddrDiv>주소</NiBangNeBangAddrDiv>
         <NiBangNeBangTitleInputDiv
           type="text"
           placeholder="주소(자유 형식)"
