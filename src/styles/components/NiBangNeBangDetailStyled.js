@@ -135,3 +135,37 @@ export const Img = styled.img`
   display: block;
   background: #f3f4f6;
 `;
+
+export const BottomRow = styled.div`
+  margin-top: 16px;
+  padding-top: 12px;
+ border-top: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
+export const Avatar = styled.img`
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #f3f4f6;
+  display: block;
+`;
+
+export const AuthorMeta = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+export const AuthorName = styled.div`
+  font-weight: 700;
+  color: #111827;
+`;
+
+export const AuthorEmail = styled.div`
+  font-size: 13px;
+  color: #6b7280;
+`;

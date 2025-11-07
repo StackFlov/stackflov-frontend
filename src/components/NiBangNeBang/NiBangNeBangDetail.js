@@ -3,19 +3,14 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import Cookies from "js-cookie";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 
 import {
   TraceDiv,
   TraceContentDiv,
   TraceCreatedAtDiv,
-  TraceDetailBottomContent,
   TraceCategoryDiv,
   TraceDetailWrapper,
   TraceTitleDiv,
-  UserImageDiv,
-  UserInfoDiv,
-  UserNickName,
   UserFollowBtn,
   ReplyDiv,
   ReplyUserUserNameDiv,
@@ -40,12 +35,18 @@ import {
   Chip,
   Stars,
   Img,
+  BottomRow,
+  Avatar,
+  AuthorMeta,
+  AuthorName,
+  AuthorEmail,
 } from "../../styles/components/NiBangNeBangDetailStyled";
 
 import ReportButton from "../../components/report/ReportButton";
 
 const DEFAULT_PROFILE =
   "https://d3sutbt651osyh.cloudfront.net/assets/profile/default.png";
+
 
 /** pill 버튼 조합 */
 const EditBtn = (props) => (
@@ -229,6 +230,18 @@ const NiBangNeBangDetail = () => {
 
   if (!detail) return <div style={{ padding: 24 }}>로딩 중…</div>;
 
+  const authorEmail =
+    detail?.authorEmail ||
+    detail?.authorNickname ||
+    detail?.author?.email ||
+    "익명";
+
+  const authorAvatar =
+    detail?.authorProfileImageUrl ||
+    detail?.author?.profileImageUrl ||
+    detail?.author?.profileImage ||
+    DEFAULT_PROFILE;
+
   return (
     <TraceDetailWrapper>
       {/* 상단 */}
@@ -310,42 +323,23 @@ const NiBangNeBangDetail = () => {
         )}
       </MidSection>
 
-      {/* 작성자 */}
-      <TraceDetailBottomContent>
-        <UserImageDiv
-          style={{
-            width: 150,
-            height: 150,
-            borderRadius: "50%",
-            overflow: "hidden",
-            background: "#f3f4f6",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+         <BottomRow>
+        <Avatar
+          src={authorAvatar || DEFAULT_PROFILE}
+          alt="author"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = DEFAULT_PROFILE;
           }}
-        >
-          {!detail.authorProfileImageUrl ? (
-            <AccountCircleIcon style={{ fontSize: 120, color: "#c8ceda" }} />
-          ) : (
-            <img
-              src={detail.authorProfileImageUrl || DEFAULT_PROFILE}
-              alt="author"
-              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = DEFAULT_PROFILE;
-              }}
-            />
-          )}
-        </UserImageDiv>
-
-        <UserInfoDiv>
-          <UserNickName>{detail.authorEmail}</UserNickName>
-          <UserFollowBtn disabled style={{ opacity: 0.6, cursor: "default" }}>
+        />
+        <AuthorMeta>
+          <AuthorName>{authorEmail}</AuthorName>
+          {detail?.authorEmail && <AuthorEmail>{detail.authorEmail}</AuthorEmail>}
+          <UserFollowBtn disabled style={{ width: "fit-content", opacity: 0.7 }}>
             😽 팔로우
           </UserFollowBtn>
-        </UserInfoDiv>
-      </TraceDetailBottomContent>
+        </AuthorMeta>
+      </BottomRow>
 
       {/* 댓글 작성 */}
       <ReplyCreateDiv>
