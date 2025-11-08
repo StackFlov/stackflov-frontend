@@ -47,6 +47,14 @@ import ReportButton from "../../components/report/ReportButton";
 const DEFAULT_PROFILE =
   "https://d3sutbt651osyh.cloudfront.net/assets/profile/default.png";
 
+const extractHashtags = (text) => {
+  if (!text) return [];
+  const re = /#([a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣_]+)/g;
+  const uniq = new Set();
+  let m;
+  while ((m = re.exec(text))) uniq.add(m[1]);
+  return Array.from(uniq);
+};
 
 /** pill 버튼 조합 */
 const EditBtn = (props) => (
@@ -102,6 +110,14 @@ const NiBangNeBangDetail = () => {
       .then((res) => setDetail(res.data))
       .catch((err) => console.error("Error fetching review detail:", err));
   }, [id, accessToken]);
+
+  const hashtags = useMemo(() => {
+    if (!detail) return [];
+    if (Array.isArray(detail.hashtags) && detail.hashtags.length > 0) {
+      return detail.hashtags.map(String);
+    }
+    return extractHashtags(detail.content);
+  }, [detail]);
 
   // me
   useEffect(() => {
@@ -276,6 +292,24 @@ const NiBangNeBangDetail = () => {
             variant="pill"
           />
         </Chips>
+        {/* 해시태그 칩: 있으면 노출 */}
+    {hashtags.length > 0 && (
+          <Chips style={{ marginTop: 6 }}>
+            {hashtags.map((tag) => (
+              <Chip
+                key={tag}
+                role="button"
+                onClick={() =>
+                  navigate(`/nibangnebang?tag=${encodeURIComponent(tag)}`)
+                }
+                title={`#${tag} 태그로 보기`}
+                style={{ cursor: "pointer" }}
+              >
+                #{tag}
+              </Chip>
+            ))}
+          </Chips>
+        )}
       </TraceCategoryDiv>
 
       {/* 본문/이미지 */}

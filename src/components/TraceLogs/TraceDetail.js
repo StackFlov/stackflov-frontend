@@ -128,10 +128,51 @@ const CancelBtn = (props) => (
   </PillBtn>
 );
 
+const stripHashtags = (text = "") =>
+  text
+    // 줄 시작 또는 공백 뒤의 #태그 제거
+    .replace(/(^|\s)#[a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣_]+/gm, "$1")
+    // 줄 끝의 여분 공백 정리
+    .replace(/[ \t]+(\r?\n)/g, "$1");
+
+
+
 /* ---------- Const ---------- */
 const DEFAULT_PROFILE =
   "https://d3sutbt651osyh.cloudfront.net/assets/profile/default.png";
 const EXIT_MS = 260;
+
+/* ---------- Hashtag util & chips ---------- */
+const extractHashtags = (text) => {
+  if (!text) return [];
+  const re = /#([a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣_]+)/g;
+  const uniq = new Set();
+  let m;
+  while ((m = re.exec(text))) uniq.add(m[1]);
+  return Array.from(uniq);
+};
+
+const HashChips = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+`;
+const HashChip = styled.button`
+  appearance: none;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #334155;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  &:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+  }
+`;
 
 const TraceDetail = () => {
   const [traceInfo, setTraceInfo] = useState({});
@@ -313,16 +354,17 @@ const TraceDetail = () => {
           withCredentials: true,
         })
         .then(() => {
-          // keep optimistic state; if you prefer strict sync: fetchReplies();
+          // keep optimistic state
         })
         .catch((err) => {
           console.error("Error deleting reply:", err);
-          // restore with server truth
           fetchReplies();
         });
     }, EXIT_MS);
   };
 
+  const hasImages =
+   Array.isArray(traceInfo.imageUrls) && traceInfo.imageUrls.length > 0;
   // follow/unfollow
   const handleFollowed = () => {
     if (!me?.id) return alert("로그인이 필요한 기능입니다.");
@@ -400,6 +442,19 @@ const TraceDetail = () => {
 
   const category = { 0: "🏠 자취", 1: "⚡ 번개", 2: "🍯️ 꿀팁", 3: "🍙 레시피" };
 
+  const contentForView = useMemo(
+  () => stripHashtags(traceInfo?.content || ""),
+  [traceInfo?.content]
+  );
+
+  // hashtags (서버 값 우선, 없으면 본문 파싱)
+  const hashtags = useMemo(() => {
+    if (Array.isArray(traceInfo?.hashtags) && traceInfo.hashtags.length > 0) {
+      return traceInfo.hashtags.map(String);
+    }
+    return extractHashtags(traceInfo?.content);
+  }, [traceInfo]);
+
   return (
     <TraceDetailWrapper ref={wrapperRef}>
       <TraceDetailTopContent data-reveal="true" data-delay="0">
@@ -419,6 +474,24 @@ const TraceDetail = () => {
             {category[traceInfo.category]}
           </TraceCategorySelectorItem>
         </TraceCategoryDiv>
+
+        {hashtags.length > 0 && (
+          <div style={{ gridColumn: "1 / -1" }}>
+            <HashChips>
+              {hashtags.map((tag) => (
+                <HashChip
+                  key={tag}
+                  onClick={() =>
+                    navigator(`/trace?tag=${encodeURIComponent(tag)}`)
+                  }
+                  title={`#${tag} 태그로 보기`}
+                >
+                  #{tag}
+                </HashChip>
+              ))}
+            </HashChips>
+          </div>
+        )}
       </TraceDetailTopContent>
 
       <TraceDetailMiddleContent data-reveal="true" data-delay="60">
@@ -435,19 +508,21 @@ const TraceDetail = () => {
           )}
         </MetaRow>
 
-        <TraceContentDiv>{traceInfo.content}</TraceContentDiv>
+        <TraceContentDiv>{contentForView}</TraceContentDiv>
 
-        <TraceImagesWrapper>
-          {traceInfo.imageUrls?.map((url, idx) => (
-            <img
-              key={idx}
-              src={url}
-              alt={`게시글 이미지 ${idx + 1}`}
-              loading="lazy"
-              decoding="async"
-            />
-          ))}
-        </TraceImagesWrapper>
+  {hasImages && (
+   <TraceImagesWrapper>
+     {traceInfo.imageUrls.map((url, idx) => (
+       <img
+         key={idx}
+         src={url}
+         alt={`게시글 이미지 ${idx + 1}`}
+         loading="lazy"
+         decoding="async"
+       />
+     ))}
+   </TraceImagesWrapper>
+ )}
       </TraceDetailMiddleContent>
 
       <TraceDetailBottomContent data-reveal="true" data-delay="120">
