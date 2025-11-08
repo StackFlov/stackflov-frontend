@@ -24,6 +24,72 @@ import {
   Divider,
 } from "../../styles/components/TraceUpdateFormStyled";
 import Cookies from "js-cookie";
+import styled from "styled-components";
+
+/* ---------------- Hashtag helpers (생성 페이지와 동일 톤) ---------------- */
+const HASHTAG_RE = /#([0-9A-Za-z가-힣_]{1,20})/g;
+
+function normalizeTag(raw) {
+  if (!raw) return "";
+  let t = String(raw).trim();
+  if (!t) return "";
+  t = t.replace(/^#+/, "");            // 앞의 # 제거
+  t = t.replace(/\s+/g, "");           // 중간 공백 제거
+  t = t.replace(/[^0-9A-Za-z가-힣_]/g, ""); // 허용 문자만
+  return t.slice(0, 20);
+}
+
+// 본문에서 해시태그 토큰 제거(가독성 유지: 과도한 공백/줄바꿈 정리)
+function stripHashtags(text) {
+  if (!text) return "";
+  const without = text.replace(HASHTAG_RE, "").replace(/[ \t]{2,}/g, " ");
+  return without.replace(/\n{3,}/g, "\n\n").trim();
+}
+
+/* ---------------- Tag UI (생성 페이지 느낌 그대로) ---------------- */
+const TagRow = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 10px 0 16px;
+`;
+const TagLabel = styled.div`
+  font-size: 14px;
+  color: #374151;
+  min-width: 64px;
+`;
+const TagInput = styled.input`
+  flex: 1;
+  min-width: 200px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  outline: none;
+  &:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+`;
+const TagChip = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #111827;
+  font-size: 13px;
+`;
+const RemoveTagBtn = styled.button`
+  border: 0;
+  background: transparent;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+`;
+
+/* =================================================================== */
 
 const TraceUpdateForm = () => {
   const navigator = useNavigate();
@@ -43,6 +109,10 @@ const TraceUpdateForm = () => {
   const [newFiles, setNewFiles] = useState([]); // File[]
   const [previews, setPreviews] = useState([]); // blob url[]
 
+  // ---- 별도 해시태그 UI 상태 ----
+  const [tagInput, setTagInput] = useState("");
+  const [tags, setTags] = useState([]); // ["tag1","tag2",...]
+
   const accessToken = Cookies.get("accessToken");
 
   useEffect(() => {
@@ -52,7 +122,7 @@ const TraceUpdateForm = () => {
     }
   }, [accessToken, navigator]);
 
-  // 게시글 조회
+  // 게시글 조회(+ 태그 분리)
   useEffect(() => {
     let mounted = true;
     setLoading(true);
@@ -65,7 +135,19 @@ const TraceUpdateForm = () => {
         if (!mounted) return;
         const data = res.data ?? {};
         setTraceTitle(data.title ?? "");
-        setTraceContent(data.content ?? "");
+
+        const rawContent = data.content ?? "";
+        // 1) 본문에서 기존 해시태그 파싱 -> 칩 상태로
+        const found = new Set();
+        let m;
+        while ((m = HASHTAG_RE.exec(rawContent))) {
+          found.add(m[1]);
+        }
+        setTags(Array.from(found)); // 태그 칩 초기화
+
+        // 2) 본문에서는 해시태그 제거한 텍스트만 보여주기
+        setTraceContent(stripHashtags(rawContent));
+
         const c = Number(data.category ?? 0);
         setTraceCategory([0, 1, 2, 3].includes(c) ? c : 0);
         setExistingImages(Array.isArray(data.imageUrls) ? data.imageUrls : []);
@@ -108,7 +190,6 @@ const TraceUpdateForm = () => {
         dedup.push(f);
       }
     }
-
     setNewFiles(dedup.slice(0, MAX_FILES));
     e.target.value = ""; // 같은 파일 다시 선택 가능하도록 초기화
   };
@@ -137,6 +218,40 @@ const TraceUpdateForm = () => {
 
   const removeCount = useMemo(() => removeImageUrls.size, [removeImageUrls]);
 
+  /* ---------------- Hashtag UI handlers (생성과 동일 UX) ---------------- */
+
+  // Enter/Space/Comma/Blur로 태그 확정
+  const handleTagKeyDown = (e) => {
+    if (["Enter", " ", "Comma", ","].includes(e.key)) {
+      e.preventDefault();
+      commitTag(tagInput);
+    }
+  };
+
+  const commitTag = (raw) => {
+    const t = normalizeTag(raw);
+    if (!t) { setTagInput(""); return; }
+    setTags((prev) => {
+      const exists = new Set(prev.map((x) => x.toLowerCase()));
+      if (exists.has(t.toLowerCase())) return prev; // 중복 방지(대소문자 무시)
+      return [...prev, t];
+    });
+    setTagInput("");
+  };
+
+  const removeTag = (t) =>
+    setTags((prev) => prev.filter((x) => x.toLowerCase() !== String(t).toLowerCase()));
+
+  // 사용자가 본문에 직접 쓴 태그도 회수(유실 방지)
+  const tagsInContent = useMemo(() => {
+    const set = new Set();
+    if (!traceContent) return set;
+    let m;
+    while ((m = HASHTAG_RE.exec(traceContent))) set.add(m[1]);
+    return set;
+  }, [traceContent]);
+
+  /* ---------------- Submit ---------------- */
   const handleUpdatePost = async (e) => {
     e.preventDefault();
     if (submitting) return;
@@ -148,27 +263,30 @@ const TraceUpdateForm = () => {
     setSubmitting(true);
 
     try {
+      // 칩의 태그 + 본문 내 태그를 합집합으로 만들어 보내기
+      const chipLower = new Set(tags.map((t) => t.toLowerCase()));
+      const contentLower = new Set(Array.from(tagsInContent).map((t) => t.toLowerCase()));
+      const merged = Array.from(new Set([...chipLower, ...contentLower]));
+
+      let contentToSend = traceContent.trim();
+      if (merged.length) {
+        const suffix = merged.map((t) => `#${t}`).join(" ");
+        contentToSend = `${contentToSend}\n\n${suffix}`.trim();
+      }
+
       const dto = {
         title: traceTitle.trim(),
-        content: traceContent.trim(),
-        category: Number(traceCategory), // 0~3
-        removeImageUrls: Array.from(removeImageUrls), // 서버에서 제거할 URL들
+        content: contentToSend,            // ← 본문 + 칩 태그
+        category: Number(traceCategory),   // 0~3
+        removeImageUrls: Array.from(removeImageUrls),
       };
 
       const formData = new FormData();
-      formData.append(
-        "data",
-        new Blob([JSON.stringify(dto)], { type: "application/json" })
-      );
-      // 새로 추가한 이미지들
-      for (const file of newFiles) {
-        formData.append("images", file);
-      }
+      formData.append("data", new Blob([JSON.stringify(dto)], { type: "application/json" }));
+      for (const file of newFiles) formData.append("images", file);
 
       await axios.put(`https://api.stackflov.com/boards/${no}`, formData, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: { Authorization: `Bearer ${accessToken}` },
         withCredentials: true,
       });
 
@@ -243,10 +361,31 @@ const TraceUpdateForm = () => {
 
       <TraceUpdateMiddleContent>
         <TraceUpdateContentInput
-          placeholder="글 내용을 작성해주세요."
+          placeholder="글 내용을 작성해주세요. (해시태그는 아래 칩에서 관리됩니다)"
           value={traceContent}
           onChange={(e) => setTraceContent(e.target.value)}
         />
+
+        {/* 해시태그: 생성 페이지 동일 UX */}
+        <Divider />
+        <SectionTitle>해시태그</SectionTitle>
+        <TagRow>
+          <TagLabel>해시태그</TagLabel>
+          <TagInput
+            placeholder="#태그 입력 후 Enter (영문/숫자/한글/_)"
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            onKeyDown={handleTagKeyDown}
+            onBlur={() => commitTag(tagInput)}  // 포커스 아웃 시 확정
+            maxLength={20}
+          />
+          {tags.map((t) => (
+            <TagChip key={t}>
+              <span>#{t}</span>
+              <RemoveTagBtn type="button" onClick={() => removeTag(t)}>×</RemoveTagBtn>
+            </TagChip>
+          ))}
+        </TagRow>
 
         <Divider />
 
