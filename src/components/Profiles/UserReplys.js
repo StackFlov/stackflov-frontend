@@ -1,156 +1,78 @@
 import React, { useEffect, useState } from "react";
 import {
-  TraceListDummyData,
-  UserDummyData,
-  ReplyDummyData,
-  MyInfoDUmmyDatas,
-} from "../../utils/dummyDatas";
-
-import {
   UserReplysListDiv,
   UserReplysFilterSelector,
   UserReplysFilterIcon,
-  UserReplysTitleDiv,
   UserReplysTopDiv,
   UserReplysWrapper,
   UserReplysCreateAtDiv,
   UserReplysDelBtn,
   UserReplyTitleDiv,
   UserReplyContentDiv,
-  UserReplysPostTitleDiv,
+  UserReplysToolbar,
+  UserReplysListWrap,
 } from "../../styles/components/UserReplysStyled";
 
 import SortIcon from "@mui/icons-material/Sort";
-
-import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
-import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
-import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Cookies from "js-cookie";
 
 const UserReplys = () => {
-  const [myReplts, setMyReplys] = useState([]);
-  const [viewPosts, setViewPosts] = useState();
-  const navigator = useNavigate();
-
-  const location = useLocation();
-  const accessToken = Cookies.get("accessToken");
-  const [me, setMe] = useState({});
+  const [replies, setReplies] = useState([]);
+  const [sortKey, setSortKey] = useState("createdAt"); // 등록일 기본 (최신순)
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    axios
-      .get(
-        "https://api.stackflov.com/boards?page=0&size=10",
-
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true, // ← 백엔드에서 allowCredentials(true)면 이거 필수
-        }
-      )
-      .then((res) => {
-        const test = res.data.content;
-
-        const list = test.filter(
-          (item) => item.userId == MyInfoDUmmyDatas.userId
-        );
-      });
-  }, []);
+  const navigate = useNavigate();
+  const accessToken = Cookies.get("accessToken");
 
   useEffect(() => {
     const token = Cookies.get("accessToken");
-
-    if (token) {
-      axios
-        .get("https://api.stackflov.com/users/me", {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
-        })
-        .then((res) => {
-          console.logo(res.data);
-        })
-        .catch((err) => {
-          console.error("Error fetching user data:", err);
-          setIsLoggedIn(false);
-        });
-
-      axios
-        .get(`https://api.stackflov.com/my/comments/board`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
-        })
-        .then((res) => {
-          setIsLoggedIn(true);
-          console.log(res.data.content);
-          setMyReplys(res.data.content);
-        })
-        .catch((err) => {
-          console.error("Error fetching user data:", err);
-          setIsLoggedIn(false);
-        });
-    } else {
+    if (!token) {
       setIsLoggedIn(false);
+      return;
     }
+
+    // 내 댓글 목록
+    axios
+      .get(`https://api.stackflov.com/my/comments/board`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        withCredentials: true,
+      })
+      .then((res) => {
+        setIsLoggedIn(true);
+        setReplies(res?.data?.content ?? []);
+      })
+      .catch((err) => {
+        console.error("Error fetching my replies:", err);
+        setIsLoggedIn(false);
+      });
   }, [accessToken]);
 
-  useEffect(() => {
-    const myReplys = ReplyDummyData.filter(
-      (item) => item.userId == MyInfoDUmmyDatas.userId
-    );
-    setMyReplys(myReplys);
-  }, []);
-
-  useEffect(() => {
-    const view = myReplts.map((item) => {
-      return (
-        <UserReplysListDiv
-          onClick={() => {
-            // navigator(`/trace/detail/${item.tracePostId}`);
-          }}
-        >
-          <UserReplysCreateAtDiv>
-            {item.createdAt.slice(0, 10)}
-          </UserReplysCreateAtDiv>
-          {/* <UserReplysPostTitleDiv>{list[0].authorEmail}</UserReplysPostTitleDiv> */}
-          <UserReplyContentDiv>{item.content}</UserReplyContentDiv>
-          <UserReplysDelBtn
-            onClick={() => {
-              handleReplyDel(item.id);
-            }}
-          >
-            삭제
-          </UserReplysDelBtn>
-        </UserReplysListDiv>
-      );
-    });
-    setViewPosts(view);
-  }, [myReplts]);
+  const sorted = [...replies].sort((a, b) => {
+    // createdAt 최신순
+    return (b.createdAt || "").localeCompare(a.createdAt || "");
+  });
 
   const handleReplyDel = (id) => {
-    axios
-      .delete(
-        `https://api.stackflov.com/comments/${id}`,
+    const token = Cookies.get("accessToken");
+    if (!token) return;
 
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          withCredentials: true,
-        }
-      )
-      .then((res) => {})
+    axios
+      .delete(`https://api.stackflov.com/comments/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        withCredentials: true,
+      })
+      .then(() => {
+        setReplies((prev) => prev.filter((r) => r.id !== id));
+      })
       .catch((err) => {
-        console.error("Error creating reply:", err);
+        console.error("Error deleting reply:", err);
       });
   };
 
@@ -158,17 +80,59 @@ const UserReplys = () => {
     <UserReplysWrapper>
       <UserReplysTopDiv>
         <UserReplyTitleDiv>내 댓글</UserReplyTitleDiv>
-        <UserReplysFilterIcon>
-          <SortIcon />
-        </UserReplysFilterIcon>
-        <UserReplysFilterSelector>
-          <option>등록일</option>
-          <option>조회수</option>
-          <option>좋아요</option>
-          <option>북마크</option>
-        </UserReplysFilterSelector>
+
+        <UserReplysToolbar>
+          <UserReplysFilterSelector
+            value={sortKey}
+            onChange={(e) => setSortKey(e.target.value)}
+            aria-label="정렬"
+          >
+            <option value="createdAt">등록일</option>
+          </UserReplysFilterSelector>
+          <UserReplysFilterIcon aria-hidden>
+            <SortIcon fontSize="small" />
+          </UserReplysFilterIcon>
+        </UserReplysToolbar>
       </UserReplysTopDiv>
-      {viewPosts}
+
+      <UserReplysListWrap>
+        {sorted.map((item) => (
+          <UserReplysListDiv
+            key={item.id}
+            onClick={() => {
+              // 댓글이 달린 게시글 id가 있다면 상세로 이동
+              if (item.boardId) navigate(`/trace/detail/${item.boardId}`);
+            }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && item.boardId) {
+                navigate(`/trace/detail/${item.boardId}`);
+              }
+            }}
+          >
+            <UserReplysCreateAtDiv>
+              {item.createdAt?.slice(0, 10)}
+            </UserReplysCreateAtDiv>
+
+            <UserReplyContentDiv title={item.content}>
+              {item.content}
+            </UserReplyContentDiv>
+
+            <UserReplysDelBtn
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleReplyDel(item.id);
+              }}
+              aria-label="삭제"
+              title="삭제"
+            >
+              삭제
+            </UserReplysDelBtn>
+          </UserReplysListDiv>
+        ))}
+      </UserReplysListWrap>
     </UserReplysWrapper>
   );
 };
