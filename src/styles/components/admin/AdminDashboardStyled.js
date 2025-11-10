@@ -72,3 +72,20 @@ export const LinkBtn = styled(Link)`
     border-color: #e3e6ef;
   }
 `;
+
+export const ChartCard = styled.div`
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 1px 0 rgba(17,24,39,0.02);
+`;
+
+export const ChartTitle = styled.div`
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: -0.2px;
+  color: #111827;
+  margin-bottom: 8px;
+`;

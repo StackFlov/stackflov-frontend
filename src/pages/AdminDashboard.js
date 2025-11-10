@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../utils/api";
-import axios from "axios";
+import DashboardTrendChart from "./DashboardTrendChart";
 
 const fmt = (n) => (typeof n === "number" ? n.toLocaleString() : "-");
 
@@ -85,6 +85,12 @@ export default function AdminDashboard() {
           value={`유저 ${fmt(todayNewUsers)} / 글 ${fmt(todayNewBoards)}`}
         />
       </div>
+
+      {/* 그래프 카드 */}
+      <ChartCard>
+        <ChartTitle>최근 14일 트렌드</ChartTitle>
+        <DashboardTrendChart fallbackStats={stats} />
+      </ChartCard>
 
       {/* 링크 모음 */}
       <div

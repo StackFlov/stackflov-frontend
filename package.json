@@ -20,6 +20,7 @@
     "react-dom": "^19.1.0",
     "react-router-dom": "^6.30.0",
     "react-scripts": "^5.0.1",
+    "recharts": "^3.3.0",
     "reducers": "^3.0.0-alpha",
     "sockjs-client": "^1.6.1",
     "styled-components": "^6.1.17",
