@@ -76,6 +76,14 @@ const Header = () => {
 
   const apiBase = process.env.REACT_APP_API_BASE_URL || "https://api.stackflov.com";
 
+  const openProfile = () => {
+  if (!isLoggedIn) { 
+    navigate("/login"); 
+    return; 
+  }
+    navigate("/profile");
+  };
+
   const handleLogout = () => {
     axios
       .post(`${apiBase}/auth/logout`, {}, {
@@ -177,7 +185,12 @@ const Header = () => {
             )}
 
             {/* 프로필 */}
-            <HeaderItem $active={isActive("/profile")} onClick={() => navigate("/profile")}>Profile</HeaderItem>
+            <HeaderItem
+              $active={isActive("/profile")}
+              onClick={openProfile}   // ✅ 기존 navigate("/profile")에서 교체
+            >
+            Profile
+            </HeaderItem>
           </LoginWrapper>
         </HeaderWrapper>
       </HeaderBar>

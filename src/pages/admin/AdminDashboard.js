@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../utils/api";
 import {
@@ -9,6 +9,7 @@ import {
   LinkRow, LinkBtn, ChartCard, ChartTitle,
 } from "../../styles/components/admin/AdminDashboardStyled";
 
+// recharts (JS 그대로 사용)
 import {
   ResponsiveContainer,
   LineChart,
@@ -26,7 +27,9 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
+  const [animSeed, setAnimSeed] = useState(0); // 애니메이션 재생용 키
 
+  // 데이터 로드
   useEffect(() => {
     let alive = true;
     setLoading(true);
@@ -42,8 +45,13 @@ export default function AdminDashboard() {
     return () => { alive = false; };
   }, []);
 
-  // ✅ 훅은 조기 리턴보다 위에서 호출되어야 함
-  const trendRows = useMemo(() => buildTrendRows(stats), [stats]);
+  // stats가 바뀔 때마다 차트를 재마운트해서 애니메이션 재생
+  useEffect(() => {
+    setAnimSeed((s) => s + 1);
+  }, [stats]);
+
+  // 그래프 데이터 (훅 아님 → ESLint hooks 경고 없음)
+  const trendRows = buildTrendRows(stats);
 
   if (loading) return <PageWrap>대시보드 불러오는 중…</PageWrap>;
   if (err)      return <PageWrap style={{ color:"#c00" }}>오류: {String(err)}</PageWrap>;
@@ -75,19 +83,46 @@ export default function AdminDashboard() {
         <DashCard title="오늘 신규"   value={`유저 ${fmt(todayNewUsers)} / 글 ${fmt(todayNewBoards)}`} />
       </CardsGrid>
 
-      {/* 그래프 */}
+      {/* ✅ 트렌드 그래프 (애니메이션 포함) */}
       <ChartCard>
         <ChartTitle>최근 14일 트렌드</ChartTitle>
         <div style={{ width: "100%", height: 280 }}>
           <ResponsiveContainer>
-            <LineChart data={trendRows} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            {/* key=animSeed 로 데이터 변경 시마다 부드럽게 재생 */}
+            <LineChart
+              key={animSeed}
+              data={trendRows}
+              margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+            >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="label" />
               <YAxis domain={[0, (max) => Math.max(5, (max ?? 0) + 2)]} allowDecimals={false} />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="newUsers"  name="신규 유저" strokeWidth={2} dot />
-              <Line type="monotone" dataKey="newBoards" name="신규 글"  strokeWidth={2} dot />
+              <Line
+                type="monotone"
+                dataKey="newUsers"
+                name="신규 유저"
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                activeDot={{ r: 6 }}
+                isAnimationActive
+                animationBegin={0}
+                animationDuration={900}
+                animationEasing="ease-out"
+              />
+              <Line
+                type="monotone"
+                dataKey="newBoards"
+                name="신규 글"
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                activeDot={{ r: 6 }}
+                isAnimationActive
+                animationBegin={0}
+                animationDuration={900}
+                animationEasing="ease-out"
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -117,7 +152,6 @@ function DashCard({ title, value, to, warn }) {
 }
 
 /* ---------------- helpers (chart) ---------------- */
-
 function buildTrendRows(stats = {}) {
   const days = 14;
   const base = new Date();
@@ -127,27 +161,41 @@ function buildTrendRows(stats = {}) {
     const d = new Date(base);
     d.setDate(base.getDate() - (days - 1 - i));
     return {
-      dateISO: isoDate(d),
+      // 비교키(YYYY-MM-DD)
+      dateISO: toISODateKey(d),
       label: `${d.getMonth() + 1}/${d.getDate()}`,
       newUsers: 0,
       newBoards: 0,
     };
   });
 
-  // 백엔드 daily가 있으면 반영
+  // daily가 오면 병합
   const daily = Array.isArray(stats?.daily) ? stats.daily : null;
   if (daily) {
     const byISO = new Map(grid.map(g => [g.dateISO, g]));
-    daily.forEach((x) => {
-      const key = toISODateKey(x.date || x.day || x.key);
-      const row = byISO.get(key);
-      if (row) {
-        row.newUsers  = Number(x.newUsers  ?? x.users  ?? 0);
-        row.newBoards = Number(x.newBoards ?? x.boards ?? x.posts ?? 0);
-      }
+    daily.forEach((row) => {
+      // 날짜 키 여러 형태 지원
+      const k = toISODateKey(row.date ?? row.day ?? row.key ?? row.createdDate);
+      const slot = byISO.get(k);
+      if (!slot) return;
+
+      // ▼ 숫자 필드 별칭 폭넓게 지원
+      slot.newUsers = pickNum(row, [
+        "newUsers", "users", "user",
+        "signups", "signup",
+        "newUser", "newUserCount", "userCount",
+        "countUsers"
+      ], 0);
+
+      slot.newBoards = pickNum(row, [
+        "newBoards", "boards", "board",
+        "posts", "post",
+        "boardCount", "postCount",
+        "countBoards"
+      ], 0);
     });
   } else {
-    // daily 없으면 오늘 값만 채워서 보이게
+    // daily가 없으면 오늘값만 채워서라도 보이게
     const last = grid[grid.length - 1];
     last.newUsers  = Number(stats?.todayNewUsers  ?? 0);
     last.newBoards = Number(stats?.todayNewBoards ?? 0);
@@ -156,17 +204,34 @@ function buildTrendRows(stats = {}) {
   return grid;
 }
 
-function isoDate(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
+// 날짜 문자열/Date 어떤게 와도 YYYY-MM-DD로 정규화
 function toISODateKey(v) {
   try {
-    const d = v instanceof Date ? v : new Date(v);
-    if (!isNaN(d)) return isoDate(d);
+    if (v instanceof Date) {
+      const y = v.getFullYear();
+      const m = String(v.getMonth() + 1).padStart(2, "0");
+      const d = String(v.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+    if (v) {
+      // 문자열일 때 앞 10자(YYYY-MM-DD) 우선, 실패하면 Date 파싱
+      const s = String(v);
+      if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+      const d2 = new Date(s);
+      if (!isNaN(d2)) return toISODateKey(d2);
+    }
   } catch {}
-  return isoDate(new Date());
+  const now = new Date();
+  return toISODateKey(now);
+}
+
+// 안전한 숫자 추출
+function pickNum(obj, keys, def = 0) {
+  for (const k of keys) {
+    const val = obj?.[k];
+    if (val !== undefined && val !== null && !Number.isNaN(Number(val))) {
+      return Number(val);
+    }
+  }
+  return def;
 }
