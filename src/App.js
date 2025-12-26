@@ -34,6 +34,7 @@ import AdminNoticeEdit from "./pages/admin/AdminNoticeEdit";
 import Notifications from "./pages/Notifications";
 
 import Feed from "./pages/Feed";
+import ChatListPage from "./pages/ChatListPage";
 
 const App = () => {
   return (
@@ -103,6 +104,7 @@ const App = () => {
           />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/feed" element={<Feed />} />
+          <Route path="/chatList" element={<ChatListPage/>} />
         </Route>
       </Routes>
     </div>

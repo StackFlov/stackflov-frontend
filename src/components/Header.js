@@ -169,6 +169,9 @@ const Header = () => {
           </LinkWrapper>
 
           <LoginWrapper>
+            <HeaderItem $active={isActive("/chat")} onClick={() => navigate("/chat")}>
+              채팅
+            </HeaderItem>
             {/* 알림 */}
             <HeaderItem $active={isActive("/notifications")} onClick={openNoti}>
               <NotiText>

@@ -39,6 +39,7 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import axios from "axios";
 import Cookies from "js-cookie";
 import ReportButton from "../../components/report/ReportButton";
+import ChatModal from "../Chat/ChatModal";
 
 /* ---------- Local pill buttons ---------- */
 const ButtonsRow = styled.div`
@@ -183,6 +184,8 @@ const TraceDetail = () => {
   const [followings, setFollowings] = useState([]);
   const [editingReplyId, setEditingReplyId] = useState(null);
   const [imgErr, setImgErr] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [activeRoomId, setActiveRoomId] = useState(null);
 
   // per-reply animation: 'enter' | 'new' | 'exit'
   const [animMap, setAnimMap] = useState({});
@@ -400,6 +403,27 @@ const TraceDetail = () => {
       .catch((err) => console.error("Error unfollow:", err));
   };
 
+  const handleStartChat = async () => {
+    if (!me?.id) return alert("로그인이 필요합니다.");
+    if (me.id === traceInfo.authorId) return alert("본인과는 채팅할 수 없습니다.");
+
+    try {
+      // 1. 서버에 1:1 채팅방 생성 요청
+      const res = await axios.post(
+        "https://api.stackflov.com/chat/rooms",
+        { targetUserId: traceInfo.authorId },
+        { headers: { Authorization: `Bearer ${accessToken}` }, withCredentials: true }
+      );
+      
+      // 2. 생성되거나 기존에 있던 roomId를 저장하고 모달 열기
+      setActiveRoomId(res.data);
+      setIsChatOpen(true);
+    } catch (err) {
+      console.error("채팅방 생성 실패:", err);
+      alert("채팅방을 열 수 없습니다.");
+    }
+  };
+
   // board delete
   const handleBoardDelete = async () => {
     if (!me?.email || me.email !== traceInfo.authorEmail) {
@@ -557,7 +581,26 @@ const TraceDetail = () => {
             </UserFollowBtn>
           )}
         </UserInfoDiv>
+        <UserInfoDiv>
+        <UserNickName>{traceInfo.authorEmail}</UserNickName>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <UserFollowBtn onClick={isFollowing ? handleUnFollowed : handleFollowed}>
+            {isFollowing ? "😽 언팔로우" : "😽 팔로우하기"}
+          </UserFollowBtn>
+          {/* 새 버튼 추가 */}
+          <UserFollowBtn onClick={handleStartChat} style={{ background: '#eef2ff', color: '#4338ca' }}>
+            💬 1:1 채팅하기
+          </UserFollowBtn>
+        </div>
+      </UserInfoDiv>
       </TraceDetailBottomContent>
+
+      {isChatOpen && activeRoomId && (
+        <ChatModal 
+          roomId={activeRoomId} 
+          onClose={() => setIsChatOpen(false)} 
+        />
+      )}
 
       <ReplyCreateDiv data-reveal="true" data-delay="160">
         <ReplyInput
