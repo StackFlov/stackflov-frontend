@@ -104,7 +104,7 @@ const App = () => {
           />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/feed" element={<Feed />} />
-          <Route path="/chatList" element={<ChatListPage/>} />
+          <Route path="/chat" element={<ChatListPage/>} />
         </Route>
       </Routes>
     </div>

@@ -12,52 +12,50 @@ const ChatModal = ({ roomId, onClose }) => {
   const accessToken = Cookies.get("accessToken");
 
   useEffect(() => {
-    // Client 객체 생성
-    const client = new Client({
-        brokerURL: 'ws://api.stackflov.com/ws-stomp', // 서버 주소
-        connectHeaders: {
-            Authorization: `Bearer ${accessToken}`,
-        },
-        debug: (str) => console.log(str),
-        reconnectDelay: 5000,
-        heartbeatIncoming: 4000,
-        heartbeatOutgoing: 4000,
-    });
+  if (!roomId || !accessToken) return;
 
-    // SockJS를 사용해야 하는 경우 (사용자님 설정)
-    client.webSocketFactory = () => new SockJS('https://api.stackflov.com/ws-stomp');
+  // 1. 과거 대화 내역 불러오기 (REST API 호출)
+  axios.get(`https://api.stackflov.com/chat/rooms/${roomId}/messages`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    withCredentials: true
+  })
+  .then(res => {
+    // 서버 응답 데이터(List<ChatMessageResponseDto>)를 상태에 저장
+    setMessages(res.data); 
+    console.log("과거 내역 로드 완료:", res.data.length, "건");
+  })
+  .catch(err => console.error("과er 내역 로딩 실패:", err));
 
-    client.onConnect = () => {
-        console.log('Connected!');
-        client.subscribe(`/sub/chat/room/${roomId}`, (message) => {
-            const newMessage = JSON.parse(message.body);
-            setMessages((prev) => [...prev, newMessage]);
-        });
-    };
+  // 2. 실시간 웹소켓 연결 로직 (기존 코드 유지)
+  const client = new Client({
+    brokerURL: 'ws://localhost:8080/ws-stomp',
+    connectHeaders: { Authorization: `Bearer ${accessToken}` },
+    // ... 나머지 설정 동일
+  });
 
-    client.activate(); // 연결 시작
-    stompClient.current = client;
-
-    return () => client.deactivate(); // 연결 해제
+  // ... (생략)
 }, [roomId, accessToken]);
 
   const sendMessage = () => {
-    if (!input.trim()) return;
-    // 4. 메시지 전송
-    if (stompClient.current && stompClient.current.connected) {
+  if (!input.trim()) return;
+
+  // 1. .send() 대신 .publish()를 사용해야 합니다.
+  // 2. 인자 전달 방식이 객체({}) 형태로 바뀌었습니다.
+  if (stompClient.current && stompClient.current.connected) {
     stompClient.current.publish({
       destination: "/pub/chat/message",
       body: JSON.stringify({
         roomId: roomId,
         message: input
-      }),
-      // 필요시 headers: { Authorization: `Bearer ${accessToken}` } 추가 가능
+      })
     });
     setInput("");
   } else {
+    // 연결 상태를 콘솔에서 확인해보세요.
+    console.error("STOMP 연결 상태:", stompClient.current?.state);
     alert("연결이 원활하지 않습니다. 잠시 후 다시 시도해주세요.");
   }
-  };
+};
 
   return (
     <ModalOverlay>
