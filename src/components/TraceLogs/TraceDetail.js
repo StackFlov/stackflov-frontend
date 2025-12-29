@@ -39,7 +39,6 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import axios from "axios";
 import Cookies from "js-cookie";
 import ReportButton from "../../components/report/ReportButton";
-import ChatModal from "../Chat/ChatModal";
 
 /* ---------- Local pill buttons ---------- */
 const ButtonsRow = styled.div`
@@ -414,10 +413,13 @@ const TraceDetail = () => {
         { targetUserId: traceInfo.authorId },
         { headers: { Authorization: `Bearer ${accessToken}` }, withCredentials: true }
       );
+      const roomId = res.data;
+
+      // ⭐ GlobalChat에게 "이 방을 열어줘!"라고 신호를 보냅니다.
+      const event = new CustomEvent("openChatRoom", { detail: { roomId } });
       
       // 2. 생성되거나 기존에 있던 roomId를 저장하고 모달 열기
-      setActiveRoomId(res.data);
-      setIsChatOpen(true);
+      window.dispatchEvent(event);
     } catch (err) {
       console.error("채팅방 생성 실패:", err);
       alert("채팅방을 열 수 없습니다.");
@@ -594,13 +596,6 @@ const TraceDetail = () => {
         </div>
       </UserInfoDiv>
       </TraceDetailBottomContent>
-
-      {isChatOpen && activeRoomId && (
-        <ChatModal 
-          roomId={activeRoomId} 
-          onClose={() => setIsChatOpen(false)} 
-        />
-      )}
 
       <ReplyCreateDiv data-reveal="true" data-delay="160">
         <ReplyInput

@@ -1,7 +1,6 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
 import Header from "./components/Header";
-import Main from "./pages/Main";
 import Login from "./pages/Login";
 import TraceLog from "./pages/TraceLog";
 import PageThree from "./pages/PageThree";
@@ -34,7 +33,7 @@ import AdminNoticeEdit from "./pages/admin/AdminNoticeEdit";
 import Notifications from "./pages/Notifications";
 
 import Feed from "./pages/Feed";
-import ChatListPage from "./pages/ChatListPage";
+import GlobalChat from "./components/Chat/GlobalChat";
 
 const App = () => {
   return (
@@ -104,9 +103,9 @@ const App = () => {
           />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/feed" element={<Feed />} />
-          <Route path="/chat" element={<ChatListPage/>} />
         </Route>
       </Routes>
+      <GlobalChat />
     </div>
   );
 };

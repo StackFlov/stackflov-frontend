@@ -66,7 +66,7 @@ const Header = () => {
   const location = useLocation();
   const accessToken = Cookies.get("accessToken");
 
-  const [me, setMe] = useState({});
+  const [setMe] = useState({});
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const [unreadCount, setUnreadCount] = useState(0);
@@ -169,9 +169,6 @@ const Header = () => {
           </LinkWrapper>
 
           <LoginWrapper>
-            <HeaderItem $active={isActive("/chat")} onClick={() => navigate("/chat")}>
-              채팅
-            </HeaderItem>
             {/* 알림 */}
             <HeaderItem $active={isActive("/notifications")} onClick={openNoti}>
               <NotiText>
