@@ -417,7 +417,6 @@ const TraceDetail = () => {
 
       // ⭐ GlobalChat에게 "이 방을 열어줘!"라고 신호를 보냅니다.
       const event = new CustomEvent("openChatRoom", { detail: { roomId } });
-      
       // 2. 생성되거나 기존에 있던 roomId를 저장하고 모달 열기
       window.dispatchEvent(event);
     } catch (err) {
