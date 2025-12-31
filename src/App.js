@@ -34,6 +34,7 @@ import Notifications from "./pages/Notifications";
 
 import Feed from "./pages/Feed";
 import GlobalChat from "./components/Chat/GlobalChat";
+import ProfilePage from './pages/ProfilePage';
 
 const App = () => {
   return (
@@ -103,6 +104,8 @@ const App = () => {
           />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/feed" element={<Feed />} />
+
+          <Route path="/profile/:userId" element={<ProfilePage />} />
         </Route>
       </Routes>
       <GlobalChat />
