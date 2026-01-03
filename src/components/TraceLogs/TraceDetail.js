@@ -551,7 +551,12 @@ const TraceDetail = () => {
       </TraceDetailMiddleContent>
 
       <TraceDetailBottomContent data-reveal="true" data-delay="120">
-        <UserImageDiv style={{ borderRadius: "50%", overflow: "hidden" }}>
+        {/* 프로필 이미지 클릭 시 프로필 페이지로 이동 */}
+        <UserImageDiv 
+          style={{ borderRadius: "50%", overflow: "hidden", cursor: "pointer" }}
+          onClick={() => navigator(`/profile/${traceInfo.authorId}`)}
+          title={`${traceInfo.authorNickname}님의 프로필 보기`}
+        >
           {imgErr ? (
             <AccountCircleIcon style={{ fontSize: 72, color: "#c8ceda" }} />
           ) : (
@@ -573,27 +578,25 @@ const TraceDetail = () => {
         </UserImageDiv>
 
         <UserInfoDiv>
-          <UserNickName>{traceInfo.authorEmail}</UserNickName>
-          {!isFollowing ? (
-            <UserFollowBtn onClick={handleFollowed}>😽 팔로우하기</UserFollowBtn>
-          ) : (
-            <UserFollowBtn onClick={handleUnFollowed}>
-              😽 언팔로우하기
+          {/* 닉네임 클릭 시에도 프로필 페이지로 이동 */}
+          <UserNickName 
+            style={{ cursor: "pointer" }}
+            onClick={() => navigator(`/profile/${traceInfo.authorId}`)}
+            title={`${traceInfo.authorNickname}님의 프로필 보기`}
+          >
+            {traceInfo.authorNickname || "익명"}
+          </UserNickName>
+          
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <UserFollowBtn onClick={isFollowing ? handleUnFollowed : handleFollowed}>
+              {isFollowing ? "😽 언팔로우" : "😽 팔로우하기"}
             </UserFollowBtn>
-          )}
+            
+            <UserFollowBtn onClick={handleStartChat} style={{ background: '#eef2ff', color: '#4338ca' }}>
+              💬 1:1 채팅하기
+            </UserFollowBtn>
+          </div>
         </UserInfoDiv>
-        <UserInfoDiv>
-        <UserNickName>{traceInfo.authorEmail}</UserNickName>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <UserFollowBtn onClick={isFollowing ? handleUnFollowed : handleFollowed}>
-            {isFollowing ? "😽 언팔로우" : "😽 팔로우하기"}
-          </UserFollowBtn>
-          {/* 새 버튼 추가 */}
-          <UserFollowBtn onClick={handleStartChat} style={{ background: '#eef2ff', color: '#4338ca' }}>
-            💬 1:1 채팅하기
-          </UserFollowBtn>
-        </div>
-      </UserInfoDiv>
       </TraceDetailBottomContent>
 
       <ReplyCreateDiv data-reveal="true" data-delay="160">
@@ -606,71 +609,91 @@ const TraceDetail = () => {
       </ReplyCreateDiv>
 
       {replys.map((item, i) => {
-        const isEditing = editingReplyId === item.id;
-        return (
-          <ReplyDiv
-            key={item.id}
-            $anim={animMap[item.id] || "enter"}
-            onAnimationEnd={() => {
-              setAnimMap((m) => {
-                const { [item.id]: _drop, ...rest } = m;
-                return rest;
-              });
-            }}
-            data-reveal="true"
-            data-delay={200 + Math.min(i, 10) * 40}
-          >
-            <ReplyContentWrapper>
-              <ReplyHeader>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <ReplyUserUserNameDiv>{item.authorEmail}</ReplyUserUserNameDiv>
-                  <ReplyCreateAtDiv>
-                    {item.createdAt?.slice(0, 10) || ""}
-                  </ReplyCreateAtDiv>
-                </div>
+  const isEditing = editingReplyId === item.id;
+  return (
+    <ReplyDiv
+      key={item.id}
+      $anim={animMap[item.id] || "enter"}
+      onAnimationEnd={() => {
+        setAnimMap((m) => {
+          const { [item.id]: _drop, ...rest } = m;
+          return rest;
+        });
+      }}
+      data-reveal="true"
+      data-delay={200 + Math.min(i, 10) * 40}
+    >
+      <ReplyContentWrapper>
+        <ReplyHeader>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <ReplyUserUserNameDiv 
+              style={{ cursor: "pointer", fontWeight: "bold", color: "#334155" }}
+              onClick={() => {
+                // 디버깅용 로그
+                console.log("클릭한 댓글의 작성자 ID:", item.authorId); 
+                
+                if (item.authorId) {
+                  navigator(`/profile/${item.authorId}`);
+                } else {
+                  // ✅ 만약 여기서 알림이 뜬다면 백엔드 응답에 'authorId' 필드가 없는 것임
+                  alert("해당 사용자의 정보를 찾을 수 없습니다.");
+                }
+              }}
+            >
+              {item.authorNickname || item.authorEmail}
+            </ReplyUserUserNameDiv>
 
-                <ButtonsRow>
-                  <ReportButton
-                    contentId={item.id}
-                    contentType="COMMENT"
-                    accessToken={accessToken}
-                    size="sm"
-                    variant="pill"
-                  />
+            <ReplyCreateAtDiv>
+              {item.createdAt?.slice(0, 10) || ""}
+            </ReplyCreateAtDiv>
+          </div>
 
-                  {me?.email === item.authorEmail && !isEditing && (
-                    <>
-                      <EditBtn
-                        onClick={() => {
-                          setEditingReplyId(item.id);
-                          setReplyUpdateInput(item.content);
-                        }}
-                      />
-                      <DeleteBtn onClick={() => handleReplyDel(item.id)} />
-                    </>
-                  )}
+          <ButtonsRow>
+            {/* 신고 버튼 */}
+            <ReportButton
+              contentId={item.id}
+              contentType="COMMENT"
+              accessToken={accessToken}
+              size="sm"
+              variant="pill"
+            />
 
-                  {me?.email === item.authorEmail && isEditing && (
-                    <>
-                      <SaveBtn onClick={() => handleReplyUpdate(item.id)} />
-                      <CancelBtn onClick={() => setEditingReplyId(null)} />
-                    </>
-                  )}
-                </ButtonsRow>
-              </ReplyHeader>
-
-              {isEditing ? (
-                <ReplyInput
-                  value={replyUpdateInput}
-                  onChange={(e) => setReplyUpdateInput(e.target.value)}
+            {/* 본인 댓글인 경우 수정/삭제 버튼 노출 */}
+            {me?.email === item.authorEmail && !isEditing && (
+              <>
+                <EditBtn
+                  onClick={() => {
+                    setEditingReplyId(item.id);
+                    setReplyUpdateInput(item.content);
+                  }}
                 />
-              ) : (
-                <ReplyContentDiv>{item.content}</ReplyContentDiv>
-              )}
-            </ReplyContentWrapper>
-          </ReplyDiv>
-        );
-      })}
+                <DeleteBtn onClick={() => handleReplyDel(item.id)} />
+              </>
+            )}
+
+            {isEditing && (
+              <>
+                <SaveBtn onClick={() => handleReplyUpdate(item.id)} />
+                <CancelBtn onClick={() => setEditingReplyId(null)} />
+              </>
+            )}
+          </ButtonsRow>
+        </ReplyHeader>
+
+        {/* ✅ 이 부분이 누락되어 댓글 내용이 안 나왔던 것입니다. */}
+        {isEditing ? (
+          <ReplyInput
+            style={{ marginTop: '10px' }}
+            value={replyUpdateInput}
+            onChange={(e) => setReplyUpdateInput(e.target.value)}
+          />
+        ) : (
+          <ReplyContentDiv>{item.content}</ReplyContentDiv>
+        )}
+      </ReplyContentWrapper>
+    </ReplyDiv>
+  );
+})}
     </TraceDetailWrapper>
   );
 };
