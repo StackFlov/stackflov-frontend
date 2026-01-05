@@ -2,16 +2,15 @@ import styled from "styled-components";
 import "../../Fonts/fonts.css";
 
 export const RegisterFormWrapper = styled.div`
-  padding: 0px;
+  padding: 20px 0;
   width: 100%;
-  height: 775px;
+  min-height: 850px; /* 고정 height 대신 min-height 사용 */
   font-family: "INTERVARIABLE";
   font-weight: bold;
 `;
 
 export const MainContainer = styled.div`
   width: 375px;
-  height: 775px;
   margin: 0 auto;
   padding: 0;
 `;
@@ -21,94 +20,102 @@ export const FormTitleWrapper = styled.div`
   height: 60px;
   font-size: 32px;
   border-bottom: 1px solid black;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   font-weight: bold;
+  display: flex;
+  justify-content: center; /* 타이틀 중앙 정렬 */
+  align-items: center;
 `;
 
 export const FormTitle = styled.div`
-  margin: 0 0 0 9rem;
+  /* 기존 margin 제거 */
 `;
 
 export const ImgSelectorWrapper = styled.div`
   width: 375px;
-  height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2rem;
+  cursor: pointer;
 `;
 
 export const ImgSelector = styled.img`
-  width: 90px;
-  height: 90px;
-  margin: 0 0 0 9rem;
-  border: 5px solid black;
-  border-radius: 50px;
+  width: 100px;
+  height: 100px;
+  border: 3px solid black;
+  border-radius: 50%;
+  object-fit: cover;
+`;
+
+export const ImgInstruction = styled.div`
+  font-size: 12px;
+  color: #888;
+  margin-top: 8px;
 `;
 
 export const InpuItemsWrapper = styled.div`
   width: 375px;
-  height: 535px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* 항목 간 간격 */
 `;
 
 export const InputItem = styled.div`
   width: 375px;
-  height: 60px;
-  display: flex; // 추가됨
-  align-items: center; // 추가됨
-  margin-bottom: 0.5rem; // 선택적으로 항목 간 간격
+  display: flex;
+  align-items: center;
+  min-height: 40px;
 `;
 
 export const InputLabel = styled.div`
-  width: ${(props) => props.width}px;
-  height: 30px;
-  margin-right: 1rem; // 추가됨
+  width: ${(props) => props.width || 100}px;
+  font-size: 14px;
 `;
 
 export const InputValue = styled.input`
   border-radius: 5px;
   width: ${(props) => props.width}px;
-  height: 30px;
+  height: 35px;
+  padding: 0 10px;
   background-color: rgba(208, 208, 208, 0.2);
   border: 1px solid rgb(110, 110, 110);
-  transition-duration: 500ms;
-  &:hover {
-    color: black;
-    background-color: rgba(208, 208, 208, 0.8);
+  &:focus {
+    outline: none;
+    border-color: black;
   }
 `;
 
 export const IdCheckButton = styled.button`
   width: 80px;
-  height: 33px;
-  margin: 0 0 0 0.5rem;
-  background-color: ${(props) => {
-    return props.backgroundColor;
-  }};
+  height: 35px;
+  margin-left: 10px;
+  background-color: ${(props) => props.backgroundColor || "black"};
   color: #ffffff;
   border: none;
-  transition-duration: 500ms;
   border-radius: 8px;
-  &:hover {
-    color: black;
-    background-color: ${(props) => {
-      return props.backgroundColor;
-    }};
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
   }
 `;
 
 export const FormButtonWrapper = styled.div`
   width: 375px;
-  height: 40px;
-  margin: 1rem 0 0 0;
+  margin-top: 2rem;
 `;
 
 export const RegisterButton = styled.button`
-  height: 30px;
+  height: 45px;
   width: 375px;
-  background-color: rgba(205, 216, 227, 0.8);
+  background-color: ${(props) => (props.disabled ? "#ccc" : "#000")};
   color: #ffffff;
   border: none;
-  transition-duration: 500ms;
   border-radius: 8px;
-  &:hover {
-    color: black;
-    background-color: rgba(208, 208, 208, 0.5);
-  }
+  font-weight: bold;
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
+  transition: 0.3s;
 `;
