@@ -1,5 +1,4 @@
-// src/components/NiBangNeBang/NiBangNeBangDetail.js
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import Cookies from "js-cookie";
@@ -90,6 +89,7 @@ const NiBangNeBangDetail = () => {
   const [detail, setDetail] = useState(null);
   const [me, setMe] = useState(null);
   const [replies, setReplies] = useState([]);
+  const [followings, setFollowings] = useState([]); // ✅ 팔로우 리스트 상태 추가
 
   const [replyInput, setReplyInput] = useState("");
   const [replyUpdateInput, setReplyUpdateInput] = useState("");
@@ -97,7 +97,7 @@ const NiBangNeBangDetail = () => {
 
   const fetchedMeRef = useRef(false);
 
-  // 상세
+  // 상세 정보 로딩
   useEffect(() => {
     const headers = { "Content-Type": "application/json" };
     if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
@@ -119,7 +119,7 @@ const NiBangNeBangDetail = () => {
     return extractHashtags(detail.content);
   }, [detail]);
 
-  // me
+  // 내 정보 및 팔로우 리스트 로딩
   useEffect(() => {
     if (!accessToken || fetchedMeRef.current) return;
     fetchedMeRef.current = true;
@@ -132,12 +132,24 @@ const NiBangNeBangDetail = () => {
         },
         withCredentials: true,
       })
-      .then((res) => setMe(res.data))
-      .catch((err) => console.error("Error fetching me:", err));
+      .then((res) => {
+        setMe(res.data);
+        return axios.get(`https://api.stackflov.com/follows/following/${res.data.id}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          withCredentials: true,
+        });
+      })
+      .then((res2) => {
+        if (res2?.data) setFollowings(res2.data.map((u) => u.id));
+      })
+      .catch((err) => console.error("Error fetching me/followings:", err));
   }, [accessToken]);
 
   // 댓글 로딩
-  const loadReplies = () => {
+  const loadReplies = useCallback(() => {
     const headers = { "Content-Type": "application/json" };
     if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
 
@@ -150,16 +162,62 @@ const NiBangNeBangDetail = () => {
       .catch((err) => {
         console.error("Error fetching replies:", err?.response || err);
       });
-  };
+  }, [id, accessToken]);
+
   useEffect(() => {
     loadReplies();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [loadReplies]);
 
   const isAuthor = useMemo(() => {
     if (!detail || !me) return false;
     return detail.authorEmail === me.email;
   }, [detail, me]);
+
+  const isFollowing = useMemo(() => {
+    if (!detail?.authorId) return false;
+    return followings.includes(detail.authorId);
+  }, [followings, detail?.authorId]);
+
+  // ✅ 팔로우/언팔로우 핸들러
+  const handleFollowToggle = () => {
+    if (!me?.id) return alert("로그인이 필요한 기능입니다.");
+    
+    if (isFollowing) {
+      axios.delete(`https://api.stackflov.com/follows/${detail.authorId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        withCredentials: true,
+      })
+      .then(() => setFollowings(prev => prev.filter(id => id !== detail.authorId)))
+      .catch(err => console.error("Error unfollow:", err));
+    } else {
+      axios.post("https://api.stackflov.com/follows/follow", { followedId: detail.authorId }, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        withCredentials: true,
+      })
+      .then(() => setFollowings(prev => [...prev, detail.authorId]))
+      .catch(err => console.error("Error follow:", err));
+    }
+  };
+
+  // ✅ 1:1 채팅 시작 핸들러
+  const handleStartChat = async () => {
+    if (!me?.id) return alert("로그인이 필요합니다.");
+    if (me.id === detail.authorId) return alert("본인과는 채팅할 수 없습니다.");
+
+    try {
+      const res = await axios.post(
+        "https://api.stackflov.com/chat/rooms",
+        { targetUserId: detail.authorId },
+        { headers: { Authorization: `Bearer ${accessToken}` }, withCredentials: true }
+      );
+      const roomId = res.data;
+      const event = new CustomEvent("openChatRoom", { detail: { roomId } });
+      window.dispatchEvent(event);
+    } catch (err) {
+      console.error("채팅방 생성 실패:", err);
+      alert("채팅방을 열 수 없습니다.");
+    }
+  };
 
   // 댓글 작성/수정/삭제
   const handleReplyCreate = () => {
@@ -220,7 +278,6 @@ const NiBangNeBangDetail = () => {
       .catch((err) => console.error("Error deleting reply:", err));
   };
 
-  // 리뷰 삭제
   const handleReviewDelete = async () => {
     if (!isAuthor) {
       alert("작성자만 삭제할 수 있습니다.");
@@ -246,21 +303,16 @@ const NiBangNeBangDetail = () => {
 
   if (!detail) return <div style={{ padding: 24 }}>로딩 중…</div>;
 
-  const authorEmail =
-    detail?.authorEmail ||
-    detail?.authorNickname ||
-    detail?.author?.email ||
-    "익명";
+  // ✅ 표시 이름: 닉네임을 우선으로 하고 없으면 이메일 표시
+  const authorName = detail?.authorNickname || detail?.authorEmail || "익명";
 
   const authorAvatar =
     detail?.authorProfileImageUrl ||
     detail?.author?.profileImageUrl ||
-    detail?.author?.profileImage ||
     DEFAULT_PROFILE;
 
   return (
     <TraceDetailWrapper>
-      {/* 상단 */}
       <TopSection>
         <TraceDiv>니방내방</TraceDiv>
         <TitleBar>
@@ -268,7 +320,6 @@ const NiBangNeBangDetail = () => {
         </TitleBar>
       </TopSection>
 
-      {/* 주소/평점/신고 칩 */}
       <TraceCategoryDiv style={{ float: "none", width: "100%" }}>
         <Chips>
           <Chip>
@@ -283,7 +334,6 @@ const NiBangNeBangDetail = () => {
               ))}
             </Stars>
           </Chip>
-
           <ReportButton
             contentId={Number(id)}
             contentType="REVIEW"
@@ -292,16 +342,13 @@ const NiBangNeBangDetail = () => {
             variant="pill"
           />
         </Chips>
-        {/* 해시태그 칩: 있으면 노출 */}
-    {hashtags.length > 0 && (
+        {hashtags.length > 0 && (
           <Chips style={{ marginTop: 6 }}>
             {hashtags.map((tag) => (
               <Chip
                 key={tag}
                 role="button"
-                onClick={() =>
-                  navigate(`/nibangnebang?tag=${encodeURIComponent(tag)}`)
-                }
+                onClick={() => navigate(`/nibangnebang?tag=${encodeURIComponent(tag)}`)}
                 title={`#${tag} 태그로 보기`}
                 style={{ cursor: "pointer" }}
               >
@@ -312,20 +359,11 @@ const NiBangNeBangDetail = () => {
         )}
       </TraceCategoryDiv>
 
-      {/* 본문/이미지 */}
-      <MidSection
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          gap: 16,
-        }}
-      >
+      <MidSection style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 16 }}>
         <MetaRow>
           <TraceCreatedAtDiv style={{ float: "none", width: "auto", padding: "8px 0" }}>
             작성일 : {detail?.createdAt?.slice(0, 10)}
           </TraceCreatedAtDiv>
-
           {isAuthor && (
             <ButtonsRow>
               <EditBtn onClick={() => navigate(`/nibangnebang/update/${id}`)} />
@@ -341,41 +379,42 @@ const NiBangNeBangDetail = () => {
         {Array.isArray(detail.imageUrls) && detail.imageUrls.length > 0 && (
           <TraceImagesWrapper style={{ gap: 14 }}>
             {detail.imageUrls.map((url, idx) => (
-              <Img
-                key={`${url}-${idx}`}
-                src={url}
-                alt={`review-${idx}`}
-                loading="lazy"
-                decoding="async"
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.style.display = "none";
-                }}
-              />
+              <Img key={`${url}-${idx}`} src={url} alt={`review-${idx}`} loading="lazy" decoding="async" />
             ))}
           </TraceImagesWrapper>
         )}
       </MidSection>
 
-         <BottomRow>
+      <BottomRow>
         <Avatar
-          src={authorAvatar || DEFAULT_PROFILE}
+          src={authorAvatar}
           alt="author"
-          onError={(e) => {
-            e.currentTarget.onerror = null;
-            e.currentTarget.src = DEFAULT_PROFILE;
-          }}
+          style={{ cursor: "pointer" }}
+          onClick={() => navigate(`/profile/${detail.authorId}`)}
+          onError={(e) => { e.currentTarget.src = DEFAULT_PROFILE; }}
         />
         <AuthorMeta>
-          <AuthorName>{authorEmail}</AuthorName>
-          {detail?.authorEmail && <AuthorEmail>{detail.authorEmail}</AuthorEmail>}
-          <UserFollowBtn disabled style={{ width: "fit-content", opacity: 0.7 }}>
-            😽 팔로우
-          </UserFollowBtn>
+          {/* ✅ 이메일 대신 닉네임 표시 및 프로필 이동 추가 */}
+          <AuthorName 
+            style={{ cursor: "pointer" }} 
+            onClick={() => navigate(`/profile/${detail.authorId}`)}
+          >
+            {authorName}
+          </AuthorName>
+          
+          <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+            <UserFollowBtn onClick={handleFollowToggle} style={{ width: "fit-content" }}>
+              {isFollowing ? "😽 언팔로우" : "😽 팔로우하기"}
+            </UserFollowBtn>
+            
+            {/* ✅ 1:1 채팅하기 버튼 추가 */}
+            <UserFollowBtn onClick={handleStartChat} style={{ width: "fit-content", background: '#eef2ff', color: '#4338ca' }}>
+              💬 1:1 채팅하기
+            </UserFollowBtn>
+          </div>
         </AuthorMeta>
       </BottomRow>
 
-      {/* 댓글 작성 */}
       <ReplyCreateDiv>
         <ReplyInput
           placeholder="댓글을 입력하세요"
@@ -385,7 +424,6 @@ const NiBangNeBangDetail = () => {
         <ReplyCreateBtn onClick={handleReplyCreate}>댓글 작성</ReplyCreateBtn>
       </ReplyCreateDiv>
 
-      {/* 댓글 목록 */}
       {replies.map((item) => {
         const isEditing = editingReplyId === item.id;
         const imAuthor = me?.email && me.email === item.authorEmail;
@@ -395,7 +433,13 @@ const NiBangNeBangDetail = () => {
             <ReplyContentWrapper>
               <ReplyHeader>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <ReplyUserUserNameDiv>{item.authorEmail}</ReplyUserUserNameDiv>
+                  {/* ✅ 댓글 작성자도 닉네임으로 표시 및 프로필 링크 추가 */}
+                  <ReplyUserUserNameDiv 
+                    style={{ cursor: "pointer", fontWeight: "bold" }}
+                    onClick={() => navigate(`/profile/${item.authorId}`)}
+                  >
+                    {item.authorNickname || item.authorEmail}
+                  </ReplyUserUserNameDiv>
                   <ReplyCreateAtDiv>
                     {item.createdAt ? item.createdAt.slice(0, 10) : ""}
                   </ReplyCreateAtDiv>
@@ -409,32 +453,21 @@ const NiBangNeBangDetail = () => {
                     size="sm"
                     variant="pill"
                   />
-
-                  {imAuthor &&
-                    (!isEditing ? (
-                      <>
-                        <EditBtn
-                          onClick={() => {
-                            setEditingReplyId(item.id);
-                            setReplyUpdateInput(item.content);
-                          }}
-                        />
-                        <DeleteBtn onClick={() => handleReplyDel(item.id)} />
-                      </>
-                    ) : (
-                      <>
-                        <SaveBtn onClick={() => handleReplyUpdate(item.id)} />
-                        <CancelBtn onClick={() => setEditingReplyId(null)} />
-                      </>
-                    ))}
+                  {imAuthor && (!isEditing ? (
+                    <>
+                      <EditBtn onClick={() => { setEditingReplyId(item.id); setReplyUpdateInput(item.content); }} />
+                      <DeleteBtn onClick={() => handleReplyDel(item.id)} />
+                    </>
+                  ) : (
+                    <>
+                      <SaveBtn onClick={() => handleReplyUpdate(item.id)} />
+                      <CancelBtn onClick={() => setEditingReplyId(null)} />
+                    </>
+                  ))}
                 </ButtonsRow>
               </ReplyHeader>
-
               {isEditing ? (
-                <ReplyInput
-                  value={replyUpdateInput}
-                  onChange={(e) => setReplyUpdateInput(e.target.value)}
-                />
+                <ReplyInput value={replyUpdateInput} onChange={(e) => setReplyUpdateInput(e.target.value)} />
               ) : (
                 <ReplyContentDiv>{item.content}</ReplyContentDiv>
               )}
