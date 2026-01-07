@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import ReactDOM from "react-dom"; // ✅ Portal 사용을 위해 추가
 import styled from "styled-components";
 import axios from "axios";
 
@@ -15,6 +16,16 @@ export default function ReportButton({ contentId, contentType, accessToken, size
   const [reason, setReason] = useState("SPAM");
   const [details, setDetails] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // ✅ 모달이 열려있을 때 배경 스크롤 방지
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => { document.body.style.overflow = "unset"; };
+  }, [open]);
 
   const disabled = useMemo(
     () => submitting || (reason === "OTHER" && details.trim().length === 0),
@@ -52,6 +63,48 @@ export default function ReportButton({ contentId, contentType, accessToken, size
     }
   };
 
+  // ✅ 모달 콘텐츠를 Portal로 분리
+  const modalContent = (
+    <Overlay onClick={() => !submitting && setOpen(false)}>
+      <Modal onClick={(e) => e.stopPropagation()}>
+        <h3 style={{ marginTop: 0 }}>신고하기</h3>
+
+        <div style={{ marginBottom: 8, fontSize: 14, color: "#64748b" }}>
+          대상: <b>{contentType}</b>{" "}
+          <code style={{ color: "#475569" }}>#{contentId}</code>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
+          {REASONS.map((r) => (
+            <label key={r.key} style={{ display: "flex", gap: 8, alignItems: "center", border: "1px solid #e2e8f0", borderRadius: 8, padding: 8, cursor: "pointer" }}>
+              <input type="radio" name="report-reason" value={r.key} checked={reason === r.key} onChange={() => setReason(r.key)} />
+              <span style={{ fontSize: "13px" }}>{r.label}</span>
+            </label>
+          ))}
+        </div>
+
+        <div style={{ marginTop: 12 }}>
+          <textarea
+            placeholder={reason === "OTHER" ? "기타 사유를 구체적으로 적어주세요(필수)" : "추가 설명이 있으면 입력"}
+            value={details}
+            onChange={(e) => setDetails(e.target.value.slice(0, 2000))}
+            style={{ width: "100%", minHeight: 96, border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 12px", fontSize: 14, outline: "none" }}
+          />
+          <div style={{ textAlign: "right", fontSize: 12, color: "#94a3b8" }}>{details.length}/2000</div>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 12 }}>
+          <button disabled={submitting} onClick={() => setOpen(false)} style={{ padding: "8px 12px", borderRadius: 10, border: "1px solid #e2e8f0", background: "#fff", cursor: "pointer" }}>
+            취소
+          </button>
+          <button disabled={disabled} onClick={submit} style={{ padding: "8px 12px", borderRadius: 10, border: "1px solid #1e293b", background: "#111827", color: "#fff", opacity: disabled ? 0.5 : 1, cursor: "pointer" }}>
+            {submitting ? "전송 중..." : "신고 접수"}
+          </button>
+        </div>
+      </Modal>
+    </Overlay>
+  );
+
   return (
     <>
       <Btn $size={size} type="button" onClick={() => setOpen(true)} title="신고하기" aria-label="신고하기">
@@ -59,46 +112,8 @@ export default function ReportButton({ contentId, contentType, accessToken, size
         <span>신고</span>
       </Btn>
 
-      {open && (
-        <Overlay onClick={() => !submitting && setOpen(false)}>
-          <Modal onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ marginTop: 0 }}>신고하기</h3>
-
-            <div style={{ marginBottom: 8, fontSize: 14, color: "#64748b" }}>
-              대상: <b>{contentType}</b>{" "}
-              <code style={{ color: "#475569" }}>#{contentId}</code>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
-              {REASONS.map((r) => (
-                <label key={r.key} style={{ display: "flex", gap: 8, alignItems: "center", border: "1px solid #e2e8f0", borderRadius: 8, padding: 8 }}>
-                  <input type="radio" name="report-reason" value={r.key} checked={reason === r.key} onChange={() => setReason(r.key)} />
-                  <span>{r.label}</span>
-                </label>
-              ))}
-            </div>
-
-            <div style={{ marginTop: 12 }}>
-              <textarea
-                placeholder={reason === "OTHER" ? "기타 사유를 구체적으로 적어주세요(필수)" : "추가 설명이 있으면 입력"}
-                value={details}
-                onChange={(e) => setDetails(e.target.value.slice(0, 2000))}
-                style={{ width: "100%", minHeight: 96, border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 12px", fontSize: 14 }}
-              />
-              <div style={{ textAlign: "right", fontSize: 12, color: "#94a3b8" }}>{details.length}/2000</div>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 12 }}>
-              <button disabled={submitting} onClick={() => setOpen(false)} style={{ padding: "8px 12px", borderRadius: 10, border: "1px solid #e2e8f0", background: "#fff" }}>
-                취소
-              </button>
-              <button disabled={disabled} onClick={submit} style={{ padding: "8px 12px", borderRadius: 10, border: "1px solid #1e293b", background: "#111827", color: "#fff", opacity: disabled ? 0.5 : 1 }}>
-                {submitting ? "전송 중..." : "신고 접수"}
-              </button>
-            </div>
-          </Modal>
-        </Overlay>
-      )}
+      {/* ✅ Portal을 사용하여 document.body 직계 자식으로 렌더링 */}
+      {open && ReactDOM.createPortal(modalContent, document.body)}
     </>
   );
 }
