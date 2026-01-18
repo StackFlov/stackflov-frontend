@@ -1,3 +1,4 @@
+// src/components/trace/TraceList.js
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import {
   TraceListWrapper,
@@ -20,6 +21,10 @@ import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import TurnedInIcon from "@mui/icons-material/TurnedIn";
+// ✅ 아이콘이 없는 경우를 대비해 기본 아이콘 위주로 구성
+import HomeIcon from "@mui/icons-material/Home"; 
+import LightbulbIcon from "@mui/icons-material/Lightbulb";
+import RestaurantIcon from "@mui/icons-material/Restaurant";
 import axios from "axios";
 import Cookies from "js-cookie";
 
@@ -39,17 +44,20 @@ const TraceList = ({ nowCategory }) => {
         withCredentials: true,
       })
       .then((res) => {
-        setList(Array.isArray(res.data?.content) ? res.data.content : []);
+        // API 응답 구조 확인 (res.data.content 인지 확인)
+        const data = res.data?.content || res.data || [];
+        setList(Array.isArray(data) ? data : []);
       })
       .catch((err) => {
-        console.error("게시글 로딩 실패:", err);
+        console.error("데이터 로드 실패:", err);
         setList([]);
       })
       .finally(() => setLoading(false));
   }, []);
 
+  // 카드 애니메이션 로직
   useEffect(() => {
-    if (!wrapperRef.current) return;
+    if (!wrapperRef.current || loading) return;
     const items = wrapperRef.current.querySelectorAll("[data-reveal='true']");
     const io = new IntersectionObserver(
       (entries) => {
@@ -64,30 +72,37 @@ const TraceList = ({ nowCategory }) => {
     );
     items.forEach((el) => io.observe(el));
     return () => io.disconnect();
-  }, [loading, nowCategory]);
+  }, [loading, list]);
+
+  // 카테고리별 아이콘 선택
+  const renderCategoryPlaceholder = (category) => {
+    switch (Number(category)) {
+      case 1: return <HomeIcon className="cate-icon" />;
+      case 2: return <LightbulbIcon className="cate-icon" />;
+      case 3: return <RestaurantIcon className="cate-icon" />;
+      default: return <HomeIcon className="cate-icon" />;
+    }
+  };
 
   const filteredList = useMemo(() => {
-    if (nowCategory === 99) return list;
-    return list.filter((item) => item.category === nowCategory);
+    if (!nowCategory || nowCategory === 99) return list;
+    return list.filter((item) => Number(item.category) === Number(nowCategory));
   }, [nowCategory, list]);
 
   if (loading) {
     return (
       <TraceListWrapper>
         <TraceListItemWrapper>
-          {Array.from({ length: 6 }).map((_, i) => <LoadingSkeleton key={i} />)}
+          {[1, 2, 3, 4, 5, 6].map((v) => <LoadingSkeleton key={v} />)}
         </TraceListItemWrapper>
       </TraceListWrapper>
     );
   }
 
-  if (!filteredList.length) {
+  if (filteredList.length === 0) {
     return (
       <TraceListWrapper>
-        <EmptyState>
-          아직 표시할 게시글이 없어요.
-          <span>첫 글을 작성해보세요!</span>
-        </EmptyState>
+        <EmptyState>게시글이 없습니다.<span>첫 번째 주인공이 되어보세요!</span></EmptyState>
       </TraceListWrapper>
     );
   }
@@ -102,36 +117,30 @@ const TraceList = ({ nowCategory }) => {
               style={{ "--reveal-delay": `${Math.min(idx, 8) * 70}ms` }}
               onClick={() => navigator(`/trace/detail/${item.id}`)}
             >
-              <CardImage>
-                {/* ✅ 백엔드 필드명이 thumbnailUrl이 맞는지 확인하세요 */}
+              <CardImage $hasImage={!!item.thumbnailUrl}>
                 {item.thumbnailUrl ? (
                   <img src={item.thumbnailUrl} alt={item.title} />
                 ) : (
-                  <div className="no-img-placeholder">🖼️ No Image</div>
+                  <div className="placeholder-content">
+                    {renderCategoryPlaceholder(item.category)}
+                    <span className="logo-text">STAY LOG</span>
+                  </div>
                 )}
               </CardImage>
 
               <CardInfoBox>
                 <TraceListTitle>{item.title}</TraceListTitle>
-                
                 <MetaRow>
                   <div className="author">
-                    <PersonOutlineIcon style={{ fontSize: "18px" }} />
+                    <PersonOutlineIcon style={{ fontSize: "16px" }} />
                     {item.authorNickname}
                   </div>
                   <span>{item.createdAt?.slice(0, 10)}</span>
                 </MetaRow>
-
                 <StatsRow>
-                  <StatItem title="조회수">
-                    <RemoveRedEyeIcon /> {item.viewCount ?? 0}
-                  </StatItem>
-                  <StatItem title="좋아요" $active={!!item.liked}>
-                    {item.liked ? <FavoriteIcon /> : <FavoriteBorderIcon />} {item.good ?? 0}
-                  </StatItem>
-                  <StatItem title="북마크" $active={!!item.bookmarked} $isBookmark={true}>
-                    {item.bookmarked ? <TurnedInIcon /> : <BookmarkBorderIcon />} {item.bookMark ?? 0}
-                  </StatItem>
+                  <StatItem><RemoveRedEyeIcon /> {item.viewCount ?? 0}</StatItem>
+                  <StatItem $active={!!item.liked}><FavoriteIcon /> {item.good ?? 0}</StatItem>
+                  <StatItem $active={!!item.bookmarked} $isBookmark={true}><TurnedInIcon /> {item.bookMark ?? 0}</StatItem>
                 </StatsRow>
               </CardInfoBox>
             </ItemWrapper>
