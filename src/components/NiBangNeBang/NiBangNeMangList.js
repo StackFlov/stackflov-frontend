@@ -1,16 +1,21 @@
-// src/components/NiBangNeBang/NiBangNeMangList.jsx
 import React, { useEffect, useState } from "react";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteIcon from "@mui/icons-material/Favorite";
+import HomeIcon from "@mui/icons-material/Home";
+import LightbulbIcon from "@mui/icons-material/Lightbulb";
+import RestaurantIcon from "@mui/icons-material/Restaurant";
 import {
   ListOuter,
   ListUL,
   CardLI,
   Card,
+  CardImage,
+  CardInfoBox,
   CreatedAt,
   ContentCol,
   Title,
   Author,
+  MetaRow,
   LikeBtn,
 } from "../../styles/components/NiBangNeBangListStyled";
 import { useNavigate } from "react-router-dom";
@@ -37,48 +42,44 @@ const NiBangNeMangList = ({ postsToDisplay }) => {
       .catch((err) => console.error("Error fetching user data:", err));
   }, [accessToken]);
 
-  const like = (id) => {
+  const toggleLike = (id, isCurrentlyLiked) => {
     if (!me) return alert("로그인이 필요한 기능입니다.");
-    axios
-      .post(
-        "https://api.stackflov.com/likes",
-        { reviewId: id },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          withCredentials: true,
-        }
-      )
-      .then(() =>
-        setListItems((prev) =>
-          prev.map((it) => (it.id === id ? { ...it, isLike: true } : it))
-        )
-      )
-      .catch((e) => console.error("좋아요 실패:", e?.response || e));
+    
+    const method = isCurrentlyLiked ? "delete" : "post";
+    const url = isCurrentlyLiked 
+      ? `https://api.stackflov.com/likes?reviewId=${id}` 
+      : `https://api.stackflov.com/likes`;
+
+    axios({
+      method,
+      url,
+      data: isCurrentlyLiked ? null : { reviewId: id },
+      headers: { Authorization: `Bearer ${accessToken}` },
+      withCredentials: true,
+    })
+    .then(() => {
+      setListItems((prev) =>
+        prev.map((it) => (it.id === id ? { ...it, isLike: !isCurrentlyLiked } : it))
+      );
+    })
+    .catch((e) => console.error("좋아요 처리 실패:", e));
   };
 
-  const unlike = (id) => {
-    if (!me) return alert("로그인이 필요한 기능입니다.");
-    axios
-      .delete(`https://api.stackflov.com/likes?reviewId=${id}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        withCredentials: true,
-      })
-      .then(() =>
-        setListItems((prev) =>
-          prev.map((it) => (it.id === id ? { ...it, isLike: false } : it))
-        )
-      )
-      .catch((e) => console.error("좋아요 취소 실패:", e?.response || e));
+  // ✅ 카테고리별 아이콘 렌더링
+  const renderCategoryIcon = (category) => {
+    switch (Number(category)) {
+      case 1: return <HomeIcon className="cate-icon" />;
+      case 2: return <LightbulbIcon className="cate-icon" />;
+      case 3: return <RestaurantIcon className="cate-icon" />;
+      default: return <HomeIcon className="cate-icon" />;
+    }
   };
 
   if (!listItems.length) {
     return (
       <ListOuter>
-        <div style={{ color: "#6b7280", padding: "16px" }}>
-          지도에 표시된 게시글이 없거나, 선택한 조건에 해당하는 글이 없습니다.
+        <div style={{ color: "#6b7280", padding: "40px", textAlign: "center", border: "1px dashed #ddd", borderRadius: "16px" }}>
+          조건에 해당하는 게시글이 없습니다.
         </div>
       </ListOuter>
     );
@@ -89,25 +90,41 @@ const NiBangNeMangList = ({ postsToDisplay }) => {
       <ListUL>
         {listItems.map((item) => (
           <CardLI key={item.id}>
-            <Card>
-              <CreatedAt>{item.createdAt?.slice(0, 10)}</CreatedAt>
+            <Card onClick={() => nav(`/nibangnebang/${item.id}`)}>
+              {/* 상단 이미지 영역 */}
+              <CardImage $hasImage={!!item.thumbnailUrl}>
+                {item.thumbnailUrl ? (
+                  <img src={item.thumbnailUrl} alt="thumbnail" />
+                ) : (
+                  <div className="placeholder">
+                    {renderCategoryIcon(item.category)}
+                    <span className="cate-text">NI BANG NE BANG</span>
+                  </div>
+                )}
+              </CardImage>
 
-              <ContentCol>
-                <Title onClick={() => nav(`/nibangnebang/${item.id}`)}>
-                  {item.content}
-                </Title>
-                <Author>{item.authorNickname}</Author>
-              </ContentCol>
+              {/* 하단 회색 정보 박스 */}
+              <CardInfoBox>
+                <CreatedAt>{item.createdAt?.slice(0, 10)}</CreatedAt>
 
-              {item.isLike ? (
-                <LikeBtn onClick={() => unlike(item.id)} title="좋아요 취소">
-                  <FavoriteIcon style={{ color: "red" }} />
-                </LikeBtn>
-              ) : (
-                <LikeBtn onClick={() => like(item.id)} title="좋아요">
-                  <FavoriteBorderIcon />
-                </LikeBtn>
-              )}
+                <ContentCol>
+                  <Title>{item.content}</Title>
+                </ContentCol>
+
+                <MetaRow>
+                  <Author>👤 {item.authorNickname}</Author>
+                  <LikeBtn 
+                    $active={item.isLike} 
+                    onClick={(e) => {
+                      e.stopPropagation(); // 카드 클릭 이동 방지
+                      toggleLike(item.id, item.isLike);
+                    }}
+                  >
+                    {item.isLike ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                    <span>좋아요</span>
+                  </LikeBtn>
+                </MetaRow>
+              </CardInfoBox>
             </Card>
           </CardLI>
         ))}
