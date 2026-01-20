@@ -44,7 +44,6 @@ const NiBangNeMangList = ({ postsToDisplay }) => {
 
   const toggleLike = (id, isCurrentlyLiked) => {
     if (!me) return alert("로그인이 필요한 기능입니다.");
-    
     const method = isCurrentlyLiked ? "delete" : "post";
     const url = isCurrentlyLiked 
       ? `https://api.stackflov.com/likes?reviewId=${id}` 
@@ -65,21 +64,17 @@ const NiBangNeMangList = ({ postsToDisplay }) => {
     .catch((e) => console.error("좋아요 처리 실패:", e));
   };
 
-  // ✅ 카테고리별 아이콘 렌더링
-  const renderCategoryIcon = (category) => {
-    switch (Number(category)) {
-      case 1: return <HomeIcon className="cate-icon" />;
-      case 2: return <LightbulbIcon className="cate-icon" />;
-      case 3: return <RestaurantIcon className="cate-icon" />;
-      default: return <HomeIcon className="cate-icon" />;
-    }
+  // 이미지 로드 에러 핸들링
+  const handleImgError = (e) => {
+    e.target.style.display = 'none';
+    e.target.nextSibling.style.display = 'flex';
   };
 
   if (!listItems.length) {
     return (
       <ListOuter>
         <div style={{ color: "#6b7280", padding: "40px", textAlign: "center", border: "1px dashed #ddd", borderRadius: "16px" }}>
-          조건에 해당하는 게시글이 없습니다.
+          조건에 해당하는 리뷰가 없습니다.
         </div>
       </ListOuter>
     );
@@ -88,46 +83,57 @@ const NiBangNeMangList = ({ postsToDisplay }) => {
   return (
     <ListOuter>
       <ListUL>
-        {listItems.map((item) => (
-          <CardLI key={item.id}>
-            <Card onClick={() => nav(`/nibangnebang/${item.id}`)}>
-              {/* 상단 이미지 영역 */}
-              <CardImage $hasImage={!!item.thumbnailUrl}>
-                {item.thumbnailUrl ? (
-                  <img src={item.thumbnailUrl} alt="thumbnail" />
-                ) : (
-                  <div className="placeholder">
-                    {renderCategoryIcon(item.category)}
-                    <span className="cate-text">NI BANG NE BANG</span>
-                  </div>
-                )}
-              </CardImage>
+        {listItems.map((item) => {
+          // ✅ 백엔드 DTO의 imageUrls 리스트 중 첫 번째 사진을 썸네일로 사용
+          const thumbnail = item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[0] : null;
 
-              {/* 하단 회색 정보 박스 */}
-              <CardInfoBox>
-                <CreatedAt>{item.createdAt?.slice(0, 10)}</CreatedAt>
+          return (
+            <CardLI key={item.id}>
+              <Card onClick={() => nav(`/nibangnebang/${item.id}`)}>
+                {/* 상단 이미지 영역 (그림자 포함) */}
+                <CardImage $hasImage={!!thumbnail}>
+                  {thumbnail ? (
+                    <>
+                      <img src={thumbnail} alt="review-thumb" onError={handleImgError} />
+                      <div className="placeholder" style={{display: 'none'}}>
+                        <HomeIcon className="cate-icon" />
+                        <span className="cate-text">STAY LOG</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="placeholder">
+                      <HomeIcon className="cate-icon" />
+                      <span className="cate-text">STAY LOG</span>
+                    </div>
+                  )}
+                </CardImage>
 
-                <ContentCol>
-                  <Title>{item.content}</Title>
-                </ContentCol>
+                {/* 하단 회색 정보 박스 */}
+                <CardInfoBox>
+                  <CreatedAt>{item.createdAt?.slice(0, 10)}</CreatedAt>
+                  <ContentCol>
+                    {/* ✅ DTO의 title 필드 사용 */}
+                    <Title title={item.title}>{item.title || item.content}</Title>
+                  </ContentCol>
 
-                <MetaRow>
-                  <Author>👤 {item.authorNickname}</Author>
-                  <LikeBtn 
-                    $active={item.isLike} 
-                    onClick={(e) => {
-                      e.stopPropagation(); // 카드 클릭 이동 방지
-                      toggleLike(item.id, item.isLike);
-                    }}
-                  >
-                    {item.isLike ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-                    <span>좋아요</span>
-                  </LikeBtn>
-                </MetaRow>
-              </CardInfoBox>
-            </Card>
-          </CardLI>
-        ))}
+                  <MetaRow>
+                    <Author>👤 {item.authorNickname}</Author>
+                    <LikeBtn 
+                      $active={item.isLike} 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleLike(item.id, item.isLike);
+                      }}
+                    >
+                      {item.isLike ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                      <span>{item.likeCount || 0}</span>
+                    </LikeBtn>
+                  </MetaRow>
+                </CardInfoBox>
+              </Card>
+            </CardLI>
+          );
+        })}
       </ListUL>
     </ListOuter>
   );
