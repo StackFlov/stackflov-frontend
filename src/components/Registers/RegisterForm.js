@@ -1,40 +1,33 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
-  FormButtonWrapper,
-  FormTitle,
-  FormTitleWrapper,
-  IdCheckButton,
-  ImgSelector,
-  ImgSelectorWrapper,
-  ImgInstruction,
-  InpuItemsWrapper,
-  InputItem,
-  InputLabel,
-  InputValue,
-  MainContainer,
-  RegisterButton,
-  RegisterFormWrapper,
+  RegisterWrapper,
+  RegisterCard,
+  FormHeader,
+  ProfileUploadSection,
+  InputGroup,
+  Label,
+  StyledInput,
+  ActionButton,
+  TermsContainer,
+  CheckboxWrapper,
+  SubmitButton,
+  TimerText,
+  FadeInSection,
 } from "../../styles/components/RegisterFormStyled";
 import noneUserImg from "../../assets/none_images.png";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
 
-// ✅ 아주 긴 이용약관 예시 텍스트
 const TERMS_CONTENT = `
 제 1 조 (목적)
-본 약관은 StackFlov(이하 "서비스")가 제공하는 지역 사회 커뮤니티 서비스의 이용조건 및 절차, 회원과 서비스 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
+본 약관은 StackFlov(이하 "서비스")가 제공하는 1인 가구 지역 사회 커뮤니티 서비스의 이용조건 및 절차를 규정함을 목적으로 합니다.
 
-제 2 조 (용어의 정의)
-1. "회원"이라 함은 서비스에 접속하여 이 약관에 따라 이용계약을 체결하고 서비스를 이용하는 이용자를 말합니다.
-2. "게시물"이라 함은 회원이 서비스를 이용함에 있어 서비스상에 게시한 글, 사진, 동영상 및 각종 파일과 링크 등을 의미합니다.
+제 2 조 (회원의 의무)
+1. 회원은 가입 시 정확한 정보를 기재해야 하며, 타인의 정보를 도용할 수 없습니다.
+2. 회원은 공동체 의식을 가지고 이웃 간의 예의를 지키며 서비스를 이용해야 합니다.
 
-제 3 조 (회원가입 절차)
-회원이 되고자 하는 자는 서비스가 정한 가입 양식에 따라 회원정보를 기입한 후 이 약관에 동의한다는 의사표시를 함으로써 회원가입을 신청합니다.
-
-제 4 조 (개인정보 보호 의무)
-서비스는 "정보통신망법" 등 관계 법령이 정하는 바에 따라 회원의 개인정보를 보호하기 위해 노력합니다. 개인정보의 보호 및 사용에 대해서는 관련법 및 서비스의 개인정보처리방침이 적용됩니다.
-
-... (이하 생략 - 실제 서비스 운영 시 상세 내용을 추가하세요) ...
+제 3 조 (개인정보 보호)
+서비스는 수집된 우편번호 및 주소 정보를 지역 기반 서비스 제공 이외의 용도로 사용하지 않으며, 관련 법령에 따라 안전하게 보호합니다.
 
 본 약관은 2026년 1월 5일부터 시행됩니다.
 `;
@@ -49,12 +42,12 @@ const RegisterForm = () => {
   const [zipCode, setZipCode] = useState("");
   const [addr, setAddr] = useState("");
   const [addrDetail, setAddrDetail] = useState("");
-  const [isAgreed, setIsAgreed] = useState(false); // ✅ 약관 동의 상태
+  const [isAgreed, setIsAgreed] = useState(false);
 
   const [profileImageFile, setProfileImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(noneUserImg);
   const fileInputRef = useRef(null);
-  
+
   const [isEmailLoading, setIsEmailLoading] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
   const [emailCode, setEmailCode] = useState("");
@@ -65,16 +58,6 @@ const RegisterForm = () => {
   const [isTimerActive, setIsTimerActive] = useState(false);
 
   const navigator = useNavigate();
-
-  // ✅ 다음 주소 검색 팝업
-  const handleAddressSearch = () => {
-    new window.daum.Postcode({
-      oncomplete: function (data) {
-        setZipCode(data.zonecode);
-        setAddr(data.address);
-      },
-    }).open();
-  };
 
   // 타이머 로직
   useEffect(() => {
@@ -93,27 +76,27 @@ const RegisterForm = () => {
     return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
   };
 
+  // 비밀번호 일치 및 회원가입 버튼 활성화 로직
   useEffect(() => {
     setIsPasswordAble(password !== "" && password === passwordCheck);
   }, [password, passwordCheck]);
 
-  // ✅ 버튼 활성화 조건 (약관 동의 필수 포함)
   useEffect(() => {
-    const isAllFilled = id && password && isPasswordAble && nickName && 
-                        phoneNum && zipCode && addr && addrDetail && isEmailVerified && isAgreed;
+    const isAllFilled =
+      id &&
+      password &&
+      isPasswordAble &&
+      nickName &&
+      phoneNum &&
+      zipCode &&
+      addr &&
+      addrDetail &&
+      isEmailVerified &&
+      isAgreed;
     setIsRegisterAble(isAllFilled);
   }, [id, password, isPasswordAble, nickName, phoneNum, zipCode, addr, addrDetail, isEmailVerified, isAgreed]);
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setProfileImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result);
-      reader.readAsDataURL(file);
-    }
-  };
-
+  // 이메일 전송 핸들러
   const handleSendEmail = async () => {
     if (!id) return alert("이메일을 입력해주세요.");
     setIsEmailLoading(true);
@@ -124,14 +107,15 @@ const RegisterForm = () => {
       setTimeLeft(180);
       setIsTimerActive(true);
     } catch (error) {
-      alert(error.response?.data?.message || "이미 가입된 이메일이거나 발송 오류입니다.");
+      alert(error.response?.data?.message || "인증번호 발송에 실패했습니다.");
     } finally {
       setIsEmailLoading(false);
     }
   };
 
+  // 이메일 인증 확인 핸들러
   const handleVerifyCode = async () => {
-    if (timeLeft === 0) return alert("시간이 만료되었습니다. 다시 시도해주세요.");
+    if (timeLeft === 0) return alert("인증 시간이 만료되었습니다.");
     try {
       await axios.post("https://api.stackflov.com/auth/email/verify", { email: id, code: emailCode });
       alert("이메일 인증에 성공했습니다.");
@@ -142,6 +126,18 @@ const RegisterForm = () => {
     }
   };
 
+  // 이미지 선택 핸들러
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfileImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // 회원가입 실행 핸들러
   const handleRegister = async () => {
     if (!isRegisterAble) return;
     try {
@@ -176,125 +172,111 @@ const RegisterForm = () => {
   };
 
   return (
-    <RegisterFormWrapper>
-      <MainContainer>
-        <FormTitleWrapper><FormTitle>Register</FormTitle></FormTitleWrapper>
+    <RegisterWrapper>
+      <RegisterCard>
+        <FormHeader>
+          <h2>Register</h2>
+          <p>StackFlov의 새로운 가족이 되어주세요!</p>
+        </FormHeader>
 
-        <ImgSelectorWrapper onClick={() => fileInputRef.current.click()}>
-          <ImgSelector src={imagePreview} />
-          <ImgInstruction>이미지 클릭하여 변경</ImgInstruction>
-          <input type="file" accept="image/*" hidden ref={fileInputRef} onChange={handleImageChange} />
-        </ImgSelectorWrapper>
-
-        <InpuItemsWrapper>
-          <InputItem>
-            <InputLabel width={100}>아이디(이메일)</InputLabel>
-            <InputValue width={160} placeholder="example@test.com" onChange={(e) => setId(e.target.value)} />
-            <IdCheckButton
-              backgroundColor={isEmailLoading ? "#555" : (isEmailSent ? "gray" : "black")}
-              onClick={handleSendEmail}
-              disabled={isEmailLoading}
-            >
-              {isEmailLoading ? "발송 중..." : isEmailSent ? "재발송" : "인증 발송"}
-            </IdCheckButton>
-          </InputItem>
-
-          {isEmailSent && (
-            <InputItem>
-              <InputLabel width={100}>인증번호</InputLabel>
-              <InputValue width={160} placeholder="6자리" onChange={(e) => setEmailCode(e.target.value)} />
-              <div style={{ color: "red", fontSize: "12px", width: "40px" }}>{isEmailVerified ? "" : formatTime(timeLeft)}</div>
-              <IdCheckButton
-                backgroundColor={isEmailVerified || timeLeft === 0 ? "gray" : "blue"}
-                onClick={handleVerifyCode}
-                disabled={isEmailVerified || timeLeft === 0}
-              >
-                {isEmailVerified ? "인증됨" : "확인"}
-              </IdCheckButton>
-            </InputItem>
-          )}
-
-          <InputItem>
-            <InputLabel width={100}>비밀번호</InputLabel>
-            <InputValue type="password" width={250} onChange={(e) => setPassword(e.target.value)} />
-          </InputItem>
-          <InputItem>
-            <InputLabel width={100}>비밀번호 확인</InputLabel>
-            <InputValue type="password" width={250} onChange={(e) => setPasswordCheck(e.target.value)} />
-          </InputItem>
-          <InputItem>
-            <InputLabel width={100}>닉네임</InputLabel>
-            <InputValue width={250} onChange={(e) => setNickName(e.target.value)} />
-          </InputItem>
-          <InputItem>
-            <InputLabel width={100}>전화번호</InputLabel>
-            <InputValue width={250} placeholder="010-0000-0000" onChange={(e) => setPhoneNum(e.target.value)} />
-          </InputItem>
-
-          <InputItem>
-            <InputLabel width={100}>우편번호</InputLabel>
-            <InputValue width={160} value={zipCode} readOnly />
-            <IdCheckButton backgroundColor="black" onClick={handleAddressSearch}>주소 검색</IdCheckButton>
-          </InputItem>
-          <InputItem>
-            <InputLabel width={100}>주소</InputLabel>
-            <InputValue width={250} value={addr} readOnly />
-          </InputItem>
-          <InputItem>
-            <InputLabel width={100}>상세주소</InputLabel>
-            <InputValue width={250} placeholder="나머지 주소 입력" onChange={(e) => setAddrDetail(e.target.value)} />
-          </InputItem>
-
-          {/* ✅ 긴 이용약관 박스 추가 */}
-          <div style={{ marginTop: "30px" }}>
-            <InputLabel style={{ marginBottom: "10px" }}>이용약관 동의</InputLabel>
-            <div style={{
-              width: "100%",
-              height: "100px",
-              border: "1px solid #ccc",
-              padding: "10px",
-              overflowY: "scroll",
-              fontSize: "12px",
-              color: "#666",
-              backgroundColor: "#f9f9f9",
-              whiteSpace: "pre-line",
-              borderRadius: "4px"
-            }}>
-              {TERMS_CONTENT}
-            </div>
-            <div style={{ 
-              marginTop: "10px", 
-              display: "flex", 
-              justifyContent: "flex-end", 
-              alignItems: "center", 
-              gap: "8px" 
-            }}>
-              <span style={{ fontSize: "13px", fontWeight: "bold" }}>위 약관에 동의하시겠습니까?</span>
-              <input 
-                type="checkbox" 
-                id="agree" 
-                checked={isAgreed} 
-                onChange={(e) => setIsAgreed(e.target.checked)} 
-                style={{ width: "18px", height: "18px", cursor: "pointer" }}
-              />
-            </div>
+        <ProfileUploadSection onClick={() => fileInputRef.current.click()}>
+          <div className="image-container">
+            <img src={imagePreview} alt="Profile" />
+            <div className="overlay">변경</div>
           </div>
-        </InpuItemsWrapper>
+          <input type="file" accept="image/*" hidden ref={fileInputRef} onChange={handleImageChange} />
+        </ProfileUploadSection>
 
-        <FormButtonWrapper>
-          <RegisterButton
-            disabled={!isRegisterAble}
-            onClick={handleRegister}
-            style={{ 
-              backgroundColor: isRegisterAble ? "#007bff" : "#ccc",
-              cursor: isRegisterAble ? "pointer" : "not-allowed"
-            }}
-          >
-            회원가입
-          </RegisterButton>
-        </FormButtonWrapper>
-      </MainContainer>
-    </RegisterFormWrapper>
+        <InputGroup>
+          <Label>아이디(이메일)</Label>
+          <div className="input-with-button">
+            <StyledInput placeholder="example@test.com" onChange={(e) => setId(e.target.value)} />
+            <ActionButton
+              onClick={handleSendEmail}
+              disabled={isEmailLoading || isEmailVerified}
+              variant={isEmailSent ? "secondary" : "primary"}
+            >
+              {isEmailLoading ? "..." : isEmailSent ? "재발송" : "인증 발송"}
+            </ActionButton>
+          </div>
+        </InputGroup>
+
+        {isEmailSent && (
+          <FadeInSection>
+            <InputGroup>
+              <Label>
+                인증번호 <TimerText>{isEmailVerified ? "인증됨" : formatTime(timeLeft)}</TimerText>
+              </Label>
+              <div className="input-with-button">
+                <StyledInput placeholder="6자리" onChange={(e) => setEmailCode(e.target.value)} />
+                <ActionButton
+                  onClick={handleVerifyCode}
+                  variant="success"
+                  disabled={isEmailVerified || timeLeft === 0}
+                >
+                  확인
+                </ActionButton>
+              </div>
+            </InputGroup>
+          </FadeInSection>
+        )}
+
+        <InputGroup>
+          <Label>비밀번호</Label>
+          <StyledInput type="password" onChange={(e) => setPassword(e.target.value)} />
+        </InputGroup>
+
+        <InputGroup>
+          <Label>비밀번호 확인</Label>
+          <StyledInput type="password" onChange={(e) => setPasswordCheck(e.target.value)} />
+        </InputGroup>
+
+        <InputGroup>
+          <Label>닉네임</Label>
+          <StyledInput onChange={(e) => setNickName(e.target.value)} />
+        </InputGroup>
+
+        <InputGroup>
+          <Label>전화번호</Label>
+          <StyledInput placeholder="010-0000-0000" onChange={(e) => setPhoneNum(e.target.value)} />
+        </InputGroup>
+
+        <InputGroup>
+          <Label>주소</Label>
+          <div className="input-with-button" style={{ marginBottom: "8px" }}>
+            <StyledInput value={zipCode} readOnly placeholder="우편번호" />
+            <ActionButton
+              onClick={() =>
+                new window.daum.Postcode({
+                  oncomplete: (data) => {
+                    setZipCode(data.zonecode);
+                    setAddr(data.address);
+                  },
+                }).open()
+              }
+              variant="dark"
+            >
+              주소 검색
+            </ActionButton>
+          </div>
+          <StyledInput value={addr} readOnly placeholder="기본 주소" style={{ marginBottom: "8px" }} />
+          <StyledInput placeholder="나머지 주소 입력" onChange={(e) => setAddrDetail(e.target.value)} />
+        </InputGroup>
+
+        <TermsContainer>
+          <Label>이용약관</Label>
+          <div className="terms-box">{TERMS_CONTENT}</div>
+          <CheckboxWrapper>
+            <input type="checkbox" id="agree" checked={isAgreed} onChange={(e) => setIsAgreed(e.target.checked)} />
+            <span>위 약관에 동의합니다 (필수)</span>
+          </CheckboxWrapper>
+        </TermsContainer>
+
+        <SubmitButton disabled={!isRegisterAble} onClick={handleRegister}>
+          회원가입 완료
+        </SubmitButton>
+      </RegisterCard>
+    </RegisterWrapper>
   );
 };
 
