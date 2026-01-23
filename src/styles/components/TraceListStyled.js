@@ -1,85 +1,196 @@
 import styled, { keyframes } from "styled-components";
+import "../../Fonts/fonts.css";
 
+// --- 애니메이션: 카드 등장 효과 ---
 const reveal = keyframes`
-  0% { opacity: 0; transform: translateY(15px); }
+  0% { opacity: 0; transform: translateY(30px); }
   100% { opacity: 1; transform: translateY(0); }
 `;
 
 export const TraceListWrapper = styled.div`
-  margin: 0 auto; width: 100%; max-width: 1200px; padding: 20px 16px;
+  margin: 40px auto 0;
+  width: 100%;
+  max-width: 1200px;
+  padding: 0 20px;
 `;
 
 export const TraceListItemWrapper = styled.ul`
-  list-style: none; padding: 0; margin: 0;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  /* 반응형 그리드 설정 */
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 32px;
 `;
 
-export const TraceListItem = styled.li` list-style: none; `;
+export const TraceListItem = styled.li`
+  list-style: none;
+`;
 
+// --- 카드 메인 컨테이너 (니방내방 스타일 리프팅) ---
 export const ItemWrapper = styled.div`
-  display: flex; flex-direction: column; background: #fff; border-radius: 16px;
-  overflow: hidden; cursor: pointer;
-  /* ✅ 박스 그림자 강화 */
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s ease; opacity: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 20px; /* 더 둥글고 세련된 모서리 */
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  
+  /* 부드러운 고급 그림자 */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  
+  /* 초기 등장 애니메이션 로직 */
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition-delay: var(--reveal-delay, 0ms);
 
+  /* Intersection Observer 활성화 시 */
   &[data-show="true"] {
-    animation: ${reveal} 500ms ease forwards;
-    animation-delay: var(--reveal-delay, 0ms);
+    opacity: 1;
+    transform: translateY(0);
   }
 
+  /* 마우스 호버 시 효과 */
   &:hover {
-    transform: translateY(-8px);
+    transform: translateY(-12px); /* 니방내방 스타일 리프팅 */
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
   }
+
+  will-change: opacity, transform;
 `;
 
+// --- 이미지 섹션 (줌인 애니메이션 포함) ---
 export const CardImage = styled.div`
-  width: 100%; height: 180px; position: relative; overflow: hidden;
-  /* ✅ 이미지가 없으면 그라데이션 적용 */
-  background: ${props => props.$hasImage ? "#f1f5f9" : "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)"};
+  width: 100%;
+  aspect-ratio: 16 / 10; /* 시원한 이미지 비율 */
+  overflow: hidden;
+  position: relative;
+  background: ${props => props.$hasImage ? "#f8f9fa" : "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)"};
 
-  img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
-  ${ItemWrapper}:hover img { transform: scale(1.1); }
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.2, 0, 0.2, 1);
+    will-change: transform;
+  }
+
+  /* 카드 전체 호버 시 이미지 줌인 */
+  ${ItemWrapper}:hover & img {
+    transform: scale(1.1);
+  }
 
   .placeholder-content {
-    height: 100%; display: flex; flex-direction: column; align-items: center;
-    justify-content: center; color: white; gap: 8px;
-    .cate-icon { font-size: 40px !important; opacity: 0.9; }
-    .logo-text { font-size: 10px; font-weight: 800; letter-spacing: 2px; opacity: 0.6; }
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    gap: 10px;
+    transition: transform 0.6s cubic-bezier(0.2, 0, 0.2, 1);
+
+    .cate-icon { font-size: 3rem !important; }
+    .logo-text { font-size: 1.1rem; font-weight: 800; opacity: 0.8; letter-spacing: 1px; }
+  }
+
+  /* 플레이스홀더 아이콘도 같이 줌인 */
+  ${ItemWrapper}:hover & .placeholder-content {
+    transform: scale(1.1);
   }
 `;
 
+// --- 정보 텍스트 영역 (화이트 테마) ---
 export const CardInfoBox = styled.div`
-  padding: 16px; background: #eeeeee; display: flex; flex-direction: column; gap: 10px; flex-grow: 1;
+  padding: 20px;
+  background: #ffffff; /* 회색 제거, 깔끔한 화이트 적용 */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-grow: 1;
+  border-top: 1px solid #f1f3f5;
 `;
 
 export const TraceListTitle = styled.h3`
-  margin: 0; font-size: 17px; font-weight: 800; color: #111827; line-height: 1.4;
-  overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #212529;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  min-height: 2.8em;
+  transition: color 0.2s;
+
+  /* 카드 호버 시 제목 파란색 강조 */
+  ${ItemWrapper}:hover & {
+    color: #007bff;
+  }
 `;
 
 export const MetaRow = styled.div`
-  display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #64748b;
-  .author { display: flex; align-items: center; gap: 4px; }
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #adb5bd;
+  .author { 
+    display: flex; 
+    align-items: center; 
+    gap: 4px; 
+    font-weight: 600;
+    color: #495057;
+  }
 `;
 
 export const StatsRow = styled.div`
-  display: flex; gap: 12px; margin-top: auto; padding-top: 10px; border-top: 1px solid #d1d5db;
+  display: flex;
+  gap: 15px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid #f1f3f5;
 `;
 
 export const StatItem = styled.div`
-  display: flex; align-items: center; gap: 4px; font-size: 12px;
-  color: ${props => props.$active ? (props.$isBookmark ? "#0ea5e9" : "#ef4444") : "#64748b"};
-  svg { font-size: 16px !important; }
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  /* 활성화 상태에 따른 포인트 컬러 */
+  color: ${props => props.$active ? (props.$isBookmark ? "#0ea5e9" : "#ff4757") : "#adb5bd"};
+  
+  svg { font-size: 18px !important; }
 `;
 
+// --- 기타 유틸리티 컴포넌트 ---
 export const EmptyState = styled.div`
-  grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #94a3b8;
-  border: 1px dashed #cbd5e1; border-radius: 16px;
-  span { display: block; margin-top: 8px; font-size: 14px; }
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 80px 20px;
+  color: #adb5bd;
+  background: #f8f9fa;
+  border: 2px dashed #e9ecef;
+  border-radius: 20px;
+  span { display: block; margin-top: 10px; font-size: 15px; font-weight: 600; }
 `;
 
 export const LoadingSkeleton = styled.div`
-  height: 300px; border-radius: 16px; background: #f1f5f9;
+  height: 320px;
+  border-radius: 20px;
+  background: linear-gradient(90deg, #f1f3f5 25%, #f8f9fa 50%, #f1f3f5 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite linear;
+
+  @keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
 `;

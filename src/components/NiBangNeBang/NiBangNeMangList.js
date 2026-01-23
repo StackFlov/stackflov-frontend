@@ -1,9 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import HomeIcon from "@mui/icons-material/Home";
-import LightbulbIcon from "@mui/icons-material/Lightbulb";
-import RestaurantIcon from "@mui/icons-material/Restaurant";
 import {
   ListOuter,
   ListUL,
@@ -25,11 +23,33 @@ import Cookies from "js-cookie";
 const NiBangNeMangList = ({ postsToDisplay }) => {
   const [listItems, setListItems] = useState([]);
   const [me, setMe] = useState(null);
+  const wrapperRef = useRef(null); // ✅ 애니메이션 관찰을 위한 Ref
 
   const accessToken = Cookies.get("accessToken");
   const nav = useNavigate();
 
   useEffect(() => { setListItems(postsToDisplay || []); }, [postsToDisplay]);
+
+  // ✅ 자취로그와 동일한 등장 애니메이션(Intersection Observer) 로직
+  useEffect(() => {
+    if (!wrapperRef.current || listItems.length === 0) return;
+
+    const items = wrapperRef.current.querySelectorAll("[data-reveal='true']");
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.setAttribute("data-show", "true");
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    items.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [listItems]);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -64,7 +84,6 @@ const NiBangNeMangList = ({ postsToDisplay }) => {
     .catch((e) => console.error("좋아요 처리 실패:", e));
   };
 
-  // 이미지 로드 에러 핸들링
   const handleImgError = (e) => {
     e.target.style.display = 'none';
     e.target.nextSibling.style.display = 'flex';
@@ -73,7 +92,7 @@ const NiBangNeMangList = ({ postsToDisplay }) => {
   if (!listItems.length) {
     return (
       <ListOuter>
-        <div style={{ color: "#6b7280", padding: "40px", textAlign: "center", border: "1px dashed #ddd", borderRadius: "16px" }}>
+        <div style={{ color: "#adb5bd", padding: "80px", textAlign: "center", background: "#f8f9fa", border: "2px dashed #e9ecef", borderRadius: "20px" }}>
           조건에 해당하는 리뷰가 없습니다.
         </div>
       </ListOuter>
@@ -82,37 +101,38 @@ const NiBangNeMangList = ({ postsToDisplay }) => {
 
   return (
     <ListOuter>
-      <ListUL>
-        {listItems.map((item) => {
-          // ✅ 백엔드 DTO의 imageUrls 리스트 중 첫 번째 사진을 썸네일로 사용
+      <ListUL ref={wrapperRef}>
+        {listItems.map((item, idx) => {
           const thumbnail = item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[0] : null;
 
           return (
             <CardLI key={item.id}>
-              <Card onClick={() => nav(`/nibangnebang/${item.id}`)}>
-                {/* 상단 이미지 영역 (그림자 포함) */}
+              {/* ✅ data-reveal 및 delay 스타일 추가 */}
+              <Card 
+                data-reveal="true"
+                style={{ "--reveal-delay": `${Math.min(idx, 8) * 70}ms` }}
+                onClick={() => nav(`/nibangnebang/${item.id}`)}
+              >
                 <CardImage $hasImage={!!thumbnail}>
                   {thumbnail ? (
                     <>
                       <img src={thumbnail} alt="review-thumb" onError={handleImgError} />
                       <div className="placeholder" style={{display: 'none'}}>
                         <HomeIcon className="cate-icon" />
-                        <span className="cate-text">STAY LOG</span>
+                        <span className="logo-text">STAY LOG</span>
                       </div>
                     </>
                   ) : (
                     <div className="placeholder">
                       <HomeIcon className="cate-icon" />
-                      <span className="cate-text">STAY LOG</span>
+                      <span className="logo-text">STAY LOG</span>
                     </div>
                   )}
                 </CardImage>
 
-                {/* 하단 회색 정보 박스 */}
                 <CardInfoBox>
                   <CreatedAt>{item.createdAt?.slice(0, 10)}</CreatedAt>
                   <ContentCol>
-                    {/* ✅ DTO의 title 필드 사용 */}
                     <Title title={item.title}>{item.title || item.content}</Title>
                   </ContentCol>
 
