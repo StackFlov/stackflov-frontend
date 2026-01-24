@@ -23,14 +23,14 @@ import Cookies from "js-cookie";
 const NiBangNeMangList = ({ postsToDisplay }) => {
   const [listItems, setListItems] = useState([]);
   const [me, setMe] = useState(null);
-  const wrapperRef = useRef(null); // ✅ 애니메이션 관찰을 위한 Ref
+  const wrapperRef = useRef(null);
 
   const accessToken = Cookies.get("accessToken");
   const nav = useNavigate();
 
   useEffect(() => { setListItems(postsToDisplay || []); }, [postsToDisplay]);
 
-  // ✅ 자취로그와 동일한 등장 애니메이션(Intersection Observer) 로직
+  // ✅ 등장 애니메이션(Intersection Observer) 로직
   useEffect(() => {
     if (!wrapperRef.current || listItems.length === 0) return;
 
@@ -107,7 +107,6 @@ const NiBangNeMangList = ({ postsToDisplay }) => {
 
           return (
             <CardLI key={item.id}>
-              {/* ✅ data-reveal 및 delay 스타일 추가 */}
               <Card 
                 data-reveal="true"
                 style={{ "--reveal-delay": `${Math.min(idx, 8) * 70}ms` }}

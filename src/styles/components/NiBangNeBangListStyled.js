@@ -1,7 +1,7 @@
 import styled, { keyframes } from "styled-components";
 import "../../Fonts/fonts.css";
 
-// --- 자취로그와 동일한 애니메이션 스펙 ---
+// --- 등장 애니메이션 ---
 const reveal = keyframes`
   0% { opacity: 0; transform: translateY(30px); }
   100% { opacity: 1; transform: translateY(0); }
@@ -20,7 +20,7 @@ export const ListUL = styled.ul`
   padding: 0;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 32px; /* 자취로그 일치 */
+  gap: 32px;
 `;
 
 export const CardLI = styled.li`
@@ -28,34 +28,32 @@ export const CardLI = styled.li`
   list-style: none;
 `;
 
-// --- 카드 메인 (자취로그의 ItemWrapper 스펙과 100% 일치) ---
+// --- 카드 메인 (호버 지연 버그 수정됨) ---
 export const Card = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
   background: #ffffff;
-  border-radius: 20px; /* 자취로그의 세련된 곡률 */
+  border-radius: 20px;
   overflow: hidden;
   cursor: pointer;
   position: relative;
-  
-  /* 자취로그와 동일한 그림자 */
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   
-  /* 등장 애니메이션 초기 상태 */
+  /* 등장 애니메이션 */
   opacity: 0;
   transform: translateY(30px);
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   transition-delay: var(--reveal-delay, 0ms);
 
-  /* JS Intersection Observer 대응 */
   &[data-show="true"] {
     opacity: 1;
     transform: translateY(0);
   }
 
-  /* 호버 시 자취로그 특유의 리프팅 효과 */
+  /* ✅ 수정: 호버 시 지연 시간을 강제로 0으로 만들어 즉각 반응하도록 함 */
   &:hover {
+    transition-delay: 0ms !important; 
     transform: translateY(-12px);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
   }
@@ -63,7 +61,7 @@ export const Card = styled.div`
   will-change: opacity, transform;
 `;
 
-// --- 이미지 섹션 (자취로그의 CardImage 줌인 스펙 일치) ---
+// --- 이미지 섹션 ---
 export const CardImage = styled.div`
   width: 100%;
   aspect-ratio: 16 / 10;
@@ -76,15 +74,15 @@ export const CardImage = styled.div`
     height: 100%;
     object-fit: cover;
     transition: transform 0.6s cubic-bezier(0.2, 0, 0.2, 1);
+    /* ✅ 이미지 줌인도 지연 없이 즉시 작동 */
+    transition-delay: 0ms !important;
     will-change: transform;
   }
 
-  /* 카드 호버 시 이미지 줌인 */
   ${Card}:hover & img {
     transform: scale(1.1);
   }
 
-  /* 플레이스홀더 (STAY LOG) 스타일 */
   .placeholder {
     height: 100%;
     display: flex;
@@ -94,6 +92,7 @@ export const CardImage = styled.div`
     color: white;
     gap: 10px;
     transition: transform 0.6s cubic-bezier(0.2, 0, 0.2, 1);
+    transition-delay: 0ms !important;
 
     .cate-icon { font-size: 3rem !important; }
     .logo-text { font-size: 1.1rem; font-weight: 800; opacity: 0.8; letter-spacing: 1px; }
@@ -104,10 +103,9 @@ export const CardImage = styled.div`
   }
 `;
 
-// --- 정보 영역 (자취로그의 CardInfoBox 화이트 테마 적용) ---
 export const CardInfoBox = styled.div`
   padding: 20px;
-  background: #ffffff; /* 화이트로 통일 */
+  background: #ffffff;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -127,7 +125,6 @@ export const ContentCol = styled.div`
   gap: 8px;
 `;
 
-// 타이틀 폰트 및 호버 색상 일치
 export const Title = styled.h3`
   margin: 0;
   font-size: 18px;
@@ -165,7 +162,6 @@ export const Author = styled.div`
   gap: 4px;
 `;
 
-// 좋아요 버튼 애니메이션 및 색상 일치
 export const LikeBtn = styled.button`
   background: transparent;
   border: none;

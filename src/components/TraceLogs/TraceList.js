@@ -1,4 +1,3 @@
-// src/components/trace/TraceList.js
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import {
   TraceListWrapper,
@@ -17,11 +16,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteIcon from "@mui/icons-material/Favorite";
-import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import TurnedInIcon from "@mui/icons-material/TurnedIn";
-// ✅ 아이콘이 없는 경우를 대비해 기본 아이콘 위주로 구성
 import HomeIcon from "@mui/icons-material/Home"; 
 import LightbulbIcon from "@mui/icons-material/Lightbulb";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
@@ -44,7 +40,6 @@ const TraceList = ({ nowCategory }) => {
         withCredentials: true,
       })
       .then((res) => {
-        // API 응답 구조 확인 (res.data.content 인지 확인)
         const data = res.data?.content || res.data || [];
         setList(Array.isArray(data) ? data : []);
       })
@@ -55,7 +50,7 @@ const TraceList = ({ nowCategory }) => {
       .finally(() => setLoading(false));
   }, []);
 
-  // 카드 애니메이션 로직
+  // ✅ 등장 애니메이션 로직
   useEffect(() => {
     if (!wrapperRef.current || loading) return;
     const items = wrapperRef.current.querySelectorAll("[data-reveal='true']");
@@ -74,7 +69,6 @@ const TraceList = ({ nowCategory }) => {
     return () => io.disconnect();
   }, [loading, list]);
 
-  // 카테고리별 아이콘 선택
   const renderCategoryPlaceholder = (category) => {
     switch (Number(category)) {
       case 1: return <HomeIcon className="cate-icon" />;
