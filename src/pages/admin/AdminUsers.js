@@ -1,4 +1,3 @@
-// src/pages/admin/AdminUsers.js
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../utils/api";
@@ -11,9 +10,8 @@ import {
 } from "../../styles/components/admin/AdminCommonStyled";
 
 const PAGE_SIZE = 10;
-
 const ROLE_VALUES = ["USER", "ADMIN"];
-const STATUS_VALUES = ["ACTIVE", "INACTIVE"]; // 서버는 boolean active만 받음
+const STATUS_VALUES = ["ACTIVE", "INACTIVE"];
 
 const normalizeRole = (v) => (v || "").replace(/^ROLE_/, "");
 const toActiveBool = (status) => status === "ACTIVE";
@@ -45,8 +43,29 @@ export default function AdminUsers() {
 
   useEffect(() => { fetchPage(0); }, []);
 
-  const content = resp?.content || [];
-  const totalPages = resp?.totalPages ?? 0;
+  // ✅ 레벨 및 경험치 수정 함수 추가
+  const updateLevelExp = async (userId, currentLevel, currentExp) => {
+    const newLevel = window.prompt("변경할 레벨을 입력하세요 (숫자):", currentLevel);
+    if (newLevel === null) return;
+
+    const newExp = window.prompt("변경할 경험치(EXP)를 입력하세요 (숫자):", currentExp);
+    if (newExp === null) return;
+
+    setBusyId(userId);
+    try {
+      await api.put(
+        `/admin/users/${userId}/level-exp`,
+        { level: Number(newLevel), exp: Number(newExp) },
+        { headers: { "Content-Type": "application/json" }, withCredentials: true }
+      );
+      alert("레벨 및 경험치가 수정되었습니다.");
+      await fetchPage(page);
+    } catch (e) {
+      alert(`수정 실패: ${e?.response?.data?.message || e.message}`);
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   const updateRole = async (userId, roleRaw, el) => {
     const role = normalizeRole(roleRaw);
@@ -77,7 +96,7 @@ export default function AdminUsers() {
       if (el) el.value = "";
       return;
     }
-    const active = toActiveBool(status); // 서버 DTO: { active: boolean }
+    const active = toActiveBool(status);
     setBusyId(userId);
     try {
       await api.put(
@@ -119,11 +138,14 @@ export default function AdminUsers() {
   const onSearch = () => fetchPage(0);
   const onReset = () => { setQ(""); fetchPage(0); };
 
+  const content = resp?.content || [];
+  const totalPages = resp?.totalPages ?? 0;
+
   return (
     <PageWrap>
       <Header>
         <Title>사용자 관리</Title>
-        <Sub>역할/상태/정지 처리를 관리하고, 게시글·댓글 열람으로 이어집니다.</Sub>
+        <Sub>역할/상태/정지/레벨 처리를 관리하고, 게시글·댓글 열람으로 이어집니다.</Sub>
       </Header>
 
       <SearchCard>
@@ -151,8 +173,10 @@ export default function AdminUsers() {
               <Table>
                 <thead>
                   <tr>
-                    <Th w={260}>Email</Th>
+                    <Th w={200}>Email</Th>
                     <Th w={90}>Nickname</Th>
+                    <Th w={60}>Level</Th> {/* ✅ 추가 */}
+                    <Th w={70}>EXP</Th>   {/* ✅ 추가 */}
                     <Th w={80}>Role</Th>
                     <Th w={80}>Status</Th>
                     <Th w={90}>가입일</Th>
@@ -165,14 +189,18 @@ export default function AdminUsers() {
                       (u.createdAt && String(u.createdAt).slice(0, 10)) ||
                       (u.created_date && String(u.created_date).slice(0, 10)) ||
                       "-";
-                    const role   = u.role || (u.roles && u.roles.join(", ")) || "-";
+                    const role = u.role || (u.roles && u.roles.join(", ")) || "-";
                     const status = u.status || (u.active ? "ACTIVE" : "INACTIVE");
-                    const nick   = u.nickname || u.name || "-";
+                    const nick = u.nickname || u.name || "-";
+                    const level = u.level ?? 0; // ✅ 추가
+                    const exp = u.exp ?? 0;     // ✅ 추가
 
                     return (
                       <tr key={u.userId}>
-                        <Td w={260} ellipsis title={u.email}>{u.email}</Td>
+                        <Td w={200} ellipsis title={u.email}>{u.email}</Td>
                         <Td w={90} ellipsis title={nick}>{nick}</Td>
+                        <Td w={60}>{level}</Td> {/* ✅ 추가 */}
+                        <Td w={70}>{exp}</Td>   {/* ✅ 추가 */}
                         <Td w={80} ellipsis title={role}>{role}</Td>
                         <Td w={80}>{status}</Td>
                         <Td w={90}>{created}</Td>
@@ -184,6 +212,15 @@ export default function AdminUsers() {
                             >
                               메모
                             </PrimaryBtn>
+
+                            {/* ✅ 레벨/EXP 수정 버튼 추가 */}
+                            <GhostBtn
+                              compact
+                              disabled={busyId === u.userId}
+                              onClick={() => updateLevelExp(u.userId, level, exp)}
+                            >
+                              등급수정
+                            </GhostBtn>
 
                             <Select
                               compact
@@ -228,11 +265,11 @@ export default function AdminUsers() {
                             {Number(u.boardCount) > 0 && (
                               <PrimaryBtn
                                 as={Link}
+                                border
                                 to={`/admin/users/${u.userId}/boards`}
                                 compact
-                                title={`게시글 ${u.boardCount.toLocaleString()}개`}
                               >
-                                게시글 보기
+                                게시글
                               </PrimaryBtn>
                             )}
                             {Number(u.commentCount) > 0 && (
@@ -240,9 +277,8 @@ export default function AdminUsers() {
                                 as={Link}
                                 to={`/admin/users/${u.userId}/comments`}
                                 compact
-                                title={`댓글 ${u.commentCount.toLocaleString()}개`}
                               >
-                                댓글 보기
+                                댓글
                               </GhostBtn>
                             )}
                           </Actions>

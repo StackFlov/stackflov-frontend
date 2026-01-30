@@ -170,7 +170,7 @@ const UserInfos = () => {
           <br />
           {currentLevelIdx < 9 ? (
             <div style={{ marginTop: "8px" }}>
-              게시글이나 댓글을 써서 <strong>{nextLevel.name}</strong>가 되어보세요!
+              게시글이나 댓글을 써서 <strong>{nextLevel.name}</strong>(이)가 되어보세요!
             </div>
           ) : (
             <div style={{ marginTop: "8px", color: "#FF9F00", fontWeight: "900" }}>
