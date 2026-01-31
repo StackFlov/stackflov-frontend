@@ -10,8 +10,23 @@ import {
 } from "../../styles/components/admin/AdminCommonStyled";
 
 const PAGE_SIZE = 10;
+
 const ROLE_VALUES = ["USER", "ADMIN"];
 const STATUS_VALUES = ["ACTIVE", "INACTIVE"];
+
+// ✅ 자취 생존 진화론 10단계 데이터
+const LEVEL_DATA = [
+  { name: "먼지 먹는 하마", icon: "🦛" },
+  { name: "편의점 미슐랭", icon: "🍱" },
+  { name: "배달 앱 VVIP", icon: "🛵" },
+  { name: "우리 동네 반장님", icon: "🚩" },
+  { name: "빨래 건조대 수호자", icon: "🧺" },
+  { name: "프로 자취 연금술사", icon: "🧪" },
+  { name: "당근 온도 99도", icon: "🥕" },
+  { name: "지박령", icon: "👻" },
+  { name: "자취방 만렙 교수", icon: "🎓" },
+  { name: "StackFlov 성주", icon: "🏰" },
+];
 
 const normalizeRole = (v) => (v || "").replace(/^ROLE_/, "");
 const toActiveBool = (status) => status === "ACTIVE";
@@ -30,7 +45,7 @@ export default function AdminUsers() {
     setErr(null);
     try {
       const { data } = await api.get("/admin/users", {
-        params: { page: p, size: PAGE_SIZE },
+        params: { page: p, size: PAGE_SIZE, q: q || undefined },
       });
       setResp(data);
       setPage(p);
@@ -43,37 +58,36 @@ export default function AdminUsers() {
 
   useEffect(() => { fetchPage(0); }, []);
 
-  // ✅ 레벨 및 경험치 수정 함수 추가
-  const updateLevelExp = async (userId, currentLevel, currentExp) => {
-    const newLevel = window.prompt("변경할 레벨을 입력하세요 (숫자):", currentLevel);
-    if (newLevel === null) return;
-
-    const newExp = window.prompt("변경할 경험치(EXP)를 입력하세요 (숫자):", currentExp);
-    if (newExp === null) return;
+  // ✅ 등급(레벨) 변경 함수
+  const updateLevelExp = async (userId, newLevel, el) => {
+    if (!newLevel) return;
+    if (!window.confirm(`해당 사용자의 등급을 LV.${newLevel}로 변경하시겠습니까?`)) {
+      if (el) el.value = "";
+      return;
+    }
 
     setBusyId(userId);
     try {
       await api.put(
         `/admin/users/${userId}/level-exp`,
-        { level: Number(newLevel), exp: Number(newExp) },
+        { 
+          level: Number(newLevel), 
+          exp: 0 
+        },
         { headers: { "Content-Type": "application/json" }, withCredentials: true }
       );
-      alert("레벨 및 경험치가 수정되었습니다.");
+      alert("등급이 성공적으로 변경되었습니다.");
       await fetchPage(page);
     } catch (e) {
-      alert(`수정 실패: ${e?.response?.data?.message || e.message}`);
+      alert(`등급 변경 실패: ${e?.response?.data?.message || e.message}`);
     } finally {
       setBusyId(null);
+      if (el) el.value = ""; // 선택창 다시 "등급 변경"으로 초기화
     }
   };
 
   const updateRole = async (userId, roleRaw, el) => {
     const role = normalizeRole(roleRaw);
-    if (!ROLE_VALUES.includes(role)) {
-      alert("허용되지 않는 역할 값입니다.");
-      if (el) el.value = "";
-      return;
-    }
     setBusyId(userId);
     try {
       await api.put(
@@ -91,11 +105,6 @@ export default function AdminUsers() {
   };
 
   const updateStatus = async (userId, status, el) => {
-    if (!STATUS_VALUES.includes(status)) {
-      alert("허용되지 않는 상태 값입니다.");
-      if (el) el.value = "";
-      return;
-    }
     const active = toActiveBool(status);
     setBusyId(userId);
     try {
@@ -115,7 +124,7 @@ export default function AdminUsers() {
 
   const suspendUser = async (userId, period, el) => {
     if (!period) return;
-    if (!window.confirm(`정말 이 사용자를 ${period}로 정지하시겠습니까?`)) {
+    if (!window.confirm(`정말 이 사용자를 ${period} 동안 정지하시겠습니까?`)) {
       if (el) el.value = "";
       return;
     }
@@ -145,7 +154,7 @@ export default function AdminUsers() {
     <PageWrap>
       <Header>
         <Title>사용자 관리</Title>
-        <Sub>역할/상태/정지/레벨 처리를 관리하고, 게시글·댓글 열람으로 이어집니다.</Sub>
+        <Sub>회원의 역할, 계정 상태, 자취 등급 및 정지 처리를 통합 관리합니다.</Sub>
       </Header>
 
       <SearchCard>
@@ -161,97 +170,97 @@ export default function AdminUsers() {
         </Row>
       </SearchCard>
 
-      {loading && <InfoText>불러오는 중…</InfoText>}
-      {err && <ErrorText>오류: {String(err)}</ErrorText>}
+      {loading && <InfoText>데이터를 불러오는 중입니다...</InfoText>}
+      {err && <ErrorText>오류 발생: {String(err)}</ErrorText>}
 
       {!loading && !err && (
         content.length === 0 ? (
-          <Empty>결과 없음</Empty>
+          <Empty>조회된 사용자가 없습니다.</Empty>
         ) : (
           <>
             <TableCard>
               <Table>
                 <thead>
                   <tr>
-                    <Th w={200}>Email</Th>
-                    <Th w={90}>Nickname</Th>
-                    <Th w={60}>Level</Th> {/* ✅ 추가 */}
-                    <Th w={70}>EXP</Th>   {/* ✅ 추가 */}
-                    <Th w={80}>Role</Th>
-                    <Th w={80}>Status</Th>
-                    <Th w={90}>가입일</Th>
+                    <Th w={220}>Email</Th>
+                    <Th w={100}>Nickname</Th>
+                    <Th w={60}>Level</Th>
+                    <Th w={60}>EXP</Th>
+                    <Th w={100}>Role</Th>
+                    <Th w={100}>Status</Th>
+                    <Th w={100}>가입일</Th>
                     <Th>액션</Th>
                   </tr>
                 </thead>
                 <tbody>
                   {content.map((u) => {
-                    const created =
-                      (u.createdAt && String(u.createdAt).slice(0, 10)) ||
-                      (u.created_date && String(u.created_date).slice(0, 10)) ||
-                      "-";
-                    const role = u.role || (u.roles && u.roles.join(", ")) || "-";
-                    const status = u.status || (u.active ? "ACTIVE" : "INACTIVE");
-                    const nick = u.nickname || u.name || "-";
-                    const level = u.level ?? 0; // ✅ 추가
-                    const exp = u.exp ?? 0;     // ✅ 추가
+                    const created = (u.createdAt && String(u.createdAt).slice(0, 10)) || "-";
+                    const level = u.level ?? 1;
+                    const exp = u.exp ?? 0;
 
                     return (
                       <tr key={u.userId}>
-                        <Td w={200} ellipsis title={u.email}>{u.email}</Td>
-                        <Td w={90} ellipsis title={nick}>{nick}</Td>
-                        <Td w={60}>{level}</Td> {/* ✅ 추가 */}
-                        <Td w={70}>{exp}</Td>   {/* ✅ 추가 */}
-                        <Td w={80} ellipsis title={role}>{role}</Td>
-                        <Td w={80}>{status}</Td>
-                        <Td w={90}>{created}</Td>
+                        <Td w={220} ellipsis title={u.email}>{u.email}</Td>
+                        <Td w={100} ellipsis title={u.nickname}>{u.nickname || "-"}</Td>
+                        <Td w={60} style={{ fontWeight: 'bold' }}>{level}</Td>
+                        <Td w={60}>{exp}</Td>
+                        <Td w={100}>{normalizeRole(u.role)}</Td>
+                        <Td w={100}>{u.active ? "ACTIVE" : "INACTIVE"}</Td>
+                        <Td w={100}>{created}</Td>
                         <Td>
                           <Actions>
                             <PrimaryBtn
                               compact
-                              onClick={() => setMemoUser({ id: u.userId, email: u.email, name: nick })}
+                              onClick={() => setMemoUser({ id: u.userId, email: u.email, name: u.nickname })}
                             >
                               메모
                             </PrimaryBtn>
 
-                            {/* ✅ 레벨/EXP 수정 버튼 추가 */}
-                            <GhostBtn
+                            {/* ✅ 등급 변경: '등급 변경' 문구로 원복 */}
+                            <Select
                               compact
+                              defaultValue=""
                               disabled={busyId === u.userId}
-                              onClick={() => updateLevelExp(u.userId, level, exp)}
+                              onChange={(e) => updateLevelExp(u.userId, e.target.value, e.target)}
                             >
-                              등급수정
-                            </GhostBtn>
+                              <option value="" disabled>등급 변경</option>
+                              {LEVEL_DATA.map((lv, idx) => (
+                                <option key={idx} value={idx + 1}>
+                                  LV.{idx + 1} {lv.name}
+                                </option>
+                              ))}
+                            </Select>
 
+                            {/* 역할 변경 */}
                             <Select
                               compact
                               defaultValue=""
                               disabled={busyId === u.userId}
                               onChange={(e) => updateRole(u.userId, e.target.value, e.target)}
-                              aria-label="역할 변경"
                             >
                               <option value="" disabled>역할 변경</option>
                               <option value="USER">USER</option>
                               <option value="ADMIN">ADMIN</option>
                             </Select>
 
+                            {/* 상태 변경 */}
                             <Select
                               compact
                               defaultValue=""
                               disabled={busyId === u.userId}
                               onChange={(e) => updateStatus(u.userId, e.target.value, e.target)}
-                              aria-label="상태 변경"
                             >
                               <option value="" disabled>상태 변경</option>
                               <option value="ACTIVE">ACTIVE</option>
                               <option value="INACTIVE">INACTIVE</option>
                             </Select>
 
+                            {/* 정지 기간 */}
                             <Select
                               compact
                               defaultValue=""
                               disabled={busyId === u.userId}
                               onChange={(e) => suspendUser(u.userId, e.target.value, e.target)}
-                              aria-label="정지 기간"
                             >
                               <option value="" disabled>정지 기간</option>
                               <option value="THREE_DAYS">3일</option>
@@ -261,26 +270,6 @@ export default function AdminUsers() {
                               <option value="SIX_MONTHS">6개월</option>
                               <option value="PERMANENT">영구</option>
                             </Select>
-
-                            {Number(u.boardCount) > 0 && (
-                              <PrimaryBtn
-                                as={Link}
-                                border
-                                to={`/admin/users/${u.userId}/boards`}
-                                compact
-                              >
-                                게시글
-                              </PrimaryBtn>
-                            )}
-                            {Number(u.commentCount) > 0 && (
-                              <GhostBtn
-                                as={Link}
-                                to={`/admin/users/${u.userId}/comments`}
-                                compact
-                              >
-                                댓글
-                              </GhostBtn>
-                            )}
                           </Actions>
                         </Td>
                       </tr>
@@ -291,13 +280,9 @@ export default function AdminUsers() {
             </TableCard>
 
             <Pagination>
-              <MutedBtn disabled={page <= 0} onClick={() => fetchPage(page - 1)}>
-                이전
-              </MutedBtn>
+              <MutedBtn disabled={page <= 0} onClick={() => fetchPage(page - 1)}>이전</MutedBtn>
               <PageInfo>{page + 1} / {totalPages || 1}</PageInfo>
-              <MutedBtn disabled={page >= (totalPages - 1)} onClick={() => fetchPage(page + 1)}>
-                다음
-              </MutedBtn>
+              <MutedBtn disabled={page >= (totalPages - 1)} onClick={() => fetchPage(page + 1)}>다음</MutedBtn>
             </Pagination>
           </>
         )
