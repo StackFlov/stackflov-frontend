@@ -13,6 +13,7 @@ const ProfilePage = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
+        // 실제 API 엔드포인트에 맞춰 호출합니다.
         const response = await axios.get(`https://api.stackflov.com/users/${userId}/profile`);
         setProfile(response.data);
       } catch (err) {
@@ -27,7 +28,7 @@ const ProfilePage = () => {
   if (loading) return <S.AdminBlockWrapper><h2>로딩 중...</h2></S.AdminBlockWrapper>;
   if (!profile) return <S.AdminBlockWrapper><h2>사용자를 찾을 수 없습니다.</h2></S.AdminBlockWrapper>;
 
-  // ✅ 관리자 프로필 접근 차단
+  // 관리자 프로필 접근 제한 로직 유지
   if (profile.role === 'ADMIN') {
     return (
       <S.AdminBlockWrapper>
@@ -76,7 +77,7 @@ const ProfilePage = () => {
         {activeTab === 'boards' ? (
           profile.boards?.length > 0 ? (
             profile.boards.map(b => (
-              <S.ContentCard key={b.id} onClick={() => navigate(`/boards/${b.id}`)}>
+              <S.ContentCard key={b.id} onClick={() => navigate(`/trace/detail/${b.id}`)}>
                 <h3 style={{margin: '0 0 8px 0'}}>{b.title}</h3>
                 <p style={{fontSize: '13px', color: '#94a3b8'}}>{new Date(b.createdAt).toLocaleDateString()} · 조회 {b.viewCount}</p>
               </S.ContentCard>
@@ -87,7 +88,8 @@ const ProfilePage = () => {
         ) : (
           profile.reviews?.length > 0 ? (
             profile.reviews.map(r => (
-              <S.ContentCard key={r.id}>
+              /* ✅ 경로 수정: 클릭 시 /nibangnebang/{id}로 이동합니다. */
+              <S.ContentCard key={r.id} onClick={() => navigate(`/nibangnebang/${r.id}`)} style={{cursor: 'pointer'}}>
                 <div style={{color: '#f59e0b', fontWeight: 'bold', marginBottom: '8px'}}>★ {r.rating}</div>
                 <p style={{margin: '0 0 10px 0', lineHeight: '1.5'}}>{r.content}</p>
                 <span style={{fontSize: '12px', color: '#94a3b8'}}>{r.address}</span>
