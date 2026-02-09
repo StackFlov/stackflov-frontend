@@ -108,6 +108,7 @@ const App = () => {
           <Route path="/profile/:userId" element={<ProfilePage />} />
         </Route>
       </Routes>
+      <LevelUpModal />
       <GlobalChat />
     </div>
   );

@@ -12,6 +12,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import axios from "axios";
 import styled from "styled-components";
+import { toast } from "react-toastify"; // ✅ 토스트 알림 추가
 
 /* ===== 알림 배지 스타일 ===== */
 const NotiText = styled.span`
@@ -27,16 +28,65 @@ const DotBadge = styled.span`
   font-size: 10px; line-height: 16px; text-align: center; font-weight: 700;
 `;
 
+/* ===== ✅ 출석 체크 버튼 스타일 추가 ===== */
+const AttendanceBtn = styled.button`
+  background: linear-gradient(90deg, #8b5cf6 0%, #6366f1 100%);
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-right: 10px;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(139, 92, 246, 0.4);
+  }
+
+  &:disabled {
+    background: #e2e8f0;
+    color: #94a3b8;
+    cursor: default;
+    transform: none;
+    box-shadow: none;
+  }
+`;
+
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 사용하지 않는 me, notiOpen 변수는 제거하고 세터 함수만 남기거나 정리합니다.
-  const [, setMe] = useState({}); 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(false); // ✅ 출석 로딩 상태
+  const [, setMe] = useState({}); 
 
   const apiBase = "https://api.stackflov.com";
+
+  // ✅ 출석 체크 요청 함수
+  const handleAttendance = async () => {
+    const token = Cookies.get("accessToken");
+    if (!token) return;
+
+    setLoading(true);
+    try {
+      // 이전에 설정한 /attendance/check-in 경로로 호출합니다.
+      const response = await axios.post(`${apiBase}/attendance/check-in`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
+      });
+      toast.success(`🎉 ${response.data}`); // "N일 연속 출석!" 메시지 출력
+    } catch (err) {
+      const errorMsg = err.response?.data || "이미 출석했거나 오류가 발생했습니다.";
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const openProfile = () => {
     const token = Cookies.get("accessToken");
@@ -120,6 +170,13 @@ const Header = () => {
         </LinkWrapper>
 
         <LoginWrapper>
+          {/* ✅ 출석 체크 버튼: 로그인 상태일 때만 노출 */}
+          {isLoggedIn && (
+            <AttendanceBtn onClick={handleAttendance} disabled={loading}>
+              {loading ? "확인 중..." : "출석 체크"}
+            </AttendanceBtn>
+          )}
+
           <HeaderItem $active={isActive("/notifications")} onClick={() => navigate("/notifications")}>
             <NotiText>
               알림
