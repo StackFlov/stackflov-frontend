@@ -217,12 +217,21 @@ const TraceDetail = () => {
 
   // board
   useEffect(() => {
+    viewLoggedRef.current = false;
     axios
       .get(`https://api.stackflov.com/boards/${no}`, {
         headers: { "Content-Type": "application/json" },
         withCredentials: true,
       })
-      .then((res) => setTraceInfo(res.data))
+      .then((res) => {
+      setTraceInfo(res.data);
+
+      // ✅ VIEW 로깅(한 번만)
+      if (!viewLoggedRef.current) {
+        viewLoggedRef.current = true;
+        logEvent("VIEW");
+      }
+    })
       .catch((err) => console.error("Error fetching board:", err));
   }, [no]);
 
@@ -459,6 +468,21 @@ const TraceDetail = () => {
     [traceInfo.authorProfileImageUrl]
   );
   useEffect(() => setImgErr(false), [imgSrc]);
+  useEffect(() => {
+  if (!Number.isFinite(boardId)) return;
+
+  dwellStartRef.current = Date.now();
+
+  return () => {
+    const start = dwellStartRef.current;
+    if (!start) return;
+
+    const ms = Date.now() - start;
+    if (ms < 800) return; // 너무 짧은 체류는 노이즈 컷(원하면 제거)
+
+    logEvent("DWELL", ms);
+  };
+}, [boardId, logEvent]);
 
   const isFollowing = useMemo(() => {
     if (!traceInfo.authorId) return false;
@@ -479,6 +503,34 @@ const TraceDetail = () => {
     }
     return extractHashtags(traceInfo?.content);
   }, [traceInfo]);
+
+  const boardId = Number(no);
+const viewLoggedRef = useRef(false);
+const dwellStartRef = useRef(null);
+
+const logEvent = useCallback(
+  async (type, value = null) => {
+    if (!accessToken) return;         // 로그인 안 했으면 로깅 스킵(원하면 제거)
+    if (!Number.isFinite(boardId)) return;
+
+    try {
+      await axios.post(
+        "https://api.stackflov.com/api/events",   // ✅ 너희 백엔드가 @RequestMapping("/api/events")라면 이게 맞음
+        { boardId, type, value },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          withCredentials: true,
+        }
+      );
+    } catch (e) {
+      // 로깅 실패는 UX 영향 없게 무시
+    }
+  },
+  [accessToken, boardId]
+);
 
   return (
     <TraceDetailWrapper ref={wrapperRef}>

@@ -1,4 +1,3 @@
-import React from "react";
 import { Route, Routes } from "react-router-dom";
 import Header from "./components/Header";
 import Login from "./pages/Login";
@@ -16,6 +15,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminBoardsSearch from "./pages/admin/AdminBoardsSearch";
 import AdminUserComments from "./pages/admin/AdminUserComments";
 import AdminUserMemos from "./pages/admin/AdminUserMemos";
+import LevelUpModal from "./components/modals/LevelUpModal";
 
 import AdminCommentsSearch from "./pages/admin/AdminCommentsSearch";
 import AdminReportsPending from "./pages/admin/AdminReportsPending";
@@ -35,6 +35,8 @@ import Notifications from "./pages/Notifications";
 import Feed from "./pages/Feed";
 import GlobalChat from "./components/Chat/GlobalChat";
 import ProfilePage from './pages/ProfilePage';
+
+import PersonalFeedPage from "./pages/PersonalFeedPage";
 
 const App = () => {
   return (
@@ -106,6 +108,8 @@ const App = () => {
           <Route path="/feed" element={<Feed />} />
 
           <Route path="/profile/:userId" element={<ProfilePage />} />
+
+          <Route path="/feed/personal" element={<PersonalFeedPage />} />
         </Route>
       </Routes>
       <LevelUpModal />
