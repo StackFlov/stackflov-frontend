@@ -20,7 +20,16 @@ export const getBoardDetail = (boardId) =>
 // ✅ 콜드스타트 fallback (있으면 맞춰서 바꿔)
 // 없으면 PersonalFeedPage에서 기존 feedApi 함수를 쓰도록 바꿔도 됨
 export const getPopularBoards = (size = 20) =>
-  client.get("/api/boards/popular", { params: { size } }).then((res) => res.data);
+  client.get("/api/boards/popular", { params: { size } }).then((res) => rs.data);
 
 export const getRecentBoards = (size = 20) =>
   client.get("/api/boards/recent", { params: { size } }).then((res) => res.data);
+
+export const logRecoEvent = async ({ boardId, type, value = null }) => {
+  await api.post("/api/events", { boardId, type, value });
+};
+
+export const getPersonalReco = async (size = 20) => {
+  const res = await api.get("/api/feed/personal", { params: { size } });
+  return res.data;
+};
