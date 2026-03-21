@@ -1,7 +1,7 @@
 // src/components/AttendanceCheckIn.jsx
 import React, { useState } from "react";
 import Cookies from "js-cookie";
-import { checkInAttendance } from "../api/attendance";
+import { checkIn } from "../api/attendance";
 
 export default function AttendanceCheckIn() {
   const [loading, setLoading] = useState(false);
@@ -20,7 +20,7 @@ export default function AttendanceCheckIn() {
     setMessage("");
 
     try {
-      const resultMsg = await checkInAttendance();
+      const resultMsg = await checkIn();
       setMessage(resultMsg);
       setChecked(true);
     } catch (e) {
