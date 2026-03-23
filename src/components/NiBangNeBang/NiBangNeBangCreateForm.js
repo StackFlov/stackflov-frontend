@@ -30,6 +30,7 @@ const NiBangNeBangCreateForm = () => {
   const [files, setFiles] = useState([]);       // File[]
   const [previews, setPreviews] = useState([]); // objectURL[]
   const [submitting, setSubmitting] = useState(false);
+  const [category, setCategory] = useState("ONEROOM");
 
   const navigator = useNavigate();
   const accessToken = Cookies.get("accessToken");
@@ -103,7 +104,7 @@ const NiBangNeBangCreateForm = () => {
       setSubmitting(true);
 
       const formData = new FormData();
-      const data = { title: title.trim(), address: address.trim(), content: content.trim(), rating: Number(rating) };
+      const data = { title: title.trim(), address: address.trim(), content: content.trim(), rating: Number(rating), category: category };
       formData.append("data", new Blob([JSON.stringify(data)], { type: "application/json" }));
       for (const f of files) formData.append("images", f);
 
