@@ -107,6 +107,7 @@ const Header = () => {
       .finally(() => {
         Cookies.remove("accessToken");
         Cookies.remove("refreshToken");
+        window.dispatchEvent(new Event("logoutSuccess"));
         setIsLoggedIn(false);
         setMe({});
         setUnreadCount(0);

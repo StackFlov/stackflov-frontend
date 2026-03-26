@@ -37,10 +37,19 @@ const GlobalChat = () => {
         const handleLoginSuccess = () => {
             setAccessToken(Cookies.get("accessToken"));
         };
-        
+        const handleLogoutSuccess = () => {
+            setAccessToken(null); // 또는 undefined
+            setView('closed'); // 혹시 채팅창이 열려있었다면 닫아주기
+        };
+
+        window.addEventListener("logoutSuccess", handleLogoutSuccess);
         window.addEventListener("loginSuccess", handleLoginSuccess);
-        return () => window.removeEventListener("loginSuccess", handleLoginSuccess);
+        return () => {
+             window.removeEventListener("loginSuccess", handleLoginSuccess);
+             window.removeEventListeber("logoutSuccess", handleLogoutSuccess);
+        }
     }, []);
+    
 
     useEffect(() => {
         const handleExternalOpen = (e) => {
