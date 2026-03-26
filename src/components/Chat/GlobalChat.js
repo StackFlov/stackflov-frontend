@@ -12,12 +12,11 @@ const GlobalChat = () => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState(""); 
     const [myInfo, setMyInfo] = useState(null);
+    const [accessToken, setAccessToken] = useState(Cookies.get("accessToken"));
     
     const stompClient = useRef(null);
     const scrollRef = useRef();
     const pendingMessages = useRef([]); 
-    
-    const accessToken = Cookies.get("accessToken");
     const apiBase = "https://api.stackflov.com";
 
     const fetchRooms = useCallback(() => {
@@ -33,6 +32,15 @@ const GlobalChat = () => {
             setRooms(sorted);
         }).catch(err => console.error("목록 로드 실패", err));
     }, [accessToken, apiBase]);
+
+    useEffect(() => {
+        const handleLoginSuccess = () => {
+            setAccessToken(Cookies.get("accessToken"));
+        };
+        
+        window.addEventListener("loginSuccess", handleLoginSuccess);
+        return () => window.removeEventListener("loginSuccess", handleLoginSuccess);
+    }, []);
 
     useEffect(() => {
         const handleExternalOpen = (e) => {

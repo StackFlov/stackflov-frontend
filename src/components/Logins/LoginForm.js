@@ -53,6 +53,8 @@ const LoginForm = () => {
       if (accessToken) Cookies.set("accessToken", accessToken);
       if (refreshToken) Cookies.set("refreshToken", refreshToken);
 
+      window.dispatchEvent(new Event("loginSuccess"));
+
       navigate("/");
     } catch (e) {
       const msg =
