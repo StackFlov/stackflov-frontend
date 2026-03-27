@@ -9,6 +9,7 @@ import {
   LogoWrapper,
 } from "../styles/components/HeaderStyled";
 import { useLocation, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import Cookies from "js-cookie";
 import axios from "axios";
 import styled from "styled-components";
@@ -70,19 +71,57 @@ const Header = () => {
   // ✅ 출석 체크 요청 함수
   const handleAttendance = async () => {
     const token = Cookies.get("accessToken");
-    if (!token) return;
+    if (!token) {
+      Swal.fire({
+        icon: 'warning',
+        title: '앗! 로그인이 필요해요',
+        text: '출석 체크를 하려면 먼저 로그인을 해주세요. 👋',
+        confirmButtonColor: '#6366f1',
+      });
+      return;
+    }
 
     setLoading(true);
     try {
-      // 이전에 설정한 /attendance/check-in 경로로 호출합니다.
       const response = await axios.post(`${apiBase}/attendance/check-in`, {}, {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
-      toast.success(`🎉 ${response.data}`); // "N일 연속 출석!" 메시지 출력
+
+      // 🎉 출석 성공 팝업
+      Swal.fire({
+        title: '출석 체크 완료! 🥳',
+        html: `
+          <div style="font-size: 1.1rem; color: #4b5563; margin-bottom: 10px;">
+            ${response.data}
+          </div>
+          <div style="font-size: 0.9rem; color: #8b5cf6; font-weight: bold;">
+            경험치가 쑥쑥 올라가고 있어요!
+          </div>
+        `,
+        icon: 'success',
+        background: '#ffffff',
+        confirmButtonText: '확인',
+        confirmButtonColor: '#6366f1',
+        showClass: {
+          popup: 'animate__animated animate__fadeInDown' // 애니메이션 효과 (필요 시)
+        },
+        hideClass: {
+          popup: 'animate__animated animate__fadeOutUp'
+        }
+      });
+
     } catch (err) {
       const errorMsg = err.response?.data || "이미 출석했거나 오류가 발생했습니다.";
-      toast.error(errorMsg);
+      
+      // ✋ 이미 출석했거나 에러 발생 시 팝업
+      Swal.fire({
+        title: '잠시만요!',
+        text: typeof errorMsg === 'string' ? errorMsg : '이미 오늘 출석 체크를 완료하셨습니다. 내일 또 만나요! 😊',
+        icon: 'info',
+        confirmButtonText: '알겠어요',
+        confirmButtonColor: '#94a3b8',
+      });
     } finally {
       setLoading(false);
     }

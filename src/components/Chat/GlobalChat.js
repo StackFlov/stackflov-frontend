@@ -46,7 +46,7 @@ const GlobalChat = () => {
         window.addEventListener("loginSuccess", handleLoginSuccess);
         return () => {
              window.removeEventListener("loginSuccess", handleLoginSuccess);
-             window.removeEventListeber("logoutSuccess", handleLogoutSuccess);
+             window.removeEventListener("logoutSuccess", handleLogoutSuccess);
         }
     }, []);
     

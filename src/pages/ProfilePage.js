@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import * as S from '../styles/components/ProfilePageStyles';
-import AttendanceCheckIn from "../components/AttendanceCheckIn";
 
 const ProfilePage = () => {
   const { userId } = useParams();
@@ -64,7 +63,6 @@ const ProfilePage = () => {
           </S.FollowButton>
         </S.InfoSection>
       </S.HeaderCard>
-      <AttendanceCheckIn />
 
       <S.TabWrapper>
         <S.TabButton $active={activeTab === 'boards'} onClick={() => setActiveTab('boards')}>

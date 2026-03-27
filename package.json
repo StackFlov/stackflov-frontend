@@ -29,6 +29,7 @@
     "reducers": "^3.0.0-alpha",
     "sockjs-client": "^1.6.1",
     "styled-components": "^6.1.17",
+    "sweetalert2": "^11.26.24",
     "universal-cookie": "^8.0.1",
     "web-vitals": "^2.1.4"
   },
