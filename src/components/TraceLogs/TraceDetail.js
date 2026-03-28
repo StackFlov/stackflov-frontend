@@ -193,6 +193,7 @@ const TraceDetail = () => {
   const accessToken = Cookies.get("accessToken");
   const navigator = useNavigate();
   const { no } = useParams();
+  const boardId = Number(no);
 
   // reveal animations
   const wrapperRef = useRef(null);
@@ -504,7 +505,6 @@ const TraceDetail = () => {
     return extractHashtags(traceInfo?.content);
   }, [traceInfo]);
 
-  const boardId = Number(no);
 const viewLoggedRef = useRef(false);
 const dwellStartRef = useRef(null);
 

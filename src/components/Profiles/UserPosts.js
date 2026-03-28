@@ -90,11 +90,11 @@ const UserPosts = () => {
       <UserPostsListWrap>
         {sorted.map((item) => (
           <UserPostsListDiv
-            key={item.id}
-            onClick={() => navigate(`/trace/detail/${item.id}`)}
+            key={item.no}
+            onClick={() => navigate(`/trace/detail/${item.no}`)}
             role="button"
             tabIndex={0}
-            onKeyDown={(e) => e.key === "Enter" && navigate(`/trace/detail/${item.id}`)}
+            onKeyDown={(e) => e.key === "Enter" && navigate(`/trace/detail/${item.no}`)}
           >
             <UserPostCreateAtDiv>
               {item.createdAt?.slice(0, 10)}
@@ -111,9 +111,6 @@ const UserPosts = () => {
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                // TODO: 삭제 로직 연결
-                // onDelete(item.id)
-                // 일단 UI만
                 alert("삭제 기능은 추후 연결해주세요.");
               }}
               aria-label="삭제"
