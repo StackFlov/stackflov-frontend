@@ -88,10 +88,21 @@ const UserPosts = () => {
       </UserPostsTopDiv>
 
       <UserPostsListWrap>
-        {sorted.map((item) => (
+        {sorted.map((item) => {
+          console.log("게시글 데이터 확인:", item);
+          return(
           <UserPostsListDiv
-            key={item.no}
-            onClick={() => navigate(`/trace/detail/${item.no}`)}
+            key={item.id}
+            onClick={() => {
+              const boardId = item.id; 
+              console.log("이동할 ID 확인:", boardId); 
+        
+              if (boardId) {
+                navigate(`/trace/detail/${boardId}`);
+              } else {
+                alert("게시글 번호가 없습니다.");
+              }
+            }}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => e.key === "Enter" && navigate(`/trace/detail/${item.no}`)}
@@ -119,7 +130,7 @@ const UserPosts = () => {
               <DeleteOutlineIcon fontSize="small" />
             </UserPostDelBtn>
           </UserPostsListDiv>
-        ))}
+        )})}
       </UserPostsListWrap>
     </UserPostsWrapper>
   );

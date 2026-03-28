@@ -194,6 +194,32 @@ const TraceDetail = () => {
   const navigator = useNavigate();
   const { no } = useParams();
   const boardId = Number(no);
+  const viewLoggedRef = useRef(false);
+const dwellStartRef = useRef(null);
+
+const logEvent = useCallback(
+  async (type, value = null) => {
+    if (!accessToken) return;         // 로그인 안 했으면 로깅 스킵(원하면 제거)
+    if (!Number.isFinite(boardId)) return;
+
+    try {
+      await axios.post(
+        "https://api.stackflov.com/api/events",   // ✅ 너희 백엔드가 @RequestMapping("/api/events")라면 이게 맞음
+        { boardId, type, value },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          withCredentials: true,
+        }
+      );
+    } catch (e) {
+      // 로깅 실패는 UX 영향 없게 무시
+    }
+  },
+  [accessToken, boardId]
+);
 
   // reveal animations
   const wrapperRef = useRef(null);
@@ -504,33 +530,6 @@ const TraceDetail = () => {
     }
     return extractHashtags(traceInfo?.content);
   }, [traceInfo]);
-
-const viewLoggedRef = useRef(false);
-const dwellStartRef = useRef(null);
-
-const logEvent = useCallback(
-  async (type, value = null) => {
-    if (!accessToken) return;         // 로그인 안 했으면 로깅 스킵(원하면 제거)
-    if (!Number.isFinite(boardId)) return;
-
-    try {
-      await axios.post(
-        "https://api.stackflov.com/api/events",   // ✅ 너희 백엔드가 @RequestMapping("/api/events")라면 이게 맞음
-        { boardId, type, value },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          withCredentials: true,
-        }
-      );
-    } catch (e) {
-      // 로깅 실패는 UX 영향 없게 무시
-    }
-  },
-  [accessToken, boardId]
-);
 
   return (
     <TraceDetailWrapper ref={wrapperRef}>
