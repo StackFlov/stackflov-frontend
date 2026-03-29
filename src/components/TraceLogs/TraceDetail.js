@@ -1,4 +1,4 @@
-// src/components/trace/TraceDetail.jsx
+// src/components/trace/TraceDetail.js
 import React, {
   useEffect,
   useMemo,
@@ -6,7 +6,7 @@ import React, {
   useState,
   useCallback,
 } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import {
   TraceDiv,
   TraceContentDiv,
@@ -531,6 +531,23 @@ const logEvent = useCallback(
     return extractHashtags(traceInfo?.content);
   }, [traceInfo]);
 
+  const location = useLocation();
+  useEffect(() => {
+  // 주소창에 #comment-숫자 가 있는지 확인
+  const hash = location.hash;
+  if (hash && replys.length > 0) {
+    // 데이터가 로드된 후 약간의 지연을 주어 렌더링이 완료된 후 스크롤
+    setTimeout(() => {
+      const element = document.getElementById(hash.replace("#", ""));
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        // 강조 효과 (선택사항: 잠깐 배경색을 노란색으로 바꿨다 풀기 등)
+        element.style.backgroundColor = "#fff9c4"; 
+        setTimeout(() => { element.style.backgroundColor = "transparent"; }, 2000);
+      }
+    }, 500); 
+  }
+}, [location.hash, replys]);
   return (
     <TraceDetailWrapper ref={wrapperRef}>
       <TraceDetailTopContent data-reveal="true" data-delay="0">
@@ -664,6 +681,7 @@ const logEvent = useCallback(
   return (
     <ReplyDiv
       key={item.id}
+      id={`comment-${item.id}`}
       $anim={animMap[item.id] || "enter"}
       onAnimationEnd={() => {
         setAnimMap((m) => {

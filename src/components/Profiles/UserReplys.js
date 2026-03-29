@@ -101,13 +101,13 @@ const UserReplys = () => {
             key={item.id}
             onClick={() => {
               // 댓글이 달린 게시글 id가 있다면 상세로 이동
-              if (item.boardId) navigate(`/trace/detail/${item.boardId}`);
+              if (item.boardId) navigate(`/trace/detail/${item.boardId}#comment-${item.id}`);
             }}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === "Enter" && item.boardId) {
-                navigate(`/trace/detail/${item.boardId}`);
+                navigate(`/trace/detail/${item.boardId}#comment-${item.id}`);
               }
             }}
           >
