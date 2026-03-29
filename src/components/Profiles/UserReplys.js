@@ -34,7 +34,7 @@ const UserReplys = () => {
 
     // 내 댓글 목록
     axios
-      .get(`https://api.stackflov.com/my/comments/board`, {
+      .get(`https://api.stackflov.com/my/comments/all`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
