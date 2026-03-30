@@ -20,6 +20,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Cookies from "js-cookie";
 
+import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
+import BookmarkIcon from "@mui/icons-material/Bookmark";
+
 const NiBangNeMangList = ({ postsToDisplay }) => {
   const [listItems, setListItems] = useState([]);
   const [me, setMe] = useState(null);
@@ -147,6 +150,11 @@ const NiBangNeMangList = ({ postsToDisplay }) => {
                       {item.isLike ? <FavoriteIcon /> : <FavoriteBorderIcon />}
                       <span>{item.likeCount || 0}</span>
                     </LikeBtn>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: item.isBookmarked ? '#ca8a04' : '#adb5bd', fontSize: '14px' }}>
+                      {item.isBookmarked ? <BookmarkIcon style={{ fontSize: '18px' }} /> : <BookmarkBorderIcon style={{ fontSize: '18px' }} />}
+                      <span>{item.bookmarkCount || 0}</span>
+                    </div>
                   </MetaRow>
                 </CardInfoBox>
               </Card>

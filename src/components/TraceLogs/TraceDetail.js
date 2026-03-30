@@ -39,6 +39,10 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import axios from "axios";
 import Cookies from "js-cookie";
 import ReportButton from "../../components/report/ReportButton";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import BookmarkIcon from "@mui/icons-material/Bookmark";
+import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 
 /* ---------- Local pill buttons ---------- */
 const ButtonsRow = styled.div`
@@ -183,8 +187,8 @@ const TraceDetail = () => {
   const [followings, setFollowings] = useState([]);
   const [editingReplyId, setEditingReplyId] = useState(null);
   const [imgErr, setImgErr] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [activeRoomId, setActiveRoomId] = useState(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
 
   // per-reply animation: 'enter' | 'new' | 'exit'
   const [animMap, setAnimMap] = useState({});
@@ -195,32 +199,61 @@ const TraceDetail = () => {
   const { no } = useParams();
   const boardId = Number(no);
   const viewLoggedRef = useRef(false);
-const dwellStartRef = useRef(null);
+  const dwellStartRef = useRef(null);
 
-const logEvent = useCallback(
-  async (type, value = null) => {
-    if (!accessToken) return;         // 로그인 안 했으면 로깅 스킵(원하면 제거)
-    if (!Number.isFinite(boardId)) return;
+  const logEvent = useCallback(
+    async (type, value = null) => {
+      if (!accessToken) return;         // 로그인 안 했으면 로깅 스킵(원하면 제거)
+      if (!Number.isFinite(boardId)) return;
 
+      try {
+        await axios.post(
+          "https://api.stackflov.com/api/events", 
+          { boardId, type, value },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            withCredentials: true,
+          }
+        );
+      } catch (e) {
+        // 로깅 실패는 UX 영향 없게 무시
+      }
+    },
+    [accessToken, boardId]
+  );
+
+  const handleLike = async () => {
+    if (!me?.id) return alert("로그인이 필요합니다.");
     try {
       await axios.post(
-        "https://api.stackflov.com/api/events",   // ✅ 너희 백엔드가 @RequestMapping("/api/events")라면 이게 맞음
-        { boardId, type, value },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          withCredentials: true,
-        }
+        "https://api.stackflov.com/likes", 
+        { boardId: no },
+        { headers: { Authorization: `Bearer ${accessToken}` }, withCredentials: true }
       );
-    } catch (e) {
-      // 로깅 실패는 UX 영향 없게 무시
+      setIsLiked(!isLiked);
+      // setLikeCount(prev => isLiked ? prev - 1 : prev + 1); // 카운트 로직 있을 시
+    } catch (err) {
+      console.error("좋아요 처리 실패:", err);
     }
-  },
-  [accessToken, boardId]
-);
+  };
 
+  const handleBookmark = async () => {
+    if (!me?.id) return alert("로그인이 필요합니다.");
+    try {
+      await axios.post(
+        "https://api.stackflov.com/bookmarks",
+        { boardId: no },
+        { headers: { Authorization: `Bearer ${accessToken}` }, withCredentials: true }
+      );
+      setIsBookmarked(!isBookmarked);
+      alert(isBookmarked ? "북마크가 취소되었습니다." : "북마크에 저장되었습니다.");
+    } catch (err) {
+      console.error("북마크 처리 실패:", err);
+    }
+  };
   // reveal animations
   const wrapperRef = useRef(null);
   useEffect(() => {
@@ -252,6 +285,8 @@ const logEvent = useCallback(
       })
       .then((res) => {
       setTraceInfo(res.data);
+      if (res.data.isLiked !== undefined) setIsLiked(res.data.isLiked);
+      if (res.data.isBookmarked !== undefined) setIsBookmarked(res.data.isBookmarked);
 
       // ✅ VIEW 로깅(한 번만)
       if (!viewLoggedRef.current) {
@@ -662,6 +697,14 @@ const logEvent = useCallback(
             
             <UserFollowBtn onClick={handleStartChat} style={{ background: '#eef2ff', color: '#4338ca' }}>
               💬 1:1 채팅하기
+            </UserFollowBtn>
+
+            <UserFollowBtn onClick={handleLike} style={{ background: isLiked ? '#fff1f2' : '#f8fafc', color: isLiked ? '#e11d48' : '#64748b' }}>
+              {isLiked ? "❤️ 좋아요 취소" : "🤍 좋아요"}
+            </UserFollowBtn>
+
+            <UserFollowBtn onClick={handleBookmark} style={{ background: isBookmarked ? '#fefce8' : '#f8fafc', color: isBookmarked ? '#ca8a04' : '#64748b' }}>
+              {isBookmarked ? "🔖 북마크 취소" : "📑 북마크"}
             </UserFollowBtn>
           </div>
         </UserInfoDiv>

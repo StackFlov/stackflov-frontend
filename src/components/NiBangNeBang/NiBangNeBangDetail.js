@@ -42,6 +42,10 @@ import {
 } from "../../styles/components/NiBangNeBangDetailStyled";
 
 import ReportButton from "../../components/report/ReportButton";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import BookmarkIcon from "@mui/icons-material/Bookmark";
+import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 
 const DEFAULT_PROFILE =
   "https://d3sutbt651osyh.cloudfront.net/assets/profile/default.png";
@@ -95,6 +99,8 @@ const NiBangNeBangDetail = () => {
   const [replyUpdateInput, setReplyUpdateInput] = useState("");
   const [editingReplyId, setEditingReplyId] = useState(null);
 
+  const [isLiked, setIsLiked] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
   const fetchedMeRef = useRef(false);
 
   // 상세 정보 로딩
@@ -107,10 +113,34 @@ const NiBangNeBangDetail = () => {
         headers,
         withCredentials: true,
       })
-      .then((res) => setDetail(res.data))
+      .then((res) =>{
+        setDetail(res.data)
+        setIsLiked(res.data.isLiked);
+        setIsBookmarked(res.data.isBookmarked);
+      })
       .catch((err) => console.error("Error fetching review detail:", err));
   }, [id, accessToken]);
 
+  const handleLike = async () => {
+    if (!me?.id) return alert("로그인이 필요합니다.");
+    try {
+      await axios.post("https://api.stackflov.com/likes", { reviewId: id }, {
+        headers: { Authorization: `Bearer ${accessToken}` }, withCredentials: true
+      });
+      setIsLiked(!isLiked);
+    } catch (err) { console.error(err); }
+  };
+
+  const handleBookmark = async () => {
+    if (!me?.id) return alert("로그인이 필요합니다.");
+    try {
+      await axios.post("https://api.stackflov.com/bookmarks", { reviewId: id }, {
+        headers: { Authorization: `Bearer ${accessToken}` }, withCredentials: true
+      });
+      setIsBookmarked(!isBookmarked);
+    } catch (err) { console.error(err); }
+  };
+  
   const hashtags = useMemo(() => {
     if (!detail) return [];
     if (Array.isArray(detail.hashtags) && detail.hashtags.length > 0) {
@@ -410,6 +440,16 @@ const NiBangNeBangDetail = () => {
             {/* ✅ 1:1 채팅하기 버튼 추가 */}
             <UserFollowBtn onClick={handleStartChat} style={{ width: "fit-content", background: '#eef2ff', color: '#4338ca' }}>
               💬 1:1 채팅하기
+            </UserFollowBtn>
+
+            <UserFollowBtn onClick={handleLike} style={{ width: "fit-content", background: isLiked ? '#fff1f2' : '#f8fafc', color: isLiked ? '#e11d48' : '#64748b' }}>
+              {isLiked ? <FavoriteIcon fontSize="small" /> : <FavoriteBorderIcon fontSize="small" />}
+              {isLiked ? " 좋아요 취소" : " 좋아요"}
+            </UserFollowBtn>
+
+            <UserFollowBtn onClick={handleBookmark} style={{ width: "fit-content", background: isBookmarked ? '#fefce8' : '#f8fafc', color: isBookmarked ? '#ca8a04' : '#64748b' }}>
+              {isBookmarked ? <BookmarkIcon fontSize="small" /> : <BookmarkBorderIcon fontSize="small" />}
+              {isBookmarked ? " 북마크 취소" : " 북마크"}
             </UserFollowBtn>
           </div>
         </AuthorMeta>
