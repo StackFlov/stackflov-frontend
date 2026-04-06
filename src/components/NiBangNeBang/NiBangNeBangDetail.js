@@ -124,7 +124,7 @@ const NiBangNeBangDetail = () => {
   const handleLike = async () => {
     if (!me?.id) return alert("로그인이 필요합니다.");
     try {
-      await axios.post("https://api.stackflov.com/likes", { reviewId: id }, {
+      await axios.post("https://api.stackflov.com/likes", { reviewId: Number(id) }, {
         headers: { Authorization: `Bearer ${accessToken}` }, withCredentials: true
       });
       setIsLiked(!isLiked);
