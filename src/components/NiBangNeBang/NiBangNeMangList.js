@@ -31,7 +31,9 @@ const NiBangNeMangList = ({ postsToDisplay }) => {
   const accessToken = Cookies.get("accessToken");
   const nav = useNavigate();
 
-  useEffect(() => { setListItems(postsToDisplay || []); }, [postsToDisplay]);
+  useEffect(() => { 
+    setListItems(postsToDisplay || []); }, [postsToDisplay]
+  );
 
   // ✅ 등장 애니메이션(Intersection Observer) 로직
   useEffect(() => {

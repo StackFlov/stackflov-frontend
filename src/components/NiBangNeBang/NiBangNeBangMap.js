@@ -122,6 +122,7 @@ const NiBangNeBangMap = ({ reviews, setMap, markers, setVisiblePosts }) => {
           new Promise((resolve) => {
             geocoder.addressSearch(post.address, (result, status) => {
               if (status === window.kakao.maps.services.Status.OK) {
+                console.log(`✅ 마커 생성 성공: ${post.address}`);
                 const coords = new window.kakao.maps.LatLng(result[0].y, result[0].x);
                 const marker = new window.kakao.maps.Marker({
                   map: mapRef.current,
@@ -144,6 +145,9 @@ const NiBangNeBangMap = ({ reviews, setMap, markers, setVisiblePosts }) => {
                 });
 
                 markers.current.push({ marker, data: post });
+              }else{
+                console.error(`❌ 마커 생성 실패: ${post.address} | 사유: ${status}`);
+                console.log("실패한 포스트 데이터:", post);
               }
               resolve();
             });

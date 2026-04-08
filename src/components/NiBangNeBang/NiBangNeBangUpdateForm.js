@@ -197,11 +197,7 @@ const NiBangNeBangUpdateForm = () => {
       address,
       content,
       rating: safeRating,
-      // 여러 네이밍 동시 실어 보내기(백엔드 시그니처 호환)
-      deleteImageIds: toDeleteIds,
-      imageIdsToDelete: toDeleteIds,
-      deleteImageUrls: toDeleteUrls,
-      imageUrlsToDelete: toDeleteUrls,
+      deleteImageIds: Array.from(deleteImageIds).map(Number),
     };
 
     const url = `https://api.stackflov.com/map/reviews/${id}`;
@@ -212,15 +208,9 @@ const NiBangNeBangUpdateForm = () => {
       // 🔹 JSON 파트는 다양한 키로 함께 전송 (data/request/dto)
       const json = JSON.stringify(dto);
       formData.append("data",    new Blob([json], { type: "application/json" }));
-      formData.append("request", new Blob([json], { type: "application/json" }));
-      formData.append("dto",     new Blob([json], { type: "application/json" }));
 
       // 🔹 새 이미지 파일들(있을 때만)
       newFiles.forEach((f) => formData.append("images", f));
-
-      // 🔹 @RequestParam 스타일도 겸용 지원(서버가 개별 키를 받을 수 있음)
-      toDeleteIds.forEach((id) => formData.append("deleteImageId", String(id)));
-      toDeleteUrls.forEach((u) => formData.append("deleteImageUrl", u));
 
       await axios.put(url, formData, {
         headers: { Authorization: `Bearer ${accessToken}` },
