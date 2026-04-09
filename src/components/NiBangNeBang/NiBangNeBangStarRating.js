@@ -5,7 +5,7 @@ function NiBangNeBangStarRating({ value = 0, onChange }) {
 
   return (
     <div style={{ display: "flex", gap: 6, margin: "10px 0" }}>
-      {[0, 1, 2, 3, 4, 5].map((num) => (
+      {[1, 2, 3, 4, 5].map((num) => (
         <span
           key={num}
           style={{
