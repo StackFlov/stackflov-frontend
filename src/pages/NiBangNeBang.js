@@ -19,7 +19,7 @@ function NiBangNeBang() {
 
   useEffect(() => {
     axios
-      .get(`https://api.stackflov.com/map/reviews`, {
+      .get(`https://api.stackflov.com/map/reviews?size=100`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

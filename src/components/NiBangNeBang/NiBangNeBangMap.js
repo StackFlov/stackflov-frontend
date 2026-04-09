@@ -52,6 +52,7 @@ const ResultRow = styled.div`
 `;
 
 const NiBangNeBangMap = ({ reviews, setMap, markers, setVisiblePosts }) => {
+  console.log("📍 마커 업데이트 이펙트 실행됨. 리뷰 개수:", reviews?.length);
   const mapElRef = useRef(null);
   const mapRef = useRef(null);
   const infowindowRef = useRef(null);
@@ -62,6 +63,7 @@ const NiBangNeBangMap = ({ reviews, setMap, markers, setVisiblePosts }) => {
 
   // kakao 지도 로드 + 초기화
   useEffect(() => {
+    console.log("📍 [2. 마커 이펙트 실행] 마커 생성 로직이 시작되었습니다. 데이터 개수:", reviews?.length);
     const init = () => {
       window.kakao.maps.load(() => {
         const options = {
@@ -75,8 +77,15 @@ const NiBangNeBangMap = ({ reviews, setMap, markers, setVisiblePosts }) => {
         infowindowRef.current = new window.kakao.maps.InfoWindow({ zIndex: 1 });
 
         window.kakao.maps.event.addListener(mapInstance, "bounds_changed", () => {
-          if (!markers?.current || markers.current.length === 0) return;
-          const bounds = mapInstance.getBounds();
+          if (!markers?.current || markers.current.length === 0) 
+          {
+            console.log("📍 [2-1. 중단] 지도나 리뷰 데이터가 없어 로직을 중단합니다.", { 
+      mapLoaded: !!mapRef.current, 
+      reviewCount: reviews?.length 
+    });
+            return;
+          }
+            const bounds = mapInstance.getBounds();
           const visible = markers.current
             .filter(({ marker }) => bounds.contain(marker.getPosition()))
             .map(({ data }) => data);
