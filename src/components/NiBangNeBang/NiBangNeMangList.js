@@ -67,6 +67,32 @@ const NiBangNeMangList = ({ postsToDisplay }) => {
       .catch((err) => console.error("Error fetching user data:", err));
   }, [accessToken]);
 
+  const toggleBookmark = (id, isCurrentlyBookmarked) => {
+  if (!me) return alert("로그인이 필요한 기능입니다.");
+  
+  const method = isCurrentlyBookmarked ? "delete" : "post";
+  const url = `https://api.stackflov.com/bookmarks`;
+
+  axios({
+    method,
+    url,
+    // 백엔드 BookmarkRequestDto 규격에 맞춰 reviewId 전달
+    data: { reviewId: id }, 
+    headers: { Authorization: `Bearer ${accessToken}` },
+    withCredentials: true,
+  })
+  .then(() => {
+    // 리스트 상태 업데이트
+    setListItems((prev) =>
+      prev.map((it) => (it.id === id ? { ...it, bookmarked: !isCurrentlyBookmarked } : it))
+    );
+  })
+  .catch((e) => {
+    console.error("북마크 처리 실패:", e);
+    alert("처리 중 오류가 발생했습니다.");
+  });
+};
+
   const toggleLike = (id, isCurrentlyLiked) => {
     if (!me) return alert("로그인이 필요한 기능입니다.");
     const method = isCurrentlyLiked ? "delete" : "post";
@@ -153,10 +179,26 @@ const NiBangNeMangList = ({ postsToDisplay }) => {
                       <span>{item.likeCount || 0}</span>
                     </LikeBtn>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: item.isBookmarked ? '#ca8a04' : '#adb5bd', fontSize: '14px' }}>
-                      {item.isBookmarked ? <BookmarkIcon style={{ fontSize: '18px' }} /> : <BookmarkBorderIcon style={{ fontSize: '18px' }} />}
-                      <span>{item.bookmarkCount || 0}</span>
-                    </div>
+                    <div 
+  style={{ 
+    display: 'flex', 
+    alignItems: 'center', 
+    cursor: 'pointer',
+    // 백엔드 JSON 필드명이 "bookmarked"이므로 이에 맞춰 색상 결정
+    color: item.bookmarked ? '#ca8a04' : '#adb5bd' 
+  }}
+  onClick={(e) => {
+    e.stopPropagation(); // 카드 클릭 이벤트와 겹치지 않게 방지
+    toggleBookmark(item.id, item.bookmarked);
+  }}
+>
+  {/* 상태에 따라 꽉 찬 아이콘 / 빈 아이콘 출력 */}
+  {item.bookmarked ? (
+    <BookmarkIcon style={{ fontSize: '18px' }} />
+  ) : (
+    <BookmarkBorderIcon style={{ fontSize: '18px' }} />
+  )}
+</div>
                   </MetaRow>
                 </CardInfoBox>
               </Card>

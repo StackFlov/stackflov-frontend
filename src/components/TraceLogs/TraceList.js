@@ -133,8 +133,10 @@ const TraceList = ({ nowCategory }) => {
                 </MetaRow>
                 <StatsRow>
                   <StatItem><RemoveRedEyeIcon /> {item.viewCount ?? 0}</StatItem>
-                  <StatItem $active={!!item.liked}><FavoriteIcon /> {item.good ?? 0}</StatItem>
-                  <StatItem $active={!!item.bookmarked} $isBookmark={true}><TurnedInIcon /> {item.bookMark ?? 0}</StatItem>
+                  <StatItem $active={!!item.liked}><FavoriteIcon /> {item.likeCount ?? 0}</StatItem>
+                  <StatItem $active={!!item.bookmarked} $isBookmark={true}>
+                    <TurnedInIcon />
+                  </StatItem>
                 </StatsRow>
               </CardInfoBox>
             </ItemWrapper>
