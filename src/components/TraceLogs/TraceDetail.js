@@ -227,31 +227,49 @@ const TraceDetail = () => {
 
   const handleLike = async () => {
     if (!me?.id) return alert("로그인이 필요합니다.");
+    const headers = { Authorization: `Bearer ${accessToken}` };
     try {
-      await axios.post(
-        "https://api.stackflov.com/likes", 
-        { boardId: no },
-        { headers: { Authorization: `Bearer ${accessToken}` }, withCredentials: true }
-      );
-      setIsLiked(!isLiked);
-      // setLikeCount(prev => isLiked ? prev - 1 : prev + 1); // 카운트 로직 있을 시
-    } catch (err) {
+      if(isLiked){
+        await axios.delete(`https://api.stackflov.com/likes?boardId=${no}`,{
+          headers,
+          withCredentials: true
+        });
+      }else {
+        await axios.post(
+          "https://api.stackflov.com/likes", 
+          { boardId: no },
+          { headers, withCredentials: true }
+        );
+      }setIsLiked(!isLiked);
+      alert(isLiked ? "좋아요가 취소되었습니다." : "좋아요가 저장되었습니다.");
+      } catch (err) {
       console.error("좋아요 처리 실패:", err);
+      alert("좋아요 처리에 실패했습니다.");
     }
   };
 
   const handleBookmark = async () => {
     if (!me?.id) return alert("로그인이 필요합니다.");
+    const headers = { Authorization: `Bearer ${accessToken}` };
     try {
-      await axios.post(
-        "https://api.stackflov.com/bookmarks",
-        { boardId: no },
-        { headers: { Authorization: `Bearer ${accessToken}` }, withCredentials: true }
-      );
+      if (isBookmarked) {
+        await axios.delete("https://api.stackflov.com/bookmarks", {
+          headers,
+          withCredentials: true,
+          data: { boardId: no } 
+        });
+      } else {
+        await axios.post(
+          "https://api.stackflov.com/bookmarks",
+          { boardId: no },
+          { headers, withCredentials: true }
+        );
+      }
       setIsBookmarked(!isBookmarked);
       alert(isBookmarked ? "북마크가 취소되었습니다." : "북마크에 저장되었습니다.");
     } catch (err) {
       console.error("북마크 처리 실패:", err);
+      alert("북마크 처리에 실패했습니다.");
     }
   };
   // reveal animations
