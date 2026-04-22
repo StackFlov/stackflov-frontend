@@ -115,8 +115,8 @@ const NiBangNeBangDetail = () => {
       })
       .then((res) =>{
         setDetail(res.data)
-        setIsLiked(res.data.isLiked);
-        setIsBookmarked(res.data.isBookmarked);
+        setIsLiked(res.data.liked);
+        setIsBookmarked(res.data.bookmarked);
       })
       .catch((err) => console.error("Error fetching review detail:", err));
   }, [id, accessToken]);

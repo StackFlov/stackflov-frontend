@@ -278,24 +278,29 @@ const TraceDetail = () => {
   // board
   useEffect(() => {
     viewLoggedRef.current = false;
+    const token = Cookies.get("accessToken"); 
+    const currentHeaders = { "Content-Type": "application/json" };
+    if (token) currentHeaders.Authorization = `Bearer ${token}`;
     axios
       .get(`https://api.stackflov.com/boards/${no}`, {
-        headers: { "Content-Type": "application/json" },
+        headers: currentHeaders,
         withCredentials: true,
       })
       .then((res) => {
       setTraceInfo(res.data);
-      if (res.data.isLiked !== undefined) setIsLiked(res.data.isLiked);
-      if (res.data.isBookmarked !== undefined) setIsBookmarked(res.data.isBookmarked);
+      const likedStatus = res.data.liked ?? res.data.isLiked ?? false;
+      const bookmarkedStatus = res.data.bookmarked ?? res.data.isBookmarked ?? false;
 
-      // ✅ VIEW 로깅(한 번만)
+      setIsLiked(likedStatus);
+      setIsBookmarked(bookmarkedStatus);
+
       if (!viewLoggedRef.current) {
         viewLoggedRef.current = true;
         logEvent("VIEW");
       }
     })
       .catch((err) => console.error("Error fetching board:", err));
-  }, [no]);
+  }, [no, accessToken, logEvent]);
 
   // me & followings
   const fetchedMeRef = useRef(false);

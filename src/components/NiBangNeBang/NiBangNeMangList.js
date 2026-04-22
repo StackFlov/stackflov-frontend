@@ -84,7 +84,7 @@ const NiBangNeMangList = ({ postsToDisplay }) => {
   .then(() => {
     // 리스트 상태 업데이트
     setListItems((prev) =>
-      prev.map((it) => (it.id === id ? { ...it, bookmarked: !isCurrentlyBookmarked } : it))
+      prev.map((it) => (it.id === id ? { ...it, isBookmarked: !isCurrentlyBookmarked } : it))
     );
   })
   .catch((e) => {
@@ -184,16 +184,14 @@ const NiBangNeMangList = ({ postsToDisplay }) => {
     display: 'flex', 
     alignItems: 'center', 
     cursor: 'pointer',
-    // 백엔드 JSON 필드명이 "bookmarked"이므로 이에 맞춰 색상 결정
-    color: item.bookmarked ? '#ca8a04' : '#adb5bd' 
+    color: item.isBookmarked ? '#ca8a04' : '#adb5bd' 
   }}
   onClick={(e) => {
-    e.stopPropagation(); // 카드 클릭 이벤트와 겹치지 않게 방지
-    toggleBookmark(item.id, item.bookmarked);
+    e.stopPropagation();
+    toggleBookmark(item.id, item.isBookmarked);
   }}
 >
-  {/* 상태에 따라 꽉 찬 아이콘 / 빈 아이콘 출력 */}
-  {item.bookmarked ? (
+  {item.isBookmarked ? (
     <BookmarkIcon style={{ fontSize: '18px' }} />
   ) : (
     <BookmarkBorderIcon style={{ fontSize: '18px' }} />
