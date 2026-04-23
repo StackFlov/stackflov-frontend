@@ -123,20 +123,44 @@ const NiBangNeBangDetail = () => {
 
   const handleLike = async () => {
     if (!me?.id) return alert("로그인이 필요합니다.");
+    const headers = { Authorization: `Bearer ${accessToken}` };
     try {
-      await axios.post("https://api.stackflov.com/likes", { reviewId: Number(id) }, {
-        headers: { Authorization: `Bearer ${accessToken}` }, withCredentials: true
-      });
-      setIsLiked(!isLiked);
-    } catch (err) { console.error(err); }
+      if (isLiked) {
+        await axios.delete(`https://api.stackflov.com/likes?reviewId=${id}`, {
+          headers,
+          withCredentials: true
+        });
+      } else {
+        await axios.post(
+          "https://api.stackflov.com/likes", 
+          { reviewId: Number(id) },
+          { headers, withCredentials: true }
+        );
+      }
+      setIsLiked(!isLiked); // 성공 시 상태 반전
+    } catch (err) {
+      console.error("좋아요 처리 실패:", err);
+      alert("좋아요 처리에 실패했습니다.");
+    }
   };
 
   const handleBookmark = async () => {
     if (!me?.id) return alert("로그인이 필요합니다.");
+    const headers = { Authorization: `Bearer ${accessToken}` };
     try {
-      await axios.post("https://api.stackflov.com/bookmarks", { reviewId: id }, {
-        headers: { Authorization: `Bearer ${accessToken}` }, withCredentials: true
-      });
+      if (isBookmarked) {
+        await axios.delete("https://api.stackflov.com/bookmarks", {
+          headers,
+          withCredentials: true,
+          data: { reviewId: id } 
+        });
+      } else {
+        await axios.post(
+          "https://api.stackflov.com/bookmarks",
+          { reviewId: id },
+          { headers, withCredentials: true }
+        );
+      }
       setIsBookmarked(!isBookmarked);
     } catch (err) { console.error(err); }
   };
